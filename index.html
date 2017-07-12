@@ -11,11 +11,16 @@
 <body>
     <h1>{{ .Title }}</h1>
 
-    <ul>
-        {{ range .Items }}
-        <li><a href="{{ .Url }}">{{ .Title }}</a></li>
+    {{ range .Items }}
+    <div>
+        <h2><a href="{{ .Url }}">{{ .Title }}</a></h2>
+        {{ if .Content }}
+            {{ .Content }}
+        {{ else }}
+            {{ .Description }}
         {{ end }}
-    </ul>
+    </div>
+    {{ end }}
 </body>
 
 </html>

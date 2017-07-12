@@ -11,15 +11,26 @@ import (
 
 type Feed struct {
 	XMLName xml.Name `xml:"rss"`
-	Title   string   `xml:"channel>title"`
-	Items   []Item   `xml:"channel>item"`
+
+	// required
+	Title       string `xml:"channel>title"`
+	Url         string `xml:"channel>link"`
+	Description string `xml:"channel>description"`
+
+	// optional
+	Items []Item `xml:"channel>item"`
 }
 
 type Item struct {
-	Title       string `xml:"title"`
-	Url         string `xml:"link"`
-	Description string `xml:"description"`
-	Content     string `xml:"content"`
+	/*
+	 * "All elements of an item are optional, however at least one of title or
+	 * description must be present."
+	 * http://cyber.harvard.edu/rss/rss.html
+	 */
+	Title       string        `xml:"title"`
+	Description template.HTML `xml:"description"` // lol security
+	Url         string        `xml:"link"`
+	Content     template.HTML `xml:"encoded"`
 }
 
 func ParseFeed(feed []byte) (Feed, error) {
