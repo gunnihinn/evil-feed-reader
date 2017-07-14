@@ -13,11 +13,11 @@
 
     {{ range .Items }}
     <div>
-        <h2><a href="{{ .Url }}">{{ .Title }}</a></h2>
-        {{ if .Content }}
-            {{ .Content }}
-        {{ else }}
+        <h2><a href="{{ .Link }}">{{ .Title }}</a></h2>
+        {{ if .Description }}
             {{ .Description }}
+        {{ else }}
+            {{ .Content }}
         {{ end }}
     </div>
     {{ end }}
