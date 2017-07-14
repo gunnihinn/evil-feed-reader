@@ -12,7 +12,8 @@ import (
 type Feed struct {
 	XMLName xml.Name `xml:"rss"`
 
-	Url string // The URL we get the feed from; may or may not equal Link
+	Url   string // The URL we get the feed from; may or may not equal Link
+	Error error
 
 	// required
 	Title       string `xml:"channel>title"`
@@ -54,26 +55,33 @@ func bytesFromUrl(url string) ([]byte, error) {
 	return blob, err
 }
 
-func FetchFeed(url string) (Feed, error) {
+func FetchFeed(url string) Feed {
 	blob, err := bytesFromUrl(url)
 	if err != nil {
-		return Feed{}, err
+		return Feed{
+			Error: err,
+		}
 	}
 
 	feed, err := ParseFeed(blob)
 	if err != nil {
-		return feed, err
+		return Feed{
+			Error: err,
+		}
 	}
 	feed.Url = url
 
-	return feed, nil
+	return feed
 }
 
 func main() {
 	var port = flag.Int("port", 8080, "HTTP port")
 	flag.Parse()
 
-	url := "https://blog.regehr.org/feed"
+	urls := []string{
+		"https://blog.regehr.org/feed",
+		"http://ithare.com/feed/",
+	}
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		t, err := template.ParseFiles("index.html")
@@ -82,13 +90,12 @@ func main() {
 			return
 		}
 
-		feed, err := FetchFeed(url)
-		if err != nil {
-			fmt.Fprintf(w, "%s", err)
-			return
+		feeds := make([]Feed, 0)
+		for _, url := range urls {
+			feeds = append(feeds, FetchFeed(url))
 		}
 
-		t.Execute(w, feed)
+		t.Execute(w, feeds)
 	})
 	http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
 }

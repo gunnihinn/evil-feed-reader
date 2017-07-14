@@ -9,17 +9,23 @@
 </head>
 
 <body>
-    <h1>{{ .Title }}</h1>
+    {{ range . }}
+        <h1>{{ .Title }}</h1>
 
-    {{ range .Items }}
-    <div>
-        <h2><a href="{{ .Link }}">{{ .Title }}</a></h2>
-        {{ if .Description }}
-            {{ .Description }}
-        {{ else }}
-            {{ .Content }}
+        {{ if .Error }}
+            <div>{{ .Error }}</div>
+        {{ else  }}
+            {{ range .Items }}
+            <div>
+                <h2><a href="{{ .Link }}">{{ .Title }}</a></h2>
+                {{ if .Description }}
+                    {{ .Description }}
+                {{ else }}
+                    {{ .Content }}
+                {{ end }}
+            </div>
+            {{ end }}
         {{ end }}
-    </div>
     {{ end }}
 </body>
 
