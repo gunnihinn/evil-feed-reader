@@ -42,7 +42,7 @@ func ParseFeed(feed []byte) (Feed, error) {
 	return f, err
 }
 
-func FetchRawFeed(url string) ([]byte, error) {
+func bytesFromUrl(url string) ([]byte, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 		return []byte{}, err
@@ -52,6 +52,21 @@ func FetchRawFeed(url string) ([]byte, error) {
 	blob, err := ioutil.ReadAll(resp.Body)
 
 	return blob, err
+}
+
+func FetchFeed(url string) (Feed, error) {
+	blob, err := bytesFromUrl(url)
+	if err != nil {
+		return Feed{}, err
+	}
+
+	feed, err := ParseFeed(blob)
+	if err != nil {
+		return feed, err
+	}
+	feed.Url = url
+
+	return feed, nil
 }
 
 func main() {
@@ -67,18 +82,11 @@ func main() {
 			return
 		}
 
-		blob, err := FetchRawFeed(url)
+		feed, err := FetchFeed(url)
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
 			return
 		}
-
-		feed, err := ParseFeed(blob)
-		if err != nil {
-			fmt.Fprintf(w, "%s", err)
-			return
-		}
-		feed.Url = url
 
 		t.Execute(w, feed)
 	})
