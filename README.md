@@ -28,9 +28,10 @@ These are the initial release goals.
 - [x] Async fetching of feeds
 - [x] Guard against feeds including N-thousand word posts in the description.
 - [x] Dynamically generate handlers for each feed
+- [x] Don't hardcode feed URLs
 - Render the N newest items across all feeds separately
-- Don't hardcode feed URLs
 - Make the rendering pretty
+- Parse atom feeds (e.g. Scheier on security)
 
 Nice-to-haves (?):
 

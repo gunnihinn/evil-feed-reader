@@ -1,19 +1,38 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
-	"github.com/gunnihinn/evil-rss-reader/reader"
-	"github.com/gunnihinn/evil-rss-reader/rss"
 	"html/template"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
+
+	"github.com/gunnihinn/evil-rss-reader/reader"
+	"github.com/gunnihinn/evil-rss-reader/rss"
 )
 
-var URLS = []string{
-	"https://blog.regehr.org/feed",
-	"http://ithare.com/feed/",
+func parseConfig(filename string) ([]string, error) {
+	fh, err := os.Open(filename)
+	if err != nil {
+		return []string{}, err
+	}
+	defer fh.Close()
+
+	urls := make([]string, 0)
+	scanner := bufio.NewScanner(fh)
+	for scanner.Scan() {
+		line := strings.Trim(scanner.Text(), " \t")
+		if line == "" || strings.Index(line, "#") == 0 {
+			continue
+		}
+		urls = append(urls, line)
+	}
+
+	return urls, scanner.Err()
 }
 
 type Context struct {
@@ -53,10 +72,16 @@ func createHandler(feeds []reader.Feed, active reader.Feed) func(http.ResponseWr
 
 func main() {
 	var port = flag.Int("port", 8080, "HTTP port")
+	var configFile = flag.String("feeds", "feeds.cfg", "Feeds config  file")
 	flag.Parse()
 
-	feeds := make([]reader.Feed, len(URLS))
-	for i, url := range URLS {
+	urls, err := parseConfig(*configFile)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "%s\n", err)
+	}
+
+	feeds := make([]reader.Feed, len(urls))
+	for i, url := range urls {
 		feeds[i] = rss.New(url)
 	}
 
