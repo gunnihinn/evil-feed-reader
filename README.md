@@ -25,8 +25,8 @@ These are the initial release goals.
 - [x] Fetch feed from hardcoded URL
 - [x] Fetch more than one feed from hardcoded URLs
 - [x] Render more than one feed
+- [x] Async fetching of feeds
 - Guard against feeds including N-thousand word posts in the description.
-- Async fetching of feeds
 - Don't hardcode feed URLs
 - Make the rendering pretty
 - Dynamically generate handlers for each feed
