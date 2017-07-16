@@ -18,7 +18,9 @@
             {{ range .Entries }}
             <div>
                 <h2><a href="{{ .Url }}">{{ .Title }}</a></h2>
-                {{ .Content }}
+                {{ if .Content }}
+                    {{ .Content }}
+                {{ end }}
             </div>
             {{ end }}
         {{ end }}

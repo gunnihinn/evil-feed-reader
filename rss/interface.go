@@ -3,6 +3,7 @@ package rss
 import (
 	"github.com/gunnihinn/evil-rss-reader/reader"
 	"html/template"
+	"strings"
 )
 
 func New(url string) reader.Feed {
@@ -77,5 +78,9 @@ func (e entry) Url() string {
 }
 
 func (e entry) Content() template.HTML {
+	if len(strings.Split(string(e.content), " ")) > 300 {
+		return ""
+	}
+
 	return e.content
 }
