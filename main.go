@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"time"
 )
 
 var URLS = []string{
@@ -130,10 +131,17 @@ func main() {
 		}
 	}
 
-	for _, feed := range feeds {
-		feed.Update()
-		log.Printf("Feed '%s' has %d entries\n", feed.Title, len(feed.Entries))
-	}
+	go func() {
+		for {
+			for _, feed := range feeds {
+				go func(f *Feed) {
+					f.Update()
+					log.Printf("Feed '%s' has %d entries\n", f.Title, len(f.Entries))
+				}(feed)
+			}
+			time.Sleep(15 * time.Minute)
+		}
+	}()
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		t, err := template.ParseFiles("index.html")
