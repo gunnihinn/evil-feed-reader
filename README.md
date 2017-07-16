@@ -11,8 +11,8 @@ You need a Go compiler. I'm using Go 1.8.1. Our dependencies are all in the
 standard library so far, so you can run the program with:
 
     $ git clone https://github.com/gunnihinn/evil-rss-reader.git
-    $ cd rdr
-    $ go run main.go
+    $ make
+    $ ./evil-rss-reader
 
 This will launch an HTTP server on `localhost:8080` that renders the latest
 items from the feeds I'm interested in. (At the moment this is one feed that's
@@ -34,7 +34,7 @@ These are the initial release goals.
 
 Nice-to-haves (?):
 
-- Refactor project structure
+- [x] Refactor project structure
 - Allow easy swapping of feed rendering styles
 - Allow for refreshing of individual feeds
 - Keep some history of feed updates

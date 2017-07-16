@@ -3,6 +3,7 @@
 *.dll
 *.so
 *.dylib
+evil-rss-reader
 
 # Test binary, build with `go test -c`
 *.test

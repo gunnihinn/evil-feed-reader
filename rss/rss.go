@@ -1,62 +1,88 @@
-package main
+package rss
 
 import (
 	"encoding/xml"
-	"flag"
-	"fmt"
+	"github.com/gunnihinn/evil-rss-reader/reader"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"net/http"
-	"time"
 )
 
-var URLS = []string{
-	"https://blog.regehr.org/feed",
-	"http://ithare.com/feed/",
+func New(url string) *Feed {
+	return &Feed{
+		url: url,
+	}
 }
 
 type Feed struct {
-	Url   string
-	Title string
+	url   string
+	title string
 
 	// Maybe add: type (rss/atom)
 
 	// Generated at runtime
-	Entries []Entry
-	Error   error
+	entries []reader.Entry
+	err     error
+}
+
+func (f Feed) Title() string {
+	return f.title
+}
+
+func (f Feed) Url() string {
+	return f.url
+}
+
+func (f Feed) Entries() []reader.Entry {
+	return f.entries
+}
+
+func (f Feed) Error() error {
+	return f.err
 }
 
 func (f *Feed) Update() {
-	rf, err := FetchRssFeed(f.Url)
+	rf, err := fetchRssFeed(f.Url())
 
 	if err == nil {
-		if f.Title == "" {
-			f.Title = rf.Title
+		if f.title == "" {
+			f.title = rf.Title
 		}
 
-		f.Entries = make([]Entry, len(rf.Items))
+		f.entries = make([]reader.Entry, len(rf.Items))
 		for i, item := range rf.Items {
 			entry := Entry{
-				Title: item.Title,
-				Url:   item.Link,
+				title: item.Title,
+				url:   item.Link,
 			}
 			if item.Description != "" {
-				entry.Content = item.Description
+				entry.content = item.Description
 			} else if item.Content != "" {
-				entry.Content = item.Content
+				entry.content = item.Content
 			}
-			f.Entries[i] = entry
+			f.entries[i] = entry
 		}
 	}
 
-	f.Error = err
+	f.err = err
 }
 
 type Entry struct {
-	Title   string
-	Url     string        // optional
-	Content template.HTML // optional
+	title   string
+	url     string        // optional
+	content template.HTML // optional
+}
+
+func (e Entry) Title() string {
+	return e.title
+}
+
+func (e Entry) Url() string {
+	return e.url
+}
+
+func (e Entry) Content() template.HTML {
+	return e.content
 }
 
 type RssFeed struct {
@@ -102,54 +128,16 @@ func bytesFromUrl(url string) ([]byte, error) {
 	return blob, err
 }
 
-func FetchRssFeed(url string) (RssFeed, error) {
-	log.Printf("Fetching RSS feed from '%s'\n", url)
-
+func fetchRssFeed(url string) (RssFeed, error) {
 	blob, err := bytesFromUrl(url)
 	if err != nil {
-		log.Printf("%s\n", err)
 		return RssFeed{}, err
 	}
 
 	feed, err := ParseRssFeed(blob)
 	if err != nil {
-		log.Printf("%s\n", err)
 		return RssFeed{}, err
 	}
 
 	return feed, nil
-}
-
-func main() {
-	var port = flag.Int("port", 8080, "HTTP port")
-	flag.Parse()
-
-	feeds := make([]*Feed, len(URLS))
-	for i, url := range URLS {
-		feeds[i] = &Feed{
-			Url: url,
-		}
-	}
-
-	go func() {
-		for {
-			for _, feed := range feeds {
-				go func(f *Feed) {
-					f.Update()
-					log.Printf("Feed '%s' has %d entries\n", f.Title, len(f.Entries))
-				}(feed)
-			}
-			time.Sleep(15 * time.Minute)
-		}
-	}()
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		t, err := template.ParseFiles("index.html")
-		if err != nil {
-			fmt.Fprintf(w, "%s", err)
-			return
-		}
-		t.Execute(w, feeds)
-	})
-	http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
 }
