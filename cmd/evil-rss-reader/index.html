@@ -9,22 +9,30 @@
 </head>
 
 <body>
-    {{ range . }}
-        <h1>{{ .Title }}</h1>
+    <nav>
+        <ul>
+        {{ range .Sidebar }}
+            <li><a href="{{ .Resource }}">{{ .Title }}</a></li>
+        {{ end }}
+        </ul>
+    </nav>
 
-        {{ if .Error }}
-            <div>{{ .Error }}</div>
-        {{ else  }}
-            {{ range .Entries }}
-            <div>
-                <h2><a href="{{ .Url }}">{{ .Title }}</a></h2>
-                {{ if .Content }}
-                    {{ .Content }}
-                {{ end }}
-            </div>
+    <main>
+    {{ if .Feed }}
+        {{ if .Feed.Error }}
+            <div>{{ .Feed.Error }}</div>
+        {{ end  }}
+        {{ range .Feed.Entries }}
+        <div>
+            <h2><a href="{{ .Url }}">{{ .Title }}</a></h2>
+            {{ if .Content }}
+                {{ .Content }}
             {{ end }}
+        </div>
         {{ end }}
     {{ end }}
+    </main>
+
 </body>
 
 </html>
