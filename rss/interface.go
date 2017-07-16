@@ -5,13 +5,13 @@ import (
 	"html/template"
 )
 
-func New(url string) *Feed {
-	return &Feed{
+func New(url string) reader.Feed {
+	return &feed{
 		url: url,
 	}
 }
 
-type Feed struct {
+type feed struct {
 	url   string
 	title string
 
@@ -20,23 +20,23 @@ type Feed struct {
 	err     error
 }
 
-func (f Feed) Title() string {
+func (f feed) Title() string {
 	return f.title
 }
 
-func (f Feed) Url() string {
+func (f feed) Url() string {
 	return f.url
 }
 
-func (f Feed) Entries() []reader.Entry {
+func (f feed) Entries() []reader.Entry {
 	return f.entries
 }
 
-func (f Feed) Error() error {
+func (f feed) Error() error {
 	return f.err
 }
 
-func (f *Feed) Update() {
+func (f *feed) Update() {
 	rf, err := fetchFeed(f.Url())
 
 	if err == nil {
@@ -46,7 +46,7 @@ func (f *Feed) Update() {
 
 		f.entries = make([]reader.Entry, len(rf.Items))
 		for i, item := range rf.Items {
-			entry := Entry{
+			entry := entry{
 				title: item.Title,
 				url:   item.Link,
 			}
@@ -62,20 +62,20 @@ func (f *Feed) Update() {
 	f.err = err
 }
 
-type Entry struct {
+type entry struct {
 	title   string
 	url     string        // optional
 	content template.HTML // optional
 }
 
-func (e Entry) Title() string {
+func (e entry) Title() string {
 	return e.title
 }
 
-func (e Entry) Url() string {
+func (e entry) Url() string {
 	return e.url
 }
 
-func (e Entry) Content() template.HTML {
+func (e entry) Content() template.HTML {
 	return e.content
 }
