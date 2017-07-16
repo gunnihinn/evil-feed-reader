@@ -15,14 +15,10 @@
         {{ if .Error }}
             <div>{{ .Error }}</div>
         {{ else  }}
-            {{ range .Items }}
+            {{ range .Entries }}
             <div>
-                <h2><a href="{{ .Link }}">{{ .Title }}</a></h2>
-                {{ if .Description }}
-                    {{ .Description }}
-                {{ else }}
-                    {{ .Content }}
-                {{ end }}
+                <h2><a href="{{ .Url }}">{{ .Title }}</a></h2>
+                {{ .Content }}
             </div>
             {{ end }}
         {{ end }}

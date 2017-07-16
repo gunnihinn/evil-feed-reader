@@ -29,6 +29,7 @@ These are the initial release goals.
 - Async fetching of feeds
 - Don't hardcode feed URLs
 - Make the rendering pretty
+- Dynamically generate handlers for each feed
 - Render the N newest items across all feeds separately
 
 Nice-to-haves (?):
