@@ -61,7 +61,14 @@ func Prepare(feeds []reader.Feed, active reader.Feed) Context {
 
 func createHandler(feeds []reader.Feed, active reader.Feed) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		t, err := template.ParseFiles("index.html")
+		data, err := Asset("data/index.html")
+		if err != nil {
+			fmt.Fprintf(w, "%s", err)
+			return
+		}
+
+		t := template.New("data/index.html")
+		_, err = t.Parse(string(data))
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
 			return

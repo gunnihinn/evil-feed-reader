@@ -5,6 +5,12 @@
 *.dylib
 evil-rss-reader
 
+# Config files
+*.cfg
+
+# Embedded assets
+bindata.go
+
 # Test binary, build with `go test -c`
 *.test
 
