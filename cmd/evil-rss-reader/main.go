@@ -40,7 +40,7 @@ func Prepare(feeds []reader.Feed, active reader.Feed) Context {
 
 func createHandler(feeds []reader.Feed, active reader.Feed) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := Asset("data/index.html")
+		data, err := Asset("cmd/evil-rss-reader/data/index.html")
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
 			return
@@ -58,7 +58,7 @@ func createHandler(feeds []reader.Feed, active reader.Feed) func(http.ResponseWr
 
 func main() {
 	var port = flag.Int("port", 8080, "HTTP port")
-	var configFile = flag.String("feeds", "feeds.cfg", "Feeds config  file")
+	var configFile = flag.String("feeds", "feeds.cfg", "Feeds config file")
 	flag.Parse()
 
 	urls, err := parseConfig(*configFile)
