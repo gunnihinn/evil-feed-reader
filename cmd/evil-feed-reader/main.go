@@ -19,6 +19,7 @@ import (
 type Context struct {
 	Sidebar []Navitem
 	Feed    reader.Feed
+	CSS     template.CSS
 }
 
 type Navitem struct {
@@ -31,6 +32,12 @@ func Prepare(feeds []reader.Feed, active reader.Feed) Context {
 		Feed:    active,
 		Sidebar: make([]Navitem, len(feeds)),
 	}
+
+	data, err := Asset("cmd/evil-feed-reader/data/style.css")
+	if err == nil {
+		ctx.CSS = template.CSS(data)
+	}
+
 	for i, f := range feeds {
 		ctx.Sidebar[i] = Navitem{
 			Title:    f.Title(),
