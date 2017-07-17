@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gunnihinn/evil-rss-reader/provider"
 	"github.com/gunnihinn/evil-rss-reader/reader"
 	"github.com/gunnihinn/evil-rss-reader/rss"
 )
@@ -87,9 +88,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "%s\n", err)
 	}
 
+	provider := provider.HTTP()
 	feeds := make([]reader.Feed, len(urls))
 	for i, url := range urls {
-		feeds[i] = rss.New(url)
+		feeds[i] = rss.New(provider, url)
 	}
 
 	go func() {

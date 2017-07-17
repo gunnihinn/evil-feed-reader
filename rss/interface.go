@@ -1,22 +1,27 @@
 package rss
 
 import (
-	"github.com/gunnihinn/evil-rss-reader/reader"
 	"html/template"
 	"strings"
+
+	"github.com/gunnihinn/evil-rss-reader/provider"
+	"github.com/gunnihinn/evil-rss-reader/reader"
 )
 
-func New(url string) reader.Feed {
+func New(provider provider.Provider, resource string) reader.Feed {
 	return &feed{
-		url: url,
+		resource: resource,
+		provider: provider,
 	}
 }
 
 type feed struct {
-	url   string
-	title string
+	resource string
+	provider provider.Provider
 
 	// Generated at runtime
+	title   string
+	url     string
 	entries []reader.Entry
 	err     error
 }
@@ -38,11 +43,20 @@ func (f feed) Error() error {
 }
 
 func (f *feed) Update() {
-	rf, err := fetchFeed(f.Url())
+	blob, err := f.provider.Get(f.resource)
+	if err != nil {
+		f.err = err
+		return
+	}
 
+	rf, err := parseFeed(blob)
 	if err == nil {
 		if f.title == "" {
 			f.title = rf.Title
+		}
+
+		if f.url == "" {
+			f.url = rf.Link
 		}
 
 		f.entries = make([]reader.Entry, len(rf.Items))
