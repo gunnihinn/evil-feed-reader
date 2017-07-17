@@ -41,9 +41,9 @@ These are the initial release goals.
 - [x] Dynamically generate handlers for each feed
 - [x] Don't hardcode feed URLs
 - [x] Parse atom feeds (e.g. Scheier on security)
+- [x] Rename project to "Evil feed reader"
 - Render the N newest items across all feeds separately
 - Make the rendering pretty
-- Rename project to "Evil feed reader"
 
 Nice-to-haves (?):
 
