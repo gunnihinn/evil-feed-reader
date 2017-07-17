@@ -19,6 +19,7 @@
 
     <main>
     {{ if .Feed }}
+        <h1>{{ .Feed.Title }}</h1>
         {{ if .Feed.Error }}
             <div>{{ .Feed.Error }}</div>
         {{ end  }}
