@@ -7,11 +7,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
-	"github.com/gunnihinn/evil-rss-reader/provider"
-	"github.com/gunnihinn/evil-rss-reader/reader"
-	"github.com/gunnihinn/evil-rss-reader/rss"
+	"github.com/gunnihinn/evil-feed-reader/atom"
+	"github.com/gunnihinn/evil-feed-reader/provider"
+	"github.com/gunnihinn/evil-feed-reader/reader"
+	"github.com/gunnihinn/evil-feed-reader/rss"
 )
 
 type Context struct {
@@ -40,7 +42,7 @@ func Prepare(feeds []reader.Feed, active reader.Feed) Context {
 
 func createHandler(feeds []reader.Feed, active reader.Feed) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := Asset("cmd/evil-rss-reader/data/index.html")
+		data, err := Asset("cmd/evil-feed-reader/data/index.html")
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
 			return
@@ -69,7 +71,11 @@ func main() {
 	provider := provider.HTTP()
 	feeds := make([]reader.Feed, len(urls))
 	for i, url := range urls {
-		feeds[i] = rss.New(provider, url)
+		if strings.Contains(url, "atom") {
+			feeds[i] = atom.New(provider, url)
+		} else {
+			feeds[i] = rss.New(provider, url)
+		}
 	}
 
 	go func() {

@@ -1,4 +1,4 @@
-package rss
+package atom
 
 import (
 	"html/template"
@@ -56,20 +56,33 @@ func (f *feed) Update() {
 		}
 
 		if f.url == "" {
-			f.url = rf.Link
+			for _, link := range rf.Links {
+				if link.Rel == "alternate" {
+					f.url = link.Href
+					break
+				}
+			}
 		}
 
 		f.entries = make([]reader.Entry, len(rf.Items))
 		for i, item := range rf.Items {
 			entry := entry{
 				title: item.Title,
-				url:   item.Link,
 			}
+
+			for _, link := range item.Links {
+				if link.Rel == "alternate" {
+					entry.url = link.Href
+					break
+				}
+			}
+
 			if item.Description != "" {
 				entry.content = item.Description
 			} else if item.Content != "" {
 				entry.content = item.Content
 			}
+
 			f.entries[i] = entry
 		}
 	}

@@ -1,9 +1,9 @@
 all: assets
-	go build github.com/gunnihinn/evil-rss-reader/cmd/evil-rss-reader
+	go build github.com/gunnihinn/evil-feed-reader/cmd/evil-feed-reader
 
-assets: cmd/evil-rss-reader/data
-	go-bindata -o cmd/evil-rss-reader/bindata.go cmd/evil-rss-reader/data
+assets: cmd/evil-feed-reader/data
+	go-bindata -o cmd/evil-feed-reader/bindata.go cmd/evil-feed-reader/data
 
 clean:
-	rm -f cmd/evil-rss-reader/bindata.go
-	rm -f evil-rss-reader
+	rm -f cmd/evil-feed-reader/bindata.go
+	rm -f evil-feed-reader

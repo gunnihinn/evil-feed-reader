@@ -3,7 +3,7 @@
 *.dll
 *.so
 *.dylib
-evil-rss-reader
+evil-feed-reader
 
 # Config files
 *.cfg

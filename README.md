@@ -1,7 +1,7 @@
-# Evil RSS reader
+# Evil feed reader
 
-I'm frustrated with the RSS readers available, and decided to write my own that
-does what I want, silly name and all.
+I'm frustrated with the RSS and atom readers available, and decided to
+write my own that does what I want, silly name and all.
 
 Note that what I personally want may not at all be what you want.
 
@@ -15,9 +15,9 @@ which you can install by following the instructions on:
 
 Then compile and run the reader with:
 
-    $ git clone https://github.com/gunnihinn/evil-rss-reader.git
+    $ git clone https://github.com/gunnihinn/evil-feed-reader.git
     $ make
-    $ ./evil-rss-reader
+    $ ./evil-feed-reader
 
 This will launch an HTTP server on `localhost:8080` that renders the latest
 items from the feeds I'm interested in. (At the moment this is one feed that's
@@ -40,7 +40,7 @@ These are the initial release goals.
 - [x] Guard against feeds including N-thousand word posts in the description.
 - [x] Dynamically generate handlers for each feed
 - [x] Don't hardcode feed URLs
-- Parse atom feeds (e.g. Scheier on security)
+- [x] Parse atom feeds (e.g. Scheier on security)
 - Render the N newest items across all feeds separately
 - Make the rendering pretty
 - Rename project to "Evil feed reader"
