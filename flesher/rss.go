@@ -29,7 +29,7 @@ type rssItem struct {
 	Content     template.HTML `xml:"encoded"`
 }
 
-func parseRssFeed(blob []byte) feedResult {
+func parseRssFeed(blob []byte) FeedResult {
 	f := rssFeed{}
 	if err := xml.Unmarshal(blob, &f); err != nil {
 		return feedResult{

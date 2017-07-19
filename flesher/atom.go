@@ -27,7 +27,7 @@ type atomItem struct {
 	Content     template.HTML `xml:"content"`
 }
 
-func parseAtomFeed(blob []byte) feedResult {
+func parseAtomFeed(blob []byte) FeedResult {
 	f := atomFeed{}
 	if err := xml.Unmarshal(blob, &f); err != nil {
 		return feedResult{
