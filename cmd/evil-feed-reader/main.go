@@ -78,11 +78,7 @@ func main() {
 	provider := provider.HTTP()
 	feeds := make([]reader.Feed, len(urls))
 	for i, url := range urls {
-		if strings.Contains(url, "atom") {
-			feeds[i] = atom.New(provider, url)
-		} else {
-			feeds[i] = rss.New(provider, url)
-		}
+		feeds[i] = reader.New(provider, url)
 	}
 
 	go func() {
