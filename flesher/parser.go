@@ -7,6 +7,7 @@ type FeedResult interface {
 	Title() string
 	Url() string
 	Items() []EntryResult
+	Error() error
 }
 
 type EntryResult interface {
@@ -15,4 +16,4 @@ type EntryResult interface {
 	Content() string
 }
 
-type Parser func([]byte) (Flesh, error)
+type Parser func([]byte) FeedResult
