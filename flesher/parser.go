@@ -8,25 +8,39 @@ import (
 
 // detect feed type, return appropriate parser
 func New(blob []byte) Parser {
+	if isRss(blob) {
+		return parseRssFeed
+	}
+
+	if isAtom(blob) {
+		return parseAtomFeed
+	}
+
+	return parseNothing
+}
+
+func isAtom(blob []byte) bool {
 	type atom struct {
 		XMLName xml.Name `xml:"feed"`
 	}
 
+	if err := xml.Unmarshal(blob, &atom{}); err != nil {
+		return false
+	}
+
+	return true
+}
+
+func isRss(blob []byte) bool {
 	type rss struct {
 		XMLName xml.Name `xml:"rss"`
 	}
 
-	err := xml.Unmarshal(blob, &atom{})
-	if err == nil {
-		return parseAtomFeed
+	if err := xml.Unmarshal(blob, &rss{}); err != nil {
+		return false
 	}
 
-	err = xml.Unmarshal(blob, &rss{})
-	if err == nil {
-		return parseRssFeed
-	}
-
-	return parseNothing
+	return true
 }
 
 func parseNothing(blob []byte) FeedResult {
