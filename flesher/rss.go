@@ -40,7 +40,7 @@ func parseRssFeed(blob []byte) FeedResult {
 	result := feedResult{
 		title:   f.Title,
 		url:     f.Link,
-		entries: make([]entryResult, len(f.Items)),
+		entries: make([]EntryResult, len(f.Items)),
 	}
 
 	for i, item := range f.Items {
@@ -53,7 +53,7 @@ func parseRssFeed(blob []byte) FeedResult {
 		} else if item.Content != "" {
 			entry.content = item.Content
 		}
-		f.entries[i] = entry
+		result.entries[i] = entry
 	}
 
 	return result

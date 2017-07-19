@@ -7,7 +7,7 @@ import (
 type feedResult struct {
 	title   string
 	url     string
-	entries []entryResult
+	entries []EntryResult
 	err     error
 }
 
@@ -19,7 +19,7 @@ func (f feedResult) Url() string {
 	return f.url
 }
 
-func (f feedResult) Entries() []entryResult {
+func (f feedResult) Items() []EntryResult {
 	return f.entries
 }
 

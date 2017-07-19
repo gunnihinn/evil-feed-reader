@@ -37,7 +37,7 @@ func parseAtomFeed(blob []byte) FeedResult {
 
 	result := feedResult{
 		title:   f.Title,
-		entries: make([]entryResult, len(f.Items)),
+		entries: make([]EntryResult, len(f.Items)),
 	}
 
 	for _, link := range f.Links {
@@ -64,7 +64,7 @@ func parseAtomFeed(blob []byte) FeedResult {
 		} else if item.Content != "" {
 			entry.content = item.Content
 		}
-		f.entries[i] = entry
+		result.entries[i] = entry
 	}
 
 	return result

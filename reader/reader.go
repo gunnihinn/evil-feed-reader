@@ -5,6 +5,7 @@ import (
 )
 
 type Feed interface {
+	Resource() string
 	Title() string
 	Url() string
 	Entries() []Entry

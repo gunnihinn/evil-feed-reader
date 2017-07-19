@@ -3,6 +3,7 @@ package flesher
 import (
 	"encoding/xml"
 	"fmt"
+	"html/template"
 )
 
 // detect feed type, return appropriate parser
@@ -44,7 +45,7 @@ type FeedResult interface {
 type EntryResult interface {
 	Title() string
 	Url() string
-	Content() string
+	Content() template.HTML
 }
 
 type Parser func([]byte) FeedResult

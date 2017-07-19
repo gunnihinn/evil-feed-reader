@@ -7,13 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
-	"github.com/gunnihinn/evil-feed-reader/atom"
 	"github.com/gunnihinn/evil-feed-reader/provider"
 	"github.com/gunnihinn/evil-feed-reader/reader"
-	"github.com/gunnihinn/evil-feed-reader/rss"
 )
 
 type Context struct {
@@ -86,7 +83,17 @@ func main() {
 			for _, feed := range feeds {
 				go func(f reader.Feed) {
 					f.Update()
-					log.Printf("Feed '%s' has %d entries\n", f.Title(), len(f.Entries()))
+
+					if f.Error() != nil {
+						log.Printf("Problems parsing feed '%s':\n", f.Resource())
+						log.Printf("%s\n", f.Error())
+					}
+
+					if len(f.Entries()) != 0 {
+						log.Printf("Feed '%s' has %d entries\n", f.Title(), len(f.Entries()))
+					} else {
+						log.Printf("Got no entries from '%s':\n", f.Resource())
+					}
 				}(feed)
 			}
 			time.Sleep(15 * time.Minute)

@@ -1,5 +1,13 @@
 package reader
 
+import (
+	"html/template"
+	"strings"
+
+	"github.com/gunnihinn/evil-feed-reader/flesher"
+	"github.com/gunnihinn/evil-feed-reader/provider"
+)
+
 func New(provider provider.Provider, resource string) Feed {
 	return &feed{
 		resource: resource,
@@ -17,6 +25,10 @@ type feed struct {
 	url     string
 	entries []Entry
 	err     error
+}
+
+func (f feed) Resource() string {
+	return f.resource
 }
 
 func (f feed) Title() string {
@@ -46,29 +58,28 @@ func (f *feed) Update() {
 		f.parser = flesher.New(blob)
 	}
 
-	feedResult, err := f.parser(blob)
-	if err == nil {
-		if f.title == "" {
-			f.title = feedResult.Title()
-		}
+	feedResult := f.parser(blob)
 
-		if f.url == "" {
-			f.url = feedResult.Url()
-		}
+	f.err = feedResult.Error()
 
-		f.entries = make([]Entry, len(rf.Items()))
-		for i, itemResult := range rf.Items() {
-			entry := entry{
-				title:   itemResult.Title(),
-				url:     itemResult.Url(),
-				content: itemResult.Content(),
-			}
-
-			f.entries[i] = entry
-		}
+	if f.title == "" {
+		f.title = feedResult.Title()
 	}
 
-	f.err = err
+	if f.url == "" {
+		f.url = feedResult.Url()
+	}
+
+	f.entries = make([]Entry, len(feedResult.Items()))
+	for i, itemResult := range feedResult.Items() {
+		entry := entry{
+			title:   itemResult.Title(),
+			url:     itemResult.Url(),
+			content: itemResult.Content(),
+		}
+
+		f.entries[i] = entry
+	}
 }
 
 type entry struct {
