@@ -20,8 +20,9 @@ type Context struct {
 }
 
 type Navitem struct {
-	Title    string
-	Resource string
+	Title          string
+	Resource       string
+	HasRecentItems bool
 }
 
 func Prepare(feeds []reader.Feed, active reader.Feed) Context {
@@ -37,8 +38,9 @@ func Prepare(feeds []reader.Feed, active reader.Feed) Context {
 
 	for i, f := range feeds {
 		ctx.Sidebar[i] = Navitem{
-			Title:    f.Title(),
-			Resource: fmt.Sprintf("%d", i),
+			Title:          f.Title(),
+			Resource:       fmt.Sprintf("%d", i),
+			HasRecentItems: f.HasRecentItems(),
 		}
 	}
 	return ctx

@@ -42,7 +42,7 @@ These are the initial release goals.
 - [x] Parse atom feeds (e.g. Scheier on security)
 - [x] Rename project to "Evil feed reader"
 - [x] Make the rendering pretty
-- Render the N newest items across all feeds separately
+- [x] Show what feeds have recently added items
 
 Nice-to-haves (?):
 

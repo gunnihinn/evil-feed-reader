@@ -30,6 +30,10 @@ nav > ul > li a {
     padding-bottom: 5px;
 }
 
+.recent-items {
+    color: blue;
+}
+
 main {
     padding-left: 5%;
     padding-right: 5%;

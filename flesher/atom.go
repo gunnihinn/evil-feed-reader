@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"golang.org/x/net/html/charset"
 	"html/template"
+	"time"
 )
 
 type atomFeed struct {
@@ -27,6 +28,8 @@ type atomItem struct {
 	Links       []atomLink    `xml:"link"`
 	Description template.HTML `xml:"summary"`
 	Content     template.HTML `xml:"content"`
+	Published   string        `xml:"published"`
+	Updated     string        `xml:"updated"`
 }
 
 func parseAtomFeed(blob []byte) FeedResult {
@@ -69,6 +72,19 @@ func parseAtomFeed(blob []byte) FeedResult {
 		} else if item.Content != "" {
 			entry.content = item.Content
 		}
+
+		var published string
+		if item.Updated != "" {
+			published = item.Updated
+		} else {
+			published = item.Published
+		}
+
+		t, err := time.Parse(time.RFC3339, published)
+		if err == nil {
+			entry.published = t
+		}
+
 		result.entries[i] = entry
 	}
 

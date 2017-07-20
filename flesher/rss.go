@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"golang.org/x/net/html/charset"
 	"html/template"
+	"time"
 )
 
 type rssFeed struct {
@@ -29,6 +30,7 @@ type rssItem struct {
 	Link        string        `xml:"link"`
 	Description template.HTML `xml:"description"` // lol security
 	Content     template.HTML `xml:"encoded"`
+	PubDate     string        `xml:"pubDate"`
 }
 
 func parseRssFeed(blob []byte) FeedResult {
@@ -53,11 +55,18 @@ func parseRssFeed(blob []byte) FeedResult {
 			title: item.Title,
 			url:   item.Link,
 		}
+
 		if item.Description != "" {
 			entry.content = item.Description
 		} else if item.Content != "" {
 			entry.content = item.Content
 		}
+
+		t, err := time.Parse(time.RFC822, item.PubDate)
+		if err == nil {
+			entry.published = t
+		}
+
 		result.entries[i] = entry
 	}
 

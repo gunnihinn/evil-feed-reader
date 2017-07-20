@@ -3,6 +3,7 @@ package reader
 import (
 	"html/template"
 	"strings"
+	"time"
 
 	"github.com/gunnihinn/evil-feed-reader/flesher"
 	"github.com/gunnihinn/evil-feed-reader/provider"
@@ -82,10 +83,24 @@ func (f *feed) Update() {
 	}
 }
 
+func (f feed) HasRecentItems() bool {
+	now := time.Now()
+	var limit int64 = 24 * 60 * 60
+
+	for _, entry := range f.Entries() {
+		if now.Unix()-entry.Published().Unix() < limit {
+			return true
+		}
+	}
+
+	return false
+}
+
 type entry struct {
-	title   string
-	url     string        // optional
-	content template.HTML // optional
+	title     string
+	url       string        // optional
+	content   template.HTML // optional
+	published time.Time
 }
 
 func (e entry) Title() string {
@@ -94,6 +109,10 @@ func (e entry) Title() string {
 
 func (e entry) Url() string {
 	return e.url
+}
+
+func (e entry) Published() time.Time {
+	return e.published
 }
 
 func (e entry) Content() template.HTML {

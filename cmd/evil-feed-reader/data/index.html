@@ -18,7 +18,11 @@
     <nav>
         <ul>
         {{ range .Sidebar }}
-            <li><a class="novisited" href="{{ .Resource }}">{{ .Title }}</a></li>
+            {{ if .HasRecentItems }}
+                <li><a class="recent-items" href="{{ .Resource }}">{{ .Title }}</a></li>
+            {{ else }}
+                <li><a href="{{ .Resource }}">{{ .Title }}</a></li>
+            {{ end }}
         {{ end }}
         </ul>
     </nav>

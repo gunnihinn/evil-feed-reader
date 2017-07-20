@@ -2,6 +2,7 @@ package flesher
 
 import (
 	"html/template"
+	"time"
 )
 
 type feedResult struct {
@@ -28,9 +29,10 @@ func (f feedResult) Error() error {
 }
 
 type entryResult struct {
-	title   string
-	url     string        // optional
-	content template.HTML // optional
+	title     string
+	url       string        // optional
+	content   template.HTML // optional
+	published time.Time
 }
 
 func (e entryResult) Title() string {

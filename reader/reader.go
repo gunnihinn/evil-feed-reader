@@ -2,6 +2,7 @@ package reader
 
 import (
 	"html/template"
+	"time"
 )
 
 type Feed interface {
@@ -11,10 +12,12 @@ type Feed interface {
 	Entries() []Entry
 	Error() error
 	Update()
+	HasRecentItems() bool
 }
 
 type Entry interface {
 	Title() string
 	Url() string
 	Content() template.HTML
+	Published() time.Time
 }
