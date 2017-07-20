@@ -20,8 +20,7 @@ Then compile and run the reader with:
     $ ./evil-feed-reader
 
 This will launch an HTTP server on `localhost:8080` that renders the latest
-items from the feeds I'm interested in. (At the moment this is one feed that's
-hardcoded in the program source code.)
+items from the feeds you are interested in.
 
 You'll need to setup some feed URLs for the reader to do anything. The reader
 will look for a file named `feeds.cfg` in the directory where it is run by
