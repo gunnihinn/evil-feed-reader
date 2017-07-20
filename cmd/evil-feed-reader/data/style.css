@@ -52,3 +52,16 @@ a {
 main a {
     color: blue;
 }
+
+footer {
+    text-align: center;
+}
+
+footer a {
+    padding-bottom: 10px;
+    color: blue;
+}
+
+hr {
+    width: 20%;
+}
