@@ -17,3 +17,17 @@ func TestDetectRss(t *testing.T) {
 		}
 	}
 }
+
+func TestDetectAtom(t *testing.T) {
+	var atoms = []string{
+		`<feed></feed>`,
+		`<?xml version="1.0" ?><feed></feed>`,
+		`<?xml version="1.0" encoding="ISO-8859-1" ?><feed></feed>`,
+	}
+
+	for _, atom := range atoms {
+		if !isAtom([]byte(atom)) {
+			t.Errorf("'%s' is Atom", atom)
+		}
+	}
+}

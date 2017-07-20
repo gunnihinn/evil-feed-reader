@@ -1,8 +1,10 @@
 package flesher
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
+	"golang.org/x/net/html/charset"
 	"html/template"
 )
 
@@ -24,7 +26,9 @@ func isAtom(blob []byte) bool {
 		XMLName xml.Name `xml:"feed"`
 	}
 
-	if err := xml.Unmarshal(blob, &atom{}); err != nil {
+	d := xml.NewDecoder(bytes.NewReader(blob))
+	d.CharsetReader = charset.NewReaderLabel
+	if err := d.Decode(&atom{}); err != nil {
 		return false
 	}
 
@@ -36,7 +40,9 @@ func isRss(blob []byte) bool {
 		XMLName xml.Name `xml:"rss"`
 	}
 
-	if err := xml.Unmarshal(blob, &rss{}); err != nil {
+	d := xml.NewDecoder(bytes.NewReader(blob))
+	d.CharsetReader = charset.NewReaderLabel
+	if err := d.Decode(&rss{}); err != nil {
 		return false
 	}
 

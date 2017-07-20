@@ -1,7 +1,9 @@
 package flesher
 
 import (
+	"bytes"
 	"encoding/xml"
+	"golang.org/x/net/html/charset"
 	"html/template"
 )
 
@@ -29,7 +31,10 @@ type atomItem struct {
 
 func parseAtomFeed(blob []byte) FeedResult {
 	f := atomFeed{}
-	if err := xml.Unmarshal(blob, &f); err != nil {
+
+	d := xml.NewDecoder(bytes.NewReader(blob))
+	d.CharsetReader = charset.NewReaderLabel
+	if err := d.Decode(&f); err != nil {
 		return feedResult{
 			err: err,
 		}
