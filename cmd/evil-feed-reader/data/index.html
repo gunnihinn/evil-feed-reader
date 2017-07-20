@@ -11,23 +11,27 @@
 </head>
 
 <body>
+    <header>
+        <h1><a class="novisited" href="https://github.com/gunnihinn/evil-feed-reader">Evil feed reader</a></h1>
+    </header>
+
     <nav>
         <ul>
         {{ range .Sidebar }}
-            <li><a href="{{ .Resource }}">{{ .Title }}</a></li>
+            <li><a class="novisited" href="{{ .Resource }}">{{ .Title }}</a></li>
         {{ end }}
         </ul>
     </nav>
 
     <main>
     {{ if .Feed }}
-    <h1><a href="{{ .Feed.Url }}">{{ .Feed.Title }}</a></h1>
+        <h2><a href="{{ .Feed.Url }}">{{ .Feed.Title }}</a></h2>
         {{ if .Feed.Error }}
             <div>{{ .Feed.Error }}</div>
         {{ end  }}
         {{ range .Feed.Entries }}
         <div>
-            <h2><a href="{{ .Url }}">{{ .Title }}</a></h2>
+            <h3><a href="{{ .Url }}">{{ .Title }}</a></h3>
             {{ if .Content }}
                 {{ .Content }}
             {{ end }}
