@@ -1,3 +1,7 @@
+html {
+    color: #444;
+}
+
 body {
     padding-left: 10%;
     padding-right: 15%;
@@ -8,6 +12,9 @@ body {
 nav {
     float: left;
     width: 200px;
+
+    font-family: "Arial", sans-serif;
+    line-height: 1.2;
 }
 
 nav > ul {
@@ -17,11 +24,24 @@ nav > ul {
 
 nav > ul > li a {
     display: block;
-    padding-top: 3px;
-    padding-bottom: 3px;
+    padding-top: 5px;
+    padding-bottom: 5px;
 }
 
 main {
     padding-left: 5%;
     margin-left: 200px;
+
+    font-family: "Georgia", serif;
+    font-size: 12pt;
+    line-height: 1.5;
+}
+
+h1, h2, h3 {
+    line-height: 1.2;
+    font-family: "Arial", sans-serif;
+}
+
+a {
+    text-decoration: none;
 }
