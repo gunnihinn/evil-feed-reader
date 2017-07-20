@@ -23,14 +23,14 @@
         </ul>
     </nav>
 
-    <main>
     {{ if .Feed }}
+    <main>
         <h2><a href="{{ .Feed.Url }}">{{ .Feed.Title }}</a></h2>
         {{ if .Feed.Error }}
             <div>{{ .Feed.Error }}</div>
         {{ end  }}
         {{ range .Feed.Entries }}
-        <div>
+        <div class="post">
             <h3><a href="{{ .Url }}">{{ .Title }}</a></h3>
             {{ if .Content }}
                 {{ .Content }}
@@ -38,8 +38,6 @@
         </div>
         {{ end }}
     </main>
-
-    <hr />
 
     <footer>
         <a href="https://github.com/gunnihinn/evil-feed-reader">Get evil</a>
