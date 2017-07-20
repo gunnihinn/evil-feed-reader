@@ -98,7 +98,7 @@ func (e entry) Url() string {
 
 func (e entry) Content() template.HTML {
 	if len(strings.Split(string(e.content), " ")) > 300 {
-		return ""
+		return "<p>This post was too long to comfortably fit onto the page.</p>"
 	}
 
 	return e.content
