@@ -5,6 +5,29 @@ write my own that does what I want, silly name and all.
 
 Note that what I personally want may not at all be what you want.
 
+## Features
+
+Very few!
+
+You setup the URLs of feeds you want to watch in a configuration file. We ping
+those every 15 minutes and check if they have been updated. If a feed has
+recent entries (that is, entries that are less than 24 hours old), it will be
+colored blue in the main UI.
+
+Click on a feed to show the last few entries from it. If some of them are too
+long for us to display comfortably, we'll print a message saying so. You can
+then click through to the source's web page to read the entry.
+
+We keep no history of whatever you do or look at.
+
+Management is open to feature requests.
+
+## Coming
+
+I'm going to setup a reader with my config on a URL I own so I can read my
+stuff from wherever. If you want, I can setup a reader for you too there. The
+offer is free (you know, for now, while there are few to no takers).
+
 ## To run
 
 Nota bene: If you think this is too much trouble, tell me. I'll figure
@@ -30,29 +53,6 @@ will look for a file named `feeds.cfg` in the directory where it is run by
 default. You can have it look elsewhere by passing a `-feeds` flag to it when
 run. The config file should have the format of one URL per line. Lines
 beginning with "#" will be ignored.
-
-## Todo
-
-These are the initial release goals.
-
-- [x] Fetch feed from hardcoded URL
-- [x] Fetch more than one feed from hardcoded URLs
-- [x] Render more than one feed
-- [x] Async fetching of feeds
-- [x] Guard against feeds including N-thousand word posts in the description.
-- [x] Dynamically generate handlers for each feed
-- [x] Don't hardcode feed URLs
-- [x] Parse atom feeds (e.g. Scheier on security)
-- [x] Rename project to "Evil feed reader"
-- [x] Make the rendering pretty
-- [x] Show what feeds have recently added items
-
-Nice-to-haves (?):
-
-- [x] Refactor project structure
-- Allow easy swapping of feed rendering styles
-- Allow for refreshing of individual feeds
-- Keep some history of feed updates
 
 ## Evil
 
