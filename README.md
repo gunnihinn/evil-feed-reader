@@ -7,6 +7,9 @@ Note that what I personally want may not at all be what you want.
 
 ## To run
 
+Nota bene: If you think this is too much trouble, tell me. I'll figure
+something better out.
+
 You need a Go compiler. I'm using Go 1.8.1. The reader has one dependency
 outside of the standard library (and only on the binary from that project),
 which you can install by following the instructions on:
