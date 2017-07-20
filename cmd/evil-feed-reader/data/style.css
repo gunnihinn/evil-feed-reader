@@ -41,8 +41,8 @@ main {
     border-radius: 4px;
 
     font-family: "Georgia", serif;
-    font-size: 12pt;
-    line-height: 1.5;
+    font-size: 13pt;
+    line-height: 1.7;
 
     background-color: white;
 }
@@ -61,12 +61,18 @@ main a {
     color: blue;
 }
 
+h1 {
+    font-size: 30pt;
+}
+
 h2 {
     margin-bottom: 0px;
+    font-size: 24pt;
 }
 
 h3 {
     margin-bottom: 10px;
+    font-size: 18pt;
 }
 
 .post {
