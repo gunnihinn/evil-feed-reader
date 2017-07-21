@@ -107,5 +107,5 @@ func main() {
 	}
 	http.HandleFunc("/", createHandler(feeds, nil))
 
-	http.ListenAndServe(fmt.Sprintf(":%d", *port), nil)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
 }
