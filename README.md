@@ -5,6 +5,8 @@ write my own that does what I want, silly name and all.
 
 Note that what I personally want may not at all be what you want.
 
+Try out the reader and peruse the feeds I follow [here](http://www.magnusson.io/evil-feed-reader).
+
 ## Features
 
 Very few!
