@@ -16,6 +16,9 @@ func New(provider provider.Provider, resource string) Feed {
 	}
 }
 
+// Don't show more than this many entries per feed
+const entryLimit = 10
+
 type feed struct {
 	resource string
 	provider provider.Provider
@@ -41,7 +44,11 @@ func (f feed) Url() string {
 }
 
 func (f feed) Entries() []Entry {
-	return f.entries
+	if len(f.entries) < entryLimit {
+		return f.entries
+	}
+
+	return f.entries[0:entryLimit]
 }
 
 func (f feed) Error() error {
