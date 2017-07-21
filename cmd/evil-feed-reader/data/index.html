@@ -28,7 +28,7 @@
     </nav>
 
     {{ if .Feed }}
-    <main>
+    <main class="background-main">
         <h2><a href="{{ .Feed.Url }}">{{ .Feed.Title }}</a></h2>
         {{ if .Feed.Error }}
             <div>{{ .Feed.Error }}</div>
@@ -46,6 +46,8 @@
     <footer>
         <a href="https://github.com/gunnihinn/evil-feed-reader">Get evil</a>
     </footer>
+    {{ else }}
+        <main></main>
     {{ end }}
 
 </body>
