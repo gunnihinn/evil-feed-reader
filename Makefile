@@ -25,7 +25,10 @@ clean:
 	rm -f $(bin)
 	rm -f $(bindevel)
 
-deploy:
-	cp feeds.cfg remote
+deploy: feeds
 	GOOS=freebsd GOARCH=amd64 go build -o remote/$(bin) $(project_package)
-	./remote/deploy.sh
+	./remote/deploy-reader.sh
+
+feeds:
+	cp feeds.cfg remote
+	./remote/deploy-feeds.sh

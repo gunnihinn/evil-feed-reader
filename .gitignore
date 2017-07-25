@@ -4,6 +4,7 @@
 *.so
 *.dylib
 evil-feed-reader
+evil-feed-reader-devel
 
 secrets
 

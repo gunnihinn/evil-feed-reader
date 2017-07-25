@@ -3,9 +3,10 @@ package flesher
 import (
 	"bytes"
 	"encoding/xml"
+	"fmt"
+	"github.com/araddon/dateparse"
 	"golang.org/x/net/html/charset"
 	"html/template"
-	"time"
 )
 
 type rssFeed struct {
@@ -62,9 +63,11 @@ func parseRssFeed(blob []byte) FeedResult {
 			entry.content = item.Content
 		}
 
-		t, err := time.Parse(time.RFC822, item.PubDate)
+		t, err := dateparse.ParseAny(item.PubDate)
 		if err == nil {
 			entry.published = t
+		} else {
+			result.err = fmt.Errorf("%s\nAtom date parsing error: %s\n", result.err, err)
 		}
 
 		result.entries[i] = entry
