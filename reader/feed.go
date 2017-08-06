@@ -106,8 +106,12 @@ func (f *feed) Update() {
 	}
 	hash := hex.EncodeToString(h.Sum(nil))
 	if f.hash != hash {
+		if f.hash == "" {
+			f.seen = true
+		} else {
+			f.seen = false
+		}
 		f.hash = hash
-		f.seen = false
 	}
 }
 
