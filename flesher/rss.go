@@ -3,8 +3,6 @@ package flesher
 import (
 	"bytes"
 	"encoding/xml"
-	"fmt"
-	"github.com/araddon/dateparse"
 	"golang.org/x/net/html/charset"
 	"html/template"
 )
@@ -53,21 +51,15 @@ func parseRssFeed(blob []byte) FeedResult {
 
 	for i, item := range f.Items {
 		entry := entryResult{
-			title: item.Title,
-			url:   item.Link,
+			title:     item.Title,
+			url:       item.Link,
+			published: item.PubDate,
 		}
 
 		if item.Description != "" {
 			entry.content = item.Description
 		} else if item.Content != "" {
 			entry.content = item.Content
-		}
-
-		t, err := dateparse.ParseAny(item.PubDate)
-		if err == nil {
-			entry.published = t
-		} else {
-			result.err = fmt.Errorf("%s\nAtom date parsing error: %s\n", result.err, err)
 		}
 
 		result.entries[i] = entry

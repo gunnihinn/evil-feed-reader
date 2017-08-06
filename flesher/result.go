@@ -2,7 +2,6 @@ package flesher
 
 import (
 	"html/template"
-	"time"
 )
 
 type feedResult struct {
@@ -32,7 +31,7 @@ type entryResult struct {
 	title     string
 	url       string        // optional
 	content   template.HTML // optional
-	published time.Time
+	published string
 }
 
 func (e entryResult) Title() string {
@@ -45,4 +44,8 @@ func (e entryResult) Url() string {
 
 func (e entryResult) Content() template.HTML {
 	return e.content
+}
+
+func (e entryResult) Published() string {
+	return e.published
 }

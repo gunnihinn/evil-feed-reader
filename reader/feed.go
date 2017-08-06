@@ -3,7 +3,6 @@ package reader
 import (
 	"html/template"
 	"strings"
-	"time"
 
 	"github.com/gunnihinn/evil-feed-reader/flesher"
 	"github.com/gunnihinn/evil-feed-reader/provider"
@@ -24,7 +23,6 @@ type feed struct {
 	provider provider.Provider
 	parser   flesher.Parser
 
-	// Generated at runtime
 	title   string
 	url     string
 	entries []Entry
@@ -81,9 +79,10 @@ func (f *feed) Update() {
 	f.entries = make([]Entry, len(feedResult.Items()))
 	for i, itemResult := range feedResult.Items() {
 		entry := entry{
-			title:   itemResult.Title(),
-			url:     itemResult.Url(),
-			content: itemResult.Content(),
+			title:     itemResult.Title(),
+			url:       itemResult.Url(),
+			content:   itemResult.Content(),
+			published: itemResult.Published(),
 		}
 
 		f.entries[i] = entry
@@ -107,7 +106,7 @@ type entry struct {
 	title     string
 	url       string        // optional
 	content   template.HTML // optional
-	published time.Time
+	published string
 }
 
 func (e entry) Title() string {
@@ -118,14 +117,14 @@ func (e entry) Url() string {
 	return e.url
 }
 
-func (e entry) Published() time.Time {
-	return e.published
-}
-
 func (e entry) Content() template.HTML {
 	if len(strings.Split(string(e.content), " ")) > 300 {
 		return "<p>This post was too long to comfortably fit onto the page.</p>"
 	}
 
 	return e.content
+}
+
+func (e entry) Published() string {
+	return e.published
 }

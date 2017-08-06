@@ -66,6 +66,7 @@ type EntryResult interface {
 	Title() string
 	Url() string
 	Content() template.HTML
+	Published() string
 }
 
 type Parser func([]byte) FeedResult
