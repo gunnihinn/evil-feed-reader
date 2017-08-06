@@ -6,6 +6,11 @@ import (
 
 type Feed interface {
 	Resource() string
+	Seen() bool
+	SetSeen(bool)
+	Hash() string
+	SetState(FeedState)
+
 	Title() string
 	Url() string
 	Entries() []Entry

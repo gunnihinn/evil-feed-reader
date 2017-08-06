@@ -1,7 +1,10 @@
 package reader
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"html/template"
+	"io"
 	"strings"
 
 	"github.com/gunnihinn/evil-feed-reader/flesher"
@@ -20,6 +23,9 @@ const entryLimit = 10
 
 type feed struct {
 	resource string
+	hash     string
+	seen     bool
+
 	provider provider.Provider
 	parser   flesher.Parser
 
@@ -39,6 +45,11 @@ func (f feed) Title() string {
 
 func (f feed) Url() string {
 	return f.url
+}
+
+func (f *feed) SetState(state FeedState) {
+	f.hash = state.Hash
+	f.seen = state.Seen
 }
 
 func (f feed) Entries() []Entry {
@@ -87,20 +98,24 @@ func (f *feed) Update() {
 
 		f.entries[i] = entry
 	}
-}
 
-func (f feed) HasRecentItems() bool {
-	now := time.Now()
-	var limit int64 = 24 * 60 * 60
-
-	for _, entry := range f.Entries() {
-		if now.Unix()-entry.Published().Unix() < limit {
-			return true
-		}
+	h := sha1.New()
+	for _, entry := range f.entries {
+		io.WriteString(h, entry.Title())
+		io.WriteString(h, entry.Published())
 	}
-
-	return false
+	hash := hex.EncodeToString(h.Sum(nil))
+	if f.hash != hash {
+		f.hash = hash
+		f.seen = false
+	}
 }
+
+func (f feed) Seen() bool { return f.seen }
+
+func (f *feed) SetSeen(seen bool) { f.seen = seen }
+
+func (f feed) Hash() string { return f.hash }
 
 type entry struct {
 	title     string

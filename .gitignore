@@ -5,6 +5,7 @@
 *.dylib
 evil-feed-reader
 evil-feed-reader-devel
+.evil-state.json
 
 secrets
 

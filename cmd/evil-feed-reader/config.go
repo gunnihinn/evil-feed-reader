@@ -2,8 +2,11 @@ package main
 
 import (
 	"bufio"
+	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/gunnihinn/evil-feed-reader/reader"
 )
 
 func parseConfig(filename string) ([]string, error) {
@@ -24,4 +27,19 @@ func parseConfig(filename string) ([]string, error) {
 	}
 
 	return urls, scanner.Err()
+}
+
+func parseState(filename string) (map[string]reader.FeedState, error) {
+	fh, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer fh.Close()
+
+	blob, err := ioutil.ReadAll(fh)
+	if err != nil {
+		return nil, err
+	}
+
+	return reader.Unmarshal(blob)
 }
