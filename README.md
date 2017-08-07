@@ -11,14 +11,13 @@ Very few!
 
 You setup the URLs of feeds you want to watch in a configuration file. We ping
 those every 15 minutes and check if they have been updated. If a feed has
-recent entries (that is, entries that are less than 24 hours old), it will be
-colored blue in the main UI.
+entries you haven't seen yet, it will be colored blue in the main UI.
 
 Click on a feed to show the last few entries from it. If some of them are too
 long for us to display comfortably, we'll print a message saying so. You can
 then click through to the source's web page to read the entry.
 
-We keep no history of whatever you do or look at.
+The only history we keep is whether you've yet seen a feed with new entries.
 
 Management is open to feature requests.
 
@@ -42,7 +41,7 @@ which you can install by following the instructions on:
 Then compile and run the reader with:
 
     $ git clone https://github.com/gunnihinn/evil-feed-reader.git
-    $ make
+    $ make      # needs GNU make
     $ ./evil-feed-reader
 
 This will launch an HTTP server on `localhost:8080` that renders the latest
