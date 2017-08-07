@@ -18,7 +18,6 @@ type atomFeed struct {
 
 type atomLink struct {
 	Href string `xml:"href,attr"`
-	Type string `xml:"type,attr"`
 	Rel  string `xml:"rel,attr"`
 }
 
@@ -29,6 +28,27 @@ type atomItem struct {
 	Content     template.HTML `xml:"content"`
 	Published   string        `xml:"published"`
 	Updated     string        `xml:"updated"`
+}
+
+func getLink(links []atomLink) string {
+	/*
+		https://tools.ietf.org/html/rfc4287
+
+		4.2.7.2.  The "rel" Attribute
+
+		atom:link elements MAY have a "rel" attribute that indicates the link
+		relation type.  If the "rel" attribute is not present, the link
+		element MUST be interpreted as if the link relation type is
+		"alternate".
+	*/
+
+	for _, link := range links {
+		if link.Rel == "alternate" || link.Rel == "" {
+			return link.Href
+		}
+	}
+
+	return ""
 }
 
 func parseAtomFeed(blob []byte) FeedResult {
@@ -45,25 +65,13 @@ func parseAtomFeed(blob []byte) FeedResult {
 	result := feedResult{
 		title:   f.Title,
 		entries: make([]EntryResult, len(f.Items)),
-	}
-
-	for _, link := range f.Links {
-		if link.Rel == "alternate" {
-			result.url = link.Href
-			break
-		}
+		url:     getLink(f.Links),
 	}
 
 	for i, item := range f.Items {
 		entry := entryResult{
 			title: item.Title,
-		}
-
-		for _, link := range item.Links {
-			if link.Rel == "alternate" {
-				entry.url = link.Href
-				break
-			}
+			url:   getLink(item.Links),
 		}
 
 		if item.Description != "" {
