@@ -142,10 +142,18 @@ func main() {
 		}
 	}(feeds)
 
-	for i, feed := range feeds {
-		http.HandleFunc(fmt.Sprintf("/%d", i), createHandler(feeds, feed))
+	addr := fmt.Sprintf(":%d", *port)
+	log.Printf("Listening on %s\n", addr)
+	handler := NewHandler()
+	server := &http.Server{
+		Addr:    addr,
+		Handler: handler,
 	}
-	http.HandleFunc("/", createHandler(feeds, nil))
 
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), nil))
+	for i, feed := range feeds {
+		handler.mux.HandleFunc(fmt.Sprintf("/%d", i), createHandler(feeds, feed))
+	}
+	handler.mux.HandleFunc("/", createHandler(feeds, nil))
+
+	log.Fatal(server.ListenAndServe())
 }
