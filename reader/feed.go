@@ -76,8 +76,10 @@ func (f *feed) Update() {
 	}
 
 	feedResult := f.parser(blob)
-
 	f.err = feedResult.Error()
+	if err != nil {
+		return
+	}
 
 	if f.title == "" {
 		f.title = feedResult.Title()
