@@ -4,16 +4,34 @@ import (
 	"bytes"
 	"encoding/xml"
 	"golang.org/x/net/html/charset"
+	"html"
 	"html/template"
+	"strings"
 )
 
 type atomFeed struct {
 	XMLName xml.Name `xml:"feed"`
 
-	Title       string     `xml:"title"`
+	Title       atomTitle  `xml:"title"`
 	Links       []atomLink `xml:"link"`
 	Description string     `xml:"subtitle"`
 	Items       []atomItem `xml:"entry"`
+}
+
+type atomTitle struct {
+	Value string `xml:",chardata"`
+	Type  string `xml:"type,attr"`
+}
+
+func (a atomTitle) String() string {
+	var title string
+	if a.Type == "html" {
+		title = html.UnescapeString(a.Value)
+	} else {
+		title = a.Value
+	}
+
+	return strings.TrimSpace(title)
 }
 
 type atomLink struct {
@@ -22,7 +40,7 @@ type atomLink struct {
 }
 
 type atomItem struct {
-	Title       string        `xml:"title"`
+	Title       atomTitle     `xml:"title"`
 	Links       []atomLink    `xml:"link"`
 	Description template.HTML `xml:"summary"`
 	Content     template.HTML `xml:"content"`
@@ -63,14 +81,14 @@ func parseAtomFeed(blob []byte) FeedResult {
 	}
 
 	result := feedResult{
-		title:   f.Title,
+		title:   f.Title.String(),
 		entries: make([]EntryResult, len(f.Items)),
 		url:     getLink(f.Links),
 	}
 
 	for i, item := range f.Items {
 		entry := entryResult{
-			title: item.Title,
+			title: item.Title.String(),
 			url:   getLink(item.Links),
 		}
 
