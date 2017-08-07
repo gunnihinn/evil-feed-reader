@@ -32,15 +32,14 @@ type rssItem struct {
 	PubDate     string        `xml:"pubDate"`
 }
 
-func parseRssFeed(blob []byte) FeedResult {
+func parseRssFeed(blob []byte) (FeedResult, error) {
 	f := rssFeed{}
 
 	d := xml.NewDecoder(bytes.NewReader(blob))
 	d.CharsetReader = charset.NewReaderLabel
 	if err := d.Decode(&f); err != nil {
-		return feedResult{
-			err: err,
-		}
+		// TODO: Wrap error
+		return feedResult{}, err
 	}
 
 	result := feedResult{
@@ -65,5 +64,5 @@ func parseRssFeed(blob []byte) FeedResult {
 		result.entries[i] = entry
 	}
 
-	return result
+	return result, nil
 }

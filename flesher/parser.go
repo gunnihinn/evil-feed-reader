@@ -49,17 +49,14 @@ func isRss(blob []byte) bool {
 	return true
 }
 
-func parseNothing(blob []byte) FeedResult {
-	return feedResult{
-		err: fmt.Errorf("Unable to determine feed type"),
-	}
+func parseNothing(blob []byte) (FeedResult, error) {
+	return feedResult{}, fmt.Errorf("Unable to determine feed type")
 }
 
 type FeedResult interface {
 	Title() string
 	Url() string
 	Items() []EntryResult
-	Error() error
 }
 
 type EntryResult interface {
@@ -69,4 +66,4 @@ type EntryResult interface {
 	Published() string
 }
 
-type Parser func([]byte) FeedResult
+type Parser func([]byte) (FeedResult, error)

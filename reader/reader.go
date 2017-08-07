@@ -14,8 +14,7 @@ type Feed interface {
 	Title() string
 	Url() string
 	Entries() []Entry
-	Error() error
-	Update()
+	Update() error
 }
 
 type Entry interface {

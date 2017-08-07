@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gunnihinn/evil-feed-reader/provider"
@@ -65,7 +64,11 @@ func createHandler(feeds []reader.Feed, active reader.Feed) func(http.ResponseWr
 		if active != nil {
 			active.SetSeen(true)
 		}
-		t.Execute(w, Prepare(feeds, active))
+
+		if err := t.Execute(w, Prepare(feeds, active)); err != nil {
+			fmt.Fprintf(w, "%s", err)
+			return
+		}
 	}
 }
 
@@ -77,7 +80,7 @@ func main() {
 
 	urls, err := parseConfig(*configFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't parse config file: %s\n", err)
+		log.Printf("Couldn't parse config file: %s\n", err)
 	}
 
 	provider := provider.HTTP()
@@ -88,7 +91,7 @@ func main() {
 
 	state, err := parseState(*stateFile)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Couldn't parse state file: %s\n", err)
+		log.Printf("Couldn't parse state file: %s\n", err)
 	} else {
 		for _, feed := range feeds {
 			s, ok := state[feed.Resource()]
@@ -102,11 +105,9 @@ func main() {
 		for {
 			for _, feed := range feeds {
 				go func(f reader.Feed) {
-					f.Update()
-
-					if f.Error() != nil {
+					if err := f.Update(); err != nil {
 						log.Printf("Problems parsing feed '%s':\n", f.Resource())
-						log.Printf("%s\n", f.Error())
+						log.Printf("%s\n", err)
 					}
 
 					if len(f.Entries()) != 0 {

@@ -8,7 +8,6 @@ type feedResult struct {
 	title   string
 	url     string
 	entries []EntryResult
-	err     error
 }
 
 func (f feedResult) Title() string {
@@ -21,10 +20,6 @@ func (f feedResult) Url() string {
 
 func (f feedResult) Items() []EntryResult {
 	return f.entries
-}
-
-func (f feedResult) Error() error {
-	return f.err
 }
 
 type entryResult struct {

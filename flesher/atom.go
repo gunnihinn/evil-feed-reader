@@ -69,15 +69,14 @@ func getLink(links []atomLink) string {
 	return ""
 }
 
-func parseAtomFeed(blob []byte) FeedResult {
+func parseAtomFeed(blob []byte) (FeedResult, error) {
 	f := atomFeed{}
 
 	d := xml.NewDecoder(bytes.NewReader(blob))
 	d.CharsetReader = charset.NewReaderLabel
 	if err := d.Decode(&f); err != nil {
-		return feedResult{
-			err: err,
-		}
+		// TODO: Wrap error
+		return feedResult{}, err
 	}
 
 	result := feedResult{
@@ -109,5 +108,5 @@ func parseAtomFeed(blob []byte) FeedResult {
 		result.entries[i] = entry
 	}
 
-	return result
+	return result, nil
 }

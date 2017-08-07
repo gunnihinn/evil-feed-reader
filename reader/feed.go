@@ -32,7 +32,6 @@ type feed struct {
 	title   string
 	url     string
 	entries []Entry
-	err     error
 }
 
 func (f feed) Resource() string {
@@ -60,25 +59,19 @@ func (f feed) Entries() []Entry {
 	return f.entries[0:entryLimit]
 }
 
-func (f feed) Error() error {
-	return f.err
-}
-
-func (f *feed) Update() {
+func (f *feed) Update() error {
 	blob, err := f.provider.Get(f.resource)
 	if err != nil {
-		f.err = err
-		return
+		return err
 	}
 
 	if f.parser == nil {
 		f.parser = flesher.New(blob)
 	}
 
-	feedResult := f.parser(blob)
-	f.err = feedResult.Error()
+	feedResult, err := f.parser(blob)
 	if err != nil {
-		return
+		return err
 	}
 
 	if f.title == "" {
@@ -115,6 +108,8 @@ func (f *feed) Update() {
 		}
 		f.hash = hash
 	}
+
+	return nil
 }
 
 func (f feed) Seen() bool { return f.seen }

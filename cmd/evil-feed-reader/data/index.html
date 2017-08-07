@@ -30,9 +30,6 @@
     {{ if .Feed }}
     <main class="background-main">
         <h2><a href="{{ .Feed.Url }}">{{ .Feed.Title }}</a></h2>
-        {{ if .Feed.Error }}
-            <div>{{ .Feed.Error }}</div>
-        {{ end  }}
         {{ range .Feed.Entries }}
         <div class="post">
             <h3><a href="{{ .Url }}">{{ .Title }}</a></h3>
