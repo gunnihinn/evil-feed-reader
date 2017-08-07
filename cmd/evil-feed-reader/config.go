@@ -43,3 +43,16 @@ func parseState(filename string) (map[string]reader.FeedState, error) {
 
 	return reader.Unmarshal(blob)
 }
+
+func writeState(filename string, feeds []reader.Feed) error {
+	blob, err := reader.Marshal(feeds)
+	if err != nil {
+		return err
+	}
+
+	if err = ioutil.WriteFile(filename, blob, 0644); err != nil {
+		return err
+	}
+
+	return nil
+}

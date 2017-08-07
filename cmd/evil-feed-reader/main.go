@@ -4,9 +4,11 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gunnihinn/evil-feed-reader/provider"
@@ -83,21 +85,21 @@ func main() {
 		log.Printf("Couldn't parse config file: %s\n", err)
 	}
 
-	provider := provider.HTTP()
-	feeds := make([]reader.Feed, len(urls))
-	for i, url := range urls {
-		feeds[i] = reader.New(provider, url)
+	feeds := make([]reader.Feed, 0)
+	for _, url := range urls {
+		feeds = append(feeds, reader.New(provider.HTTP(), url))
 	}
 
 	state, err := parseState(*stateFile)
 	if err != nil {
 		log.Printf("Couldn't parse state file: %s\n", err)
-	} else {
-		for _, feed := range feeds {
-			s, ok := state[feed.Resource()]
-			if ok {
-				feed.SetState(s)
-			}
+		state = make(map[string]reader.FeedState)
+	}
+
+	for _, feed := range feeds {
+		s, ok := state[feed.Resource()]
+		if ok {
+			feed.SetState(s)
 		}
 	}
 
@@ -106,13 +108,10 @@ func main() {
 			for _, feed := range feeds {
 				go func(f reader.Feed) {
 					if err := f.Update(); err != nil {
-						log.Printf("Problems parsing feed '%s':\n", f.Resource())
-						log.Printf("%s\n", err)
+						log.Printf("Problems parsing feed '%s':\n%s", f.Resource(), err)
 					}
 
-					if len(f.Entries()) != 0 {
-						log.Printf("Feed '%s' has %d entries\n", f.Title(), len(f.Entries()))
-					} else {
+					if len(f.Entries()) == 0 {
 						log.Printf("Got no entries from '%s':\n", f.Resource())
 					}
 				}(feed)
@@ -120,27 +119,6 @@ func main() {
 			time.Sleep(15 * time.Minute)
 		}
 	}()
-
-	// TODO: Replace with signal handler
-	go func(feeds []reader.Feed) {
-		for {
-			time.Sleep(1 * time.Minute) // LOL scheduling
-
-			log.Printf("Writing state to disk\n")
-
-			blob, err := reader.Marshal(feeds)
-			if err != nil {
-				log.Printf("Error creating state JSON: %s\n", err)
-			} else {
-				err = ioutil.WriteFile(*stateFile, blob, 0644)
-				if err != nil {
-					log.Printf("Error writing state JSON to disk: %s\n", err)
-				}
-			}
-
-			time.Sleep(15 * time.Minute)
-		}
-	}(feeds)
 
 	addr := fmt.Sprintf(":%d", *port)
 	log.Printf("Listening on %s\n", addr)
@@ -155,5 +133,19 @@ func main() {
 	}
 	handler.mux.HandleFunc("/", createHandler(feeds, nil))
 
-	log.Fatal(server.ListenAndServe())
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			log.Fatalf("Server error: %s\n", err)
+		}
+	}()
+
+	<-stop
+	log.Printf("Shutting down\n")
+
+	if err := writeState(*stateFile, feeds); err != nil {
+		log.Fatalf("Couldn't write reader state to disk: %s\n", err)
+	}
 }
