@@ -82,25 +82,17 @@ func (f *feed) Update() error {
 		f.url = feedResult.Url()
 	}
 
-	f.entries = make([]Entry, len(feedResult.Items()))
-	for i, itemResult := range feedResult.Items() {
-		entry := entry{
+	f.entries = make([]Entry, 0, len(feedResult.Items()))
+	for _, itemResult := range feedResult.Items() {
+		f.entries = append(f.entries, entry{
 			title:     itemResult.Title(),
 			url:       itemResult.Url(),
 			content:   itemResult.Content(),
 			published: itemResult.Published(),
-		}
-
-		f.entries[i] = entry
+		})
 	}
 
-	h := sha1.New()
-	for _, entry := range f.entries {
-		io.WriteString(h, entry.Title())
-		io.WriteString(h, entry.Published())
-	}
-	hash := hex.EncodeToString(h.Sum(nil))
-	if f.hash != hash {
+	if hash := f.calculateHash(); f.hash != hash {
 		if f.hash == "" {
 			f.seen = true
 		} else {
@@ -117,6 +109,16 @@ func (f feed) Seen() bool { return f.seen }
 func (f *feed) SetSeen(seen bool) { f.seen = seen }
 
 func (f feed) Hash() string { return f.hash }
+
+func (f feed) calculateHash() string {
+	h := sha1.New()
+	for _, entry := range f.entries {
+		io.WriteString(h, entry.Title())
+		io.WriteString(h, entry.Published())
+	}
+
+	return hex.EncodeToString(h.Sum(nil))
+}
 
 type entry struct {
 	title     string
