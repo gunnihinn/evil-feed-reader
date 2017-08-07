@@ -4,6 +4,19 @@ import (
 	"html/template"
 )
 
+type FeedResult interface {
+	Title() string
+	Url() string
+	Items() []EntryResult
+}
+
+type EntryResult interface {
+	Title() string
+	Url() string
+	Content() template.HTML
+	Published() string
+}
+
 type feedResult struct {
 	title   string
 	url     string

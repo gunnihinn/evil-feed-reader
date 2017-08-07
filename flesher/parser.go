@@ -8,7 +8,7 @@ import (
 	"html/template"
 )
 
-// detect feed type, return appropriate parser
+// New detects feed type and returns an appropriate parser.
 func New(blob []byte) Parser {
 	if isRss(blob) {
 		return parseRssFeed
@@ -53,17 +53,5 @@ func parseNothing(blob []byte) (FeedResult, error) {
 	return feedResult{}, fmt.Errorf("Unable to determine feed type")
 }
 
-type FeedResult interface {
-	Title() string
-	Url() string
-	Items() []EntryResult
-}
-
-type EntryResult interface {
-	Title() string
-	Url() string
-	Content() template.HTML
-	Published() string
-}
-
+// Parser parses a feed.
 type Parser func([]byte) (FeedResult, error)
