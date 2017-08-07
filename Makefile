@@ -1,34 +1,22 @@
-bin=evil-feed-reader
-bindevel=$(bin)-devel
+binary=evil-feed-reader
 
-project_package=github.com/gunnihinn/evil-feed-reader/cmd/evil-feed-reader
+lib_src = $(wildcard */*.go)
+bin_src = $(wildcard cmd/evil-feed-reader/*.go)
+project_package = github.com/gunnihinn/evil-feed-reader/cmd/evil-feed-reader
 
-data=cmd/evil-feed-reader/data
-bindata=cmd/evil-feed-reader/bindata.go
+data = $(wildcard cmd/evil-feed-reader/data/*)
+bindata = cmd/evil-feed-reader/bindata.go
 
-service=evil-feed-reader
+$(binary): $(bindata) $(lib_src) $(bin_src)
+	go build -o $(binary) $(project_package)
 
-$(bin): assets
-	go build -o $(bin) $(project_package)
-
-assets: $(data)
+$(bindata): $(data)
 	go-bindata -o $(bindata) $(data)
-
-devel: devel-assets
-	go build -o $(bindevel) $(project_package)
-
-devel-assets: $(data)
-	go-bindata -debug -o $(bindata) $(data)
 
 clean:
 	rm -f $(bindata)
-	rm -f $(bin)
-	rm -f $(bindevel)
+	rm -f $(binary)
 
-deploy: feeds
-	GOOS=freebsd GOARCH=amd64 go build -o remote/$(bin) $(project_package)
-	./remote/deploy-reader.sh
-
-feeds:
-	cp feeds.cfg remote
-	./remote/deploy-feeds.sh
+deploy: $(bindata) $(lib_src) $(bin_src)
+	GOOS=freebsd GOARCH=amd64 go build -o $(binary) $(project_package)
+	./deploy.sh

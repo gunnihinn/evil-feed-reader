@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"golang.org/x/net/html/charset"
-	"html/template"
 )
 
 // New detects feed type and returns an appropriate parser.
