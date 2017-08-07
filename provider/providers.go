@@ -20,25 +20,38 @@ type provider struct {
 	fromFunc func(string) ([]byte, error)
 }
 
+// Get bytes from resource.
 func (p provider) Get(resource string) ([]byte, error) {
 	return p.fromFunc(resource)
 }
 
-// HTTP defines an HTTP provider.
+/*
+HTTP defines an HTTP provider.
+
+Its `Get` method makes a GET request to the URL `resource`.
+*/
 func HTTP() Provider {
 	return provider{
 		fromFunc: fromHTTP,
 	}
 }
 
-// File defines a File provider.
+/*
+File defines a File provider.
+
+Its `Get` method reads bytes from a file named `resource` on disk.
+*/
 func File() Provider {
 	return provider{
 		fromFunc: fromFile,
 	}
 }
 
-// String defines a String provider.
+/*
+String defines a String provider.
+
+Its `Get` method converts the string `resource` into bytes.
+*/
 func String() Provider {
 	return provider{
 		fromFunc: fromString,
