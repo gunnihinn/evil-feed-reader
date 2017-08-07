@@ -78,11 +78,14 @@ func main() {
 	var port = flag.Int("port", 8080, "HTTP port")
 	var configFile = flag.String("feeds", "feeds.cfg", "Feeds config file")
 	var stateFile = flag.String("state", ".evil-state.json", "Internal state file")
+	var logFile = flag.String("log", "", "Reader log file; use STDOUT if absent")
 	flag.Parse()
+
+	logger := Logger(*logFile)
 
 	urls, err := parseConfig(*configFile)
 	if err != nil {
-		log.Printf("Couldn't parse config file: %s\n", err)
+		logger.Printf("Couldn't parse config file: %s\n", err)
 	}
 
 	feeds := make([]reader.Feed, 0)
@@ -92,7 +95,7 @@ func main() {
 
 	state, err := parseState(*stateFile)
 	if err != nil {
-		log.Printf("Couldn't parse state file: %s\n", err)
+		logger.Printf("Couldn't parse state file: %s\n", err)
 		state = make(map[string]reader.FeedState)
 	}
 
@@ -108,11 +111,11 @@ func main() {
 			for _, feed := range feeds {
 				go func(f reader.Feed) {
 					if err := f.Update(); err != nil {
-						log.Printf("Problems parsing feed '%s':\n%s", f.Resource(), err)
+						logger.Printf("Problems parsing feed '%s':\n%s", f.Resource(), err)
 					}
 
 					if len(f.Entries()) == 0 {
-						log.Printf("Got no entries from '%s':\n", f.Resource())
+						logger.Printf("Got no entries from '%s':\n", f.Resource())
 					}
 				}(feed)
 			}
@@ -121,7 +124,7 @@ func main() {
 	}()
 
 	addr := fmt.Sprintf(":%d", *port)
-	log.Printf("Listening on %s\n", addr)
+	logger.Printf("Listening on %s\n", addr)
 	handler := NewHandler()
 	server := &http.Server{
 		Addr:    addr,
@@ -138,14 +141,29 @@ func main() {
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
-			log.Fatalf("Server error: %s\n", err)
+			logger.Fatalf("Server error: %s\n", err)
 		}
 	}()
 
 	<-stop
-	log.Printf("Shutting down\n")
+	logger.Print("Shutting down")
 
 	if err := writeState(*stateFile, feeds); err != nil {
-		log.Fatalf("Couldn't write reader state to disk: %s\n", err)
+		logger.Fatalf("Couldn't write reader state to disk: %s\n", err)
 	}
+}
+
+func Logger(filename string) *log.Logger {
+	file := os.Stdout
+	if filename != "" {
+		fh, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
+		if err == nil {
+			file = fh
+		} else {
+			log.Printf("Can't log to '%s': %s\n", filename, err)
+			log.Print("Logging to standard output")
+		}
+	}
+
+	return log.New(file, "", log.LstdFlags)
 }
