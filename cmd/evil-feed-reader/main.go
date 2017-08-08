@@ -152,7 +152,7 @@ func main() {
 func Logger(filename string) *log.Logger {
 	file := os.Stdout
 	if filename != "" {
-		fh, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
+		fh, err := os.OpenFile(filename, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0644)
 		if err == nil {
 			file = fh
 		} else {
