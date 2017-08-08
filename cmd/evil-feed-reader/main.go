@@ -18,7 +18,6 @@ import (
 type Context struct {
 	Sidebar []Navitem
 	Feed    reader.Feed
-	CSS     template.CSS
 }
 
 type Navitem struct {
@@ -33,11 +32,6 @@ func Prepare(feeds []reader.Feed, active reader.Feed) Context {
 		Sidebar: make([]Navitem, len(feeds)),
 	}
 
-	data, err := Asset("cmd/evil-feed-reader/data/style.css")
-	if err == nil {
-		ctx.CSS = template.CSS(data)
-	}
-
 	for i, f := range feeds {
 		ctx.Sidebar[i] = Navitem{
 			Title:          f.Title(),
@@ -50,13 +44,13 @@ func Prepare(feeds []reader.Feed, active reader.Feed) Context {
 
 func createHandler(feeds []reader.Feed, active reader.Feed) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		data, err := Asset("cmd/evil-feed-reader/data/index.html")
+		data, err := Asset("static/index.html")
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
 			return
 		}
 
-		t := template.New("data/index.html")
+		t := template.New("static/index.html")
 		_, err = t.Parse(string(data))
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)
@@ -136,7 +130,7 @@ func main() {
 	}
 	handler.mux.HandleFunc("/", createHandler(feeds, nil))
 
-	handler.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+	handler.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(assetFS())))
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
