@@ -136,6 +136,8 @@ func main() {
 	}
 	handler.mux.HandleFunc("/", createHandler(feeds, nil))
 
+	handler.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
 
