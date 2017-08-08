@@ -72,18 +72,18 @@
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-    <script>window.jQuery || document.write('<script src="static/js/jquery.min.js"></script>')</script>
+    <script>window.jQuery || document.write(unescape('%3Cscript src="static/js/jquery.min.js"%3E%3C/script%3E'))</script>
 
     <!-- Bootstrap JS -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script>if(typeof($.fn.modal) === 'undefined') {document.write('<script src="static/js/bootstrap.min.js"></script>')}</script>
+    <script>if(typeof($.fn.modal) === 'undefined') {document.write(unescape('%3Cscript src="static/js/bootstrap.min.js"%3E%3C/script%3E'))}</script>
 
     <!-- Bootstrap CSS local fallback -->
     <div id="bootstrapCssTest" class="hidden"></div>
     <script>
     $(function() {
 		if ($('#bootstrapCssTest').is(':visible')) {
-		    $("head").prepend('<link rel="stylesheet" href="static/css/bootstrap.min.css">');
+            $("head").prepend(unescape('%3Clink rel="stylesheet" href="static/css/bootstrap.min.css"%3E'));
 		}
 	});
     </script>
