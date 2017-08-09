@@ -106,10 +106,8 @@ func main() {
 				go func(f reader.Feed) {
 					if err := f.Update(); err != nil {
 						logger.Printf("Problems parsing feed '%s':\n%s", f.Resource(), err)
-					}
-
-					if len(f.Entries()) == 0 {
-						logger.Printf("Got no entries from '%s':\n", f.Resource())
+					} else if len(f.Entries()) == 0 {
+						logger.Printf("Got no entries from '%s'\n", f.Resource())
 					}
 				}(feed)
 			}
@@ -129,8 +127,15 @@ func main() {
 		handler.mux.HandleFunc(fmt.Sprintf("/%d", i), createHandler(feeds, feed))
 	}
 	handler.mux.HandleFunc("/", createHandler(feeds, nil))
-
 	handler.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(assetFS())))
+	handler.mux.HandleFunc("/log", func(w http.ResponseWriter, r *http.Request) {
+		contents, err := readLog(*logFile)
+		if err != nil {
+			fmt.Fprintf(w, "%s", err)
+			return
+		}
+		fmt.Fprintf(w, "%s", contents)
+	})
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
@@ -161,5 +166,5 @@ func Logger(filename string) *log.Logger {
 		}
 	}
 
-	return log.New(file, "", log.LstdFlags)
+	return log.New(file, "Message: ", log.LstdFlags)
 }

@@ -56,3 +56,22 @@ func writeState(filename string, feeds []reader.Feed) error {
 
 	return nil
 }
+
+func readLog(filename string) (string, error) {
+	if filename == "" {
+		return "Logging to standard output", nil
+	}
+
+	fh, err := os.Open(filename)
+	if err != nil {
+		return "", err
+	}
+	defer fh.Close()
+
+	blob, err := ioutil.ReadAll(fh)
+	if err != nil {
+		return "", err
+	}
+
+	return string(blob), err
+}
