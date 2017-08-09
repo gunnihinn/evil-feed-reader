@@ -8,11 +8,16 @@
 . /etc/rc.subr
 
 name="evil"
-bin="evil-feed-reader"
+bin="evilfr"
 rcvar=evil_enable
 
+feedFile=/home/freebsd/feeds.cfg
+stateFile=/home/freebsd/.evil-state.json
+logFile=/home/freebsd/evil.log
+port=8000
+
 command="/home/freebsd/${bin}"
-command_args="-feeds /home/freebsd/feeds.cfg -port 8000"
+command_args="-feeds $feedFile -state $stateFile -log $logFile -port $port"
 
 evil_user=freebsd
 start_cmd="/usr/sbin/daemon -u ${evil_user} ${command} ${command_args}"

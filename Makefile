@@ -1,4 +1,4 @@
-binary=evil-feed-reader
+binary=evilfr
 
 lib_src = $(wildcard */*.go)
 bin_src = $(wildcard cmd/evil-feed-reader/*.go)

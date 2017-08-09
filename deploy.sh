@@ -1,6 +1,6 @@
 #!/bin/bash
 
-binary=evil-feed-reader
+binary=evilfr
 config=feeds.cfg
 
 service=evil

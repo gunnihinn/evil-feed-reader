@@ -3,8 +3,7 @@
 *.dll
 *.so
 *.dylib
-evil-feed-reader
-evil-feed-reader-devel
+evilfr
 .evil-state.json
 
 secrets
