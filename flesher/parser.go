@@ -2,54 +2,55 @@ package flesher
 
 import (
 	"bytes"
-	"encoding/xml"
-	"fmt"
-	"golang.org/x/net/html/charset"
+	"html"
+	"html/template"
+
+	"github.com/mmcdole/gofeed"
 )
 
 // New detects feed type and returns an appropriate parser.
 func New(blob []byte) Parser {
-	if isRss(blob) {
-		return parseRssFeed
-	}
-
-	if isAtom(blob) {
-		return parseAtomFeed
-	}
-
-	return parseNothing
+	return parseFeed
 }
 
-func isAtom(blob []byte) bool {
-	type atom struct {
-		XMLName xml.Name `xml:"feed"`
+func parseFeed(blob []byte) (FeedResult, error) {
+	feed, err := gofeed.NewParser().Parse(bytes.NewReader(blob))
+	if err != nil {
+		return feedResult{}, err
 	}
 
-	d := xml.NewDecoder(bytes.NewReader(blob))
-	d.CharsetReader = charset.NewReaderLabel
-	if err := d.Decode(&atom{}); err != nil {
-		return false
+	result := feedResult{
+		title: feed.Title,
+		url:   feed.Link,
 	}
 
-	return true
-}
+	entries := make([]EntryResult, 0)
+	for _, item := range feed.Items {
+		var content string
+		if item.Description != "" {
+			content = item.Description
+		} else {
+			content = item.Content
+		}
 
-func isRss(blob []byte) bool {
-	type rss struct {
-		XMLName xml.Name `xml:"rss"`
+		var published string
+		if item.Updated != "" {
+			published = item.Updated
+		} else {
+			published = item.Published
+		}
+
+		entries = append(entries, entryResult{
+			title:     html.UnescapeString(item.Title),
+			url:       item.Link,
+			content:   template.HTML(content),
+			published: published,
+		})
 	}
 
-	d := xml.NewDecoder(bytes.NewReader(blob))
-	d.CharsetReader = charset.NewReaderLabel
-	if err := d.Decode(&rss{}); err != nil {
-		return false
-	}
+	result.entries = entries
 
-	return true
-}
-
-func parseNothing(blob []byte) (FeedResult, error) {
-	return feedResult{}, fmt.Errorf("Unable to determine feed type")
+	return result, nil
 }
 
 // Parser parses a feed.
