@@ -22,4 +22,4 @@ clean:
 
 deploy: $(bindata) $(lib_src) $(bin_src)
 	GOOS=freebsd GOARCH=amd64 go build -o $(binary) $(project_package)
-	./deploy.sh
+	./deploy.sh > /dev/null

@@ -104,10 +104,15 @@ func main() {
 		for {
 			for _, feed := range feeds {
 				go func(f reader.Feed) {
-					if err := f.Update(); err != nil {
+					messages, err := f.Update()
+					if err != nil {
 						logger.Printf("Problems parsing feed '%s':\n%s", f.Resource(), err)
 					} else if len(f.Entries()) == 0 {
 						logger.Printf("Got no entries from '%s'\n", f.Resource())
+					}
+
+					for _, msg := range messages {
+						logger.Print(msg)
 					}
 				}(feed)
 			}

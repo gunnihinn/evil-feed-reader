@@ -3,6 +3,7 @@ package reader
 import (
 	"crypto/sha1"
 	"encoding/hex"
+	"fmt"
 	"html/template"
 	"io"
 	"strings"
@@ -59,10 +60,12 @@ func (f feed) Entries() []Entry {
 	return f.entries[0:entryLimit]
 }
 
-func (f *feed) Update() error {
+func (f *feed) Update() ([]string, error) {
+	messages := make([]string, 0)
+
 	blob, err := f.provider.Get(f.resource)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
 	if f.parser == nil {
@@ -71,15 +74,32 @@ func (f *feed) Update() error {
 
 	feedResult, err := f.parser(blob)
 	if err != nil {
-		return err
+		return messages, err
 	}
 
-	if f.title == "" {
-		f.title = feedResult.Title()
+	if title := feedResult.Title(); f.title == "" && title != "" {
+		f.title = title
+		messages = append(messages, fmt.Sprintf("Setting feed title to '%s'", title))
+	} else {
+		messages = append(messages, fmt.Sprintf("No title found"))
 	}
 
-	if f.url == "" {
-		f.url = feedResult.Url()
+	if url := feedResult.Url(); f.url == "" && url != "" {
+		f.url = url
+		messages = append(messages, fmt.Sprintf("Setting feed URL to '%s'", url))
+	} else {
+		messages = append(messages, fmt.Sprintf("No URL found"))
+	}
+
+	if f.url == "" || f.title == "" {
+		msg := fmt.Sprintf("%+v", feedResult)
+
+		if words := strings.Split(msg, " "); len(words) > 100 {
+			msg = strings.Join(words[0:100], " ")
+			msg += " [...]"
+		}
+
+		messages = append(messages, msg)
 	}
 
 	f.entries = make([]Entry, 0, len(feedResult.Items()))
@@ -95,13 +115,15 @@ func (f *feed) Update() error {
 	if hash := f.calculateHash(); f.hash != hash {
 		if f.hash == "" {
 			f.seen = true
+			messages = append(messages, "New feed defaults to 'seen'")
 		} else {
 			f.seen = false
+			messages = append(messages, "New items in feed; marking feed 'not seen'")
 		}
 		f.hash = hash
 	}
 
-	return nil
+	return messages, nil
 }
 
 func (f feed) Seen() bool { return f.seen }
