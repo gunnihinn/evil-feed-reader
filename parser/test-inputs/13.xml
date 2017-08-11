@@ -1,0 +1,2255 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title>null program</title>
+  <link rel="alternate" type="text/html" href="http://nullprogram.com"/>
+  <link rel="self" type="application/atom+xml" href="http://nullprogram.com/feed/"/>
+  <updated>2017-08-07T02:24:29Z</updated>
+  <id>urn:uuid:f8b65823-4ec5-3a70-efc8-2b713aa63091</id>
+
+  <author>
+    <name>Christopher Wellons</name>
+    <uri>http://nullprogram.com</uri>
+    <email>wellons@nullprogram.com</email>
+  </author>
+
+  
+  <entry>
+    <title>Introducing the Pokerware Secure Passphrase Generator</title>
+    <link rel="alternate" type="text/html" href="http://nullprogram.com/blog/2017/07/27/"/>
+    <id>urn:uuid:c2d33d1a-d2a2-3863-04ae-68d2b48eecd5</id>
+    <updated>2017-07-27T17:49:10Z</updated>
+    <category term="crypto"/><category term="meatspace"/><category term="netsec"/>
+    <content type="html">
+      <![CDATA[<p>I recently developed <a href="https://github.com/skeeto/pokerware"><strong>Pokerware</strong></a>, an offline passphrase
+generator that operates in the same spirit as <a href="http://world.std.com/~reinhold/diceware.html">Diceware</a>.
+The primary difference is that it uses a shuffled deck of playing
+cards as its entropy source rather than dice. Draw some cards and use
+them to select a uniformly random word from a list. Unless you’re some
+sort of <a href="/blog/2011/01/10/">tabletop gaming nerd</a>, a deck of cards is more readily
+available than five 6-sided dice, which would typically need to be
+borrowed from the Monopoly board collecting dust on the shelf, then
+rolled two at a time.</p>
+
+<p>There are various flavors of two different word lists here:</p>
+
+<ul>
+  <li><a href="https://github.com/skeeto/pokerware/releases/tag/1.0">https://github.com/skeeto/pokerware/releases/tag/1.0</a></li>
+</ul>
+
+<p>Hardware random number generators are <a href="https://lwn.net/Articles/629714/">difficult to verify</a>
+and may not actually be as random as they promise, either
+intentionally or unintentionally. For the particularly paranoid,
+Diceware and Pokerware are an easily verifiable alternative for
+generating secure passphrases for <a href="/blog/2017/03/12/">cryptographic purposes</a>.
+At any time, a deck of 52 playing cards is in one of 52! possible
+arrangements. That’s more than 225 bits of entropy. If you give your
+deck <a href="https://possiblywrong.wordpress.com/2011/03/27/card-shuffling-youre-not-done-yet/">a thorough shuffle</a>, it will be in an arrangement that
+has never been seen before and will never be seen again. Pokerware
+draws on some of these bits to generate passphrases.</p>
+
+<p>The Pokerware list has 5,304 words (12.4 bits per word), compared to
+Diceware’s 7,776 words (12.9 bits per word). My goal was to invent a
+card-drawing scheme that would uniformly select from a list in the same
+sized ballpark as Diceware. Much smaller and you’d have to memorize more
+words for the same passphrase strength. Much larger and the words on the
+list would be more difficult to memorize, since the list would contain
+longer and less frequently used words. Diceware strikes a nice balance
+at five dice.</p>
+
+<!-- Photo credit: Kelsey Wellons -->
+<p><img src="/img/pokerware/deck.jpg" alt="" /></p>
+
+<p>One important difference for me is that <em>I like my Pokerware word
+lists a lot more</em> than the two official Diceware lists. My lists only
+have simple, easy-to-remember words (for American English speakers, at
+least), without any numbers or other short non-words. Pokerware has
+two official lists, “formal” and “slang,” since my early testers
+couldn’t agree on which was better. Rather than make a difficult
+decision, I took the usual route of making no decision at all.</p>
+
+<p>The “formal” list is derived in part from <a href="https://books.google.com/ngrams">Google’s Ngram
+Viewer</a>, with my own additional filters and tweaking. It’s called
+“formal” because the ngrams come from formal publications and represent
+more formal kinds of speech.</p>
+
+<p>The “slang” list is derived from <em>every</em> reddit comment between
+December 2005 and May 2017, tamed by the same additional filters. I
+<a href="/blog/2016/12/01/">have this data on hand</a>, so I may as well put it to use. I
+figured more casually-used words would be easier to remember. Due to
+my extra filtering, there’s actually a lot of overlap between these
+lists, so the differences aren’t too significant.</p>
+
+<p>If you have your own word list, perhaps in a different language, you
+can use the Makefile in the repository to build your own Pokerware
+lookup table, both plain text and PDF. The PDF is generated using
+Groff macros.</p>
+
+<h3 id="passphrase-generation-instructions">Passphrase generation instructions</h3>
+
+<ol>
+  <li>
+    <p>Thoroughly shuffle the deck.</p>
+  </li>
+  <li>
+    <p>Draw two cards. Sort them by value, then suit. Suits are in
+alphabetical order: Clubs, Diamonds, Hearts, Spades.</p>
+  </li>
+  <li>
+    <p>Draw additional cards until you get a card that doesn’t match the
+face value of either of your initial two cards. Observe its suit.</p>
+  </li>
+  <li>
+    <p>Using your two cards and observed suit, look up a word in the table.</p>
+  </li>
+  <li>
+    <p>Place all cards back in the deck, shuffle, and repeat from step 2
+until you have the desired number of words. Each word is worth 12.4
+bits of entropy.</p>
+  </li>
+</ol>
+
+<p>A word of warning about step 4: If you use software to do the word list
+lookup, beware that it might save your search/command history — and
+therefore your passphrase — to a file. For example, the <code class="highlighter-rouge">less</code> pager
+will store search history in <code class="highlighter-rouge">~/.lesshst</code>. It’s easy to prevent that
+one:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ LESSHISTFILE=- less pokerware-slang.txt
+</code></pre>
+</div>
+
+<h4 id="example-word-generation">Example word generation</h4>
+
+<p>Suppose in step 2 you draw King of Hearts (KH/K♥) and Queen of Clubs
+(QC/Q♣).</p>
+
+<p class="grid"><img src="/img/pokerware/kh.png" alt="" class="card" />
+<img src="/img/pokerware/qc.png" alt="" class="card" /></p>
+
+<p>In step 3 you first draw King of Diamonds (KD/K♦), discarding it because
+it matches the face value of one of your cards from step 2.</p>
+
+<p class="grid"><img src="/img/pokerware/kd.png" alt="" class="card" /></p>
+
+<p>Next you draw Four of Spades (4S/4♠), taking spades as your extra suit.</p>
+
+<p class="grid"><img src="/img/pokerware/4s.png" alt="" class="card" /></p>
+
+<p>In order, this gives you Queen of Clubs, King of Hearts, and Spades:
+QCKHS or Q♣K♥♠. This corresponds to “wizard” in the formal word list and
+would be the first word in your passphrase.</p>
+
+<h4 id="a-deck-of-cards-as-an-office-tool">A deck of cards as an office tool</h4>
+
+<p>I now have an excuse to keep a deck of cards out on my desk at work.
+I’ve been using Diceware — or something approximating it since I’m not
+so paranoid about hardware RNGs — for passwords <a href="/blog/2009/02/07/">for over 8 years
+now</a>. From now I’ll deal new passwords from an in-reach deck of
+cards. Though typically I need to tweak the results to meet <a href="https://www.troyhunt.com/passwords-evolved-authentication-guidance-for-the-modern-era/">outdated
+character-composition requirements</a>.</p>
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title>Integer Overflow into Information Disclosure</title>
+    <link rel="alternate" type="text/html" href="http://nullprogram.com/blog/2017/07/19/"/>
+    <id>urn:uuid:c85545c5-23a4-3147-b654-6dc7a62ee426</id>
+    <updated>2017-07-19T01:57:36Z</updated>
+    <category term="netsec"/><category term="c"/>
+    <content type="html">
+      <![CDATA[<p>Last week I was discussing <a href="https://security-tracker.debian.org/tracker/CVE-2017-7529">CVE-2017-7529</a> with <a href="/blog/2016/09/02/">my intern</a>.
+Specially crafted input to Nginx causes an integer overflow which has the
+potential to leak sensitive information. But how could an integer overflow
+be abused to trick a program into leaking information? To answer this
+question, I put together the simplest practical example I could imagine.</p>
+
+<ul>
+  <li><a href="https://github.com/skeeto/integer-overflow-demo">https://github.com/skeeto/integer-overflow-demo</a></li>
+</ul>
+
+<p>This small C program converts a vector image from a custom format
+(described below) into a <a href="https://en.wikipedia.org/wiki/Netpbm_format">Netpbm image</a>, a <a href="/blog/2017/07/02/">conveniently simple
+format</a>. The program defensively and carefully parses its input, but
+still makes a subtle, fatal mistake. This mistake not only leads to
+sensitive information disclosure, but, with a more sophisticated attack,
+could be used to execute arbitrary code.</p>
+
+<p>After getting the hang of the interface for the program, I encourage you
+to take some time to work out an exploit yourself. Regardless, I’ll reveal
+a functioning exploit and explain how it works.</p>
+
+<h3 id="a-new-vector-format">A new vector format</h3>
+
+<p>The input format is line-oriented and very similar to Netpbm itself. The
+first line is the header, starting with the magic number <code class="highlighter-rouge">V2</code> (ASCII)
+followed by the image dimensions. The target output format is Netpbm’s
+“P2” (text gray scale) format, so the “V2” parallels it. The file must end
+with a newline.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>V2 &lt;width&gt; &lt;height&gt;
+</code></pre>
+</div>
+
+<p>What follows is drawing commands, one per line. For example, the <code class="highlighter-rouge">s</code>
+command sets the value of a particular pixel.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>s &lt;x&gt; &lt;y&gt; &lt;00–ff&gt;
+</code></pre>
+</div>
+
+<p>Since it’s not important for the demonstration, this is the only command I
+implemented. It’s easy to imagine additional commands to draw lines,
+circles, Bezier curves, etc.</p>
+
+<p>Here’s an example (<code class="highlighter-rouge">example.txt</code>) that draws a single white point in the
+middle of the image:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>V2 256 256
+s 127 127 ff
+</code></pre>
+</div>
+
+<p>The rendering tool reads standard input to standard output:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ render &lt; example.txt &gt; example.pgm
+</code></pre>
+</div>
+
+<p>Here’s what it looks like rendered:</p>
+
+<p><img src="/img/int-overflow/example.png" alt="" /></p>
+
+<p>However, you will notice that when you run the rendering tool, it prompts
+you for username and password. This is silly, of course, but it’s an
+excuse to get “sensitive” information into memory. It will accept any
+username/password combination where the username and password don’t match
+each other. The key is this: <strong>It’s possible to craft a valid image that
+leaks the the entered password.</strong></p>
+
+<h3 id="tour-of-the-implementation">Tour of the implementation</h3>
+
+<p>Without spoiling anything yet, let’s look at how this program works. The
+first thing to notice is that I’m using a custom “<a href="http://www.gnu.org/software/libc/manual/html_node/Obstacks.html">obstack</a>”
+allocator instead of <code class="highlighter-rouge">malloc()</code> and <code class="highlighter-rouge">free()</code>. Real-world allocators have
+some defenses against this particular vulnerability. Plus a specific
+exploit would have to target a specific libc. By using my own allocator,
+the exploit will mostly be portable, making for a better and easier
+demonstration.</p>
+
+<p>The allocator interface should be pretty self-explanatory, except for two
+details. This is an <em>obstack</em> allocator, so freeing an object also frees
+every object allocated after it. Also, it doesn’t call <code class="highlighter-rouge">malloc()</code> in the
+background. At initialization you give it a buffer from which to allocate
+all memory.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">mstack</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">top</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">max</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">buf</span><span class="p">[];</span>
+<span class="p">};</span>
+
+<span class="k">struct</span> <span class="n">mstack</span> <span class="o">*</span><span class="n">mstack_init</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">,</span> <span class="kt">size_t</span><span class="p">);</span>
+<span class="kt">void</span>          <span class="o">*</span><span class="n">mstack_alloc</span><span class="p">(</span><span class="k">struct</span> <span class="n">mstack</span> <span class="o">*</span><span class="p">,</span> <span class="kt">size_t</span><span class="p">);</span>
+<span class="kt">void</span>           <span class="n">mstack_free</span><span class="p">(</span><span class="k">struct</span> <span class="n">mstack</span> <span class="o">*</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+</code></pre>
+</div>
+
+<p>There are no vulnerabilities in these functions (I hope!). It’s just
+here for predictability.</p>
+
+<p>Next here’s the “authentication” function. It reads a username and
+password combination from <code class="highlighter-rouge">/dev/tty</code>. It’s only an excuse to get a flag in
+memory for this capture-the-flag game. The username and password must be
+less than 32 characters each.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span>
+<span class="nf">authenticate</span><span class="p">(</span><span class="k">struct</span> <span class="n">mstack</span> <span class="o">*</span><span class="n">m</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">FILE</span> <span class="o">*</span><span class="n">tty</span> <span class="o">=</span> <span class="n">fopen</span><span class="p">(</span><span class="s">"/dev/tty"</span><span class="p">,</span> <span class="s">"r+"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">tty</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">perror</span><span class="p">(</span><span class="s">"/dev/tty"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="kt">char</span> <span class="o">*</span><span class="n">user</span> <span class="o">=</span> <span class="n">mstack_alloc</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">32</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">user</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fclose</span><span class="p">(</span><span class="n">tty</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">fputs</span><span class="p">(</span><span class="s">"User: "</span><span class="p">,</span> <span class="n">tty</span><span class="p">);</span>
+    <span class="n">fflush</span><span class="p">(</span><span class="n">tty</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">fgets</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">tty</span><span class="p">))</span>
+        <span class="n">user</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="kt">char</span> <span class="o">*</span><span class="n">pass</span> <span class="o">=</span> <span class="n">mstack_alloc</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="mi">32</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">pass</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fputs</span><span class="p">(</span><span class="s">"Password: "</span><span class="p">,</span> <span class="n">tty</span><span class="p">);</span>
+        <span class="n">fflush</span><span class="p">(</span><span class="n">tty</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fgets</span><span class="p">(</span><span class="n">pass</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">tty</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">strcmp</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">pass</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">fclose</span><span class="p">(</span><span class="n">tty</span><span class="p">);</span>
+    <span class="n">mstack_free</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">user</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Next here’s a little version of <code class="highlighter-rouge">calloc()</code> for the custom allocator. Hmm,
+I wonder why is this called “naive” …</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span> <span class="o">*</span>
+<span class="nf">naive_calloc</span><span class="p">(</span><span class="k">struct</span> <span class="n">mstack</span> <span class="o">*</span><span class="n">m</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">nmemb</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">size</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">void</span> <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">mstack_alloc</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">nmemb</span> <span class="o">*</span> <span class="n">size</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="n">memset</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">nmemb</span> <span class="o">*</span> <span class="n">size</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">p</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Next up is a paranoid wrapper for <code class="highlighter-rouge">strtoul()</code> that defensively checks its
+inputs. If it’s out of range of an <code class="highlighter-rouge">unsigned long</code>, it bails out. If
+there’s trailing garbage, it bails out. If there’s no number at all, it
+bails out. If you make prolonged eye contact, it bails out.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">unsigned</span> <span class="kt">long</span>
+<span class="nf">safe_strtoul</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">nptr</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">endptr</span><span class="p">,</span> <span class="kt">int</span> <span class="n">base</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">errno</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">n</span> <span class="o">=</span> <span class="n">strtoul</span><span class="p">(</span><span class="n">nptr</span><span class="p">,</span> <span class="n">endptr</span><span class="p">,</span> <span class="n">base</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">errno</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">perror</span><span class="p">(</span><span class="n">nptr</span><span class="p">);</span>
+        <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">nptr</span> <span class="o">==</span> <span class="o">*</span><span class="n">endptr</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">"Expected an integer</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">isspace</span><span class="p">(</span><span class="o">**</span><span class="n">endptr</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">"Invalid character '%c'</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="o">**</span><span class="n">endptr</span><span class="p">);</span>
+        <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">n</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>The <code class="highlighter-rouge">main()</code> function parses the header using this wrapper and allocates
+some zeroed memory:</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code>    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">width</span> <span class="o">=</span> <span class="n">safe_strtoul</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">p</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">height</span> <span class="o">=</span> <span class="n">safe_strtoul</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">p</span><span class="p">,</span> <span class="mi">10</span><span class="p">);</span>
+    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="o">*</span><span class="n">pixels</span> <span class="o">=</span> <span class="n">naive_calloc</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">pixels</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fputs</span><span class="p">(</span><span class="s">"Not enough memory</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">stderr</span><span class="p">);</span>
+        <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Then there’s a command processing loop, also using <code class="highlighter-rouge">safe_strtoul()</code>. It
+carefully checks bounds against <code class="highlighter-rouge">width</code> and <code class="highlighter-rouge">height</code>. Finally it writes
+out a Netpbm, P2 (.pgm) format.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code>    <span class="n">printf</span><span class="p">(</span><span class="s">"P2</span><span class="se">\n</span><span class="s">%ld %ld 255</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">y</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="n">height</span><span class="p">;</span> <span class="n">y</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="kt">long</span> <span class="n">x</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">width</span><span class="p">;</span> <span class="n">x</span><span class="o">++</span><span class="p">)</span>
+            <span class="n">printf</span><span class="p">(</span><span class="s">"%d "</span><span class="p">,</span> <span class="n">pixels</span><span class="p">[</span><span class="n">y</span> <span class="o">*</span> <span class="n">width</span> <span class="o">+</span> <span class="n">x</span><span class="p">]);</span>
+        <span class="n">putchar</span><span class="p">(</span><span class="sc">'\n'</span><span class="p">);</span>
+    <span class="p">}</span>
+</code></pre>
+</div>
+
+<p>The vulnerability is in something I’ve shown above. Can you find it?</p>
+
+<h3 id="exploiting-the-renderer">Exploiting the renderer</h3>
+
+<p>Did you find it? If you’re on a platform with 64-bit <code class="highlighter-rouge">long</code>, here’s your
+exploit:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>V2 16 1152921504606846977
+</code></pre>
+</div>
+
+<p>And here’s an exploit for 32-bit <code class="highlighter-rouge">long</code>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>V2 16 268435457
+</code></pre>
+</div>
+
+<p>Here’s how it looks in action. The most obvious result is that the program
+crashes:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ echo V2 16 1152921504606846977 | ./mstack &gt; capture.txt
+User: coolguy
+Password: mysecret
+Segmentation fault
+</code></pre>
+</div>
+
+<p>Here are the initial contents of <code class="highlighter-rouge">capture.txt</code>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>P2
+16 1152921504606846977 255
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+109 121 115 101 99 114 101 116 10 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+</code></pre>
+</div>
+
+<p>Where did those junk numbers come from in the image data? Plug them into
+an ASCII table and you’ll get “mysecret”. Despite allocating the image
+with <code class="highlighter-rouge">naive_calloc()</code>, the password has found its way into the image! How
+could this be?</p>
+
+<p>What happened is that <code class="highlighter-rouge">width * height</code> overflows an <code class="highlighter-rouge">unsigned long</code>.
+(Well, technically speaking, unsigned integers are defined <em>not</em> to
+overflow in C, wrapping around instead, but it’s really the same thing.)
+In <code class="highlighter-rouge">naive_calloc()</code>, the overflow results in a value of 16, so it only
+allocates and clears 16 bytes. The requested allocation “succeeds” despite
+<em>far</em> exceeding the available memory. The caller has been given a lot less
+memory than expected, and the memory believed to have been allocated
+contains a password.</p>
+
+<p>The final part that writes the output doesn’t multiply the integers and
+doesn’t need to test for overflow. It uses a nested loop instead,
+continuing along with the original, impossible image size.</p>
+
+<p>How do we fix this? Add an overflow check at the beginning of the
+<code class="highlighter-rouge">naive_calloc()</code> function (making it no longer naive). This is what the
+real <code class="highlighter-rouge">calloc()</code> does.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code>    <span class="k">if</span> <span class="p">(</span><span class="n">nmemb</span> <span class="o">&amp;&amp;</span> <span class="n">size</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1UL</span> <span class="o">/</span> <span class="n">nmemb</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</code></pre>
+</div>
+
+<p>The frightening takeaway is that this check is <em>very</em> easy to forget. It’s
+a subtle bug with potentially disastrous consequences.</p>
+
+<p>In practice, this sort of program wouldn’t have sensitive data resident in
+memory. Instead an attacker would target the program’s stack with those
+<code class="highlighter-rouge">s</code> commands — specifically the <a href="/blog/2017/01/21/">return pointers</a> — and perform a ROP
+attack against the application. With the exploit header above and a
+platform where <code class="highlighter-rouge">long</code> the same size as a <code class="highlighter-rouge">size_t</code>, the program will behave
+as if all available memory has been allocated to the image, so the <code class="highlighter-rouge">s</code>
+command could be used to poke custom values <em>anywhere</em> in memory. This is
+a much more complicated exploit, and it has to contend with ASLR and
+random stack gap, but it’s feasible.</p>
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title>Rolling Shutter Simulation in C</title>
+    <link rel="alternate" type="text/html" href="http://nullprogram.com/blog/2017/07/02/"/>
+    <id>urn:uuid:</id>
+    <updated>2017-07-02T18:35:16Z</updated>
+    <category term="c"/><category term="media"/><category term="tutorial"/><category term="trick"/>
+    <content type="html">
+      <![CDATA[<p>The most recent <a href="https://www.youtube.com/watch?v=dNVtMmLlnoE">Smarter Every Day (#172)</a> explains a phenomenon
+that results from <em>rolling shutter</em>. You’ve likely seen this effect in
+some of your own digital photographs. When a CMOS digital camera
+captures a picture, it reads one row of the sensor at a time. If the
+subject of the picture is a fast-moving object (relative to the
+camera), then the subject will change significantly while the image is
+being captured, giving strange, unreal results:</p>
+
+<p><a href="/img/rolling-shutter/rolling-shutter.jpg"><img src="/img/rolling-shutter/rolling-shutter-thumb.jpg" alt="" /></a></p>
+
+<p>In the <em>Smarter Every Day</em> video, Destin illustrates the effect by
+simulating rolling shutter using a short video clip. In each frame of
+the video, a few additional rows are locked in place, showing the
+effect in slow motion, making it easier to understand.</p>
+
+<video src="http://nullprogram.s3.amazonaws.com/rolling-shutter/rolling-shutter-5.mp4" width="500" height="500" loop="loop" controls="controls" autoplay="autoplay">
+</video>
+
+<p>At the end of the video he thanks a friend for figuring out how to get
+After Effects to simulate rolling shutter. After thinking about this
+for a moment, I figured I could easily accomplish this myself with
+just a bit of C, without any libraries. The video above this paragraph
+is the result.</p>
+
+<p>I <a href="/blog/2011/11/28/">previously described a technique</a> to edit and manipulate
+video without any formal video editing tools. A unix pipeline is
+sufficient for doing minor video editing, especially without sound.
+The program at the front of the pipe decodes the video into a raw,
+uncompressed format, such as YUV4MPEG or <a href="https://en.wikipedia.org/wiki/Netpbm_format">PPM</a>. The tools in
+the middle losslessly manipulate this data to achieve the desired
+effect (watermark, scaling, etc.). Finally, the tool at the end
+encodes the video into a standard format.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ decode video.mp4 | xform-a | xform-b | encode out.mp4
+</code></pre>
+</div>
+
+<p>For the “decode” program I’ll be using ffmpeg now that it’s <a href="https://lwn.net/Articles/650816/">back in
+the Debian repositories</a>. You can throw a video in virtually any
+format at it and it will write PPM frames to standard output. For the
+encoder I’ll be using the <code class="highlighter-rouge">x264</code> command line program, though ffmpeg
+could handle this part as well. Without any filters in the middle,
+this example will just re-encode a video:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ ffmpeg -i input.mp4 -f image2pipe -vcodec ppm pipe:1 | \
+    x264 -o output.mp4 /dev/stdin
+</code></pre>
+</div>
+
+<p>The filter tools in the middle only need to read and write in the raw
+image format. They’re a little bit like shaders, and they’re easy to
+write. In this case, I’ll write C program that simulates rolling
+shutter. The filter could be written in any language that can read and
+write binary data from standard input to standard output.</p>
+
+<p><em>Update</em>: It appears that input PPM streams are a rather recent
+feature of libavformat (a.k.a lavf, used by <code class="highlighter-rouge">x264</code>). Support for PPM
+input first appeared in libavformat 3.1 (released June 26th, 2016). If
+you’re using an older version of libavformat, you’ll need to stick
+<code class="highlighter-rouge">ppmtoy4m</code> in front of <code class="highlighter-rouge">x264</code> in the processing pipeline.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ ffmpeg -i input.mp4 -f image2pipe -vcodec ppm pipe:1 | \
+    ppmtoy4m | \
+    x264 -o output.mp4 /dev/stdin
+</code></pre>
+</div>
+
+<h3 id="video-filtering-in-c">Video filtering in C</h3>
+
+<p>In the past, my go to for raw video data has been loose PPM frames and
+YUV4MPEG streams (via <code class="highlighter-rouge">ppmtoy4m</code>). Fortunately, over the years a lot
+of tools have gained the ability to manipulate streams of PPM images,
+which is a much more convenient format. Despite being raw video data,
+YUV4MPEG is still a fairly complex format with lots of options and
+annoying colorspace concerns. <a href="http://netpbm.sourceforge.net/doc/ppm.html">PPM is simple RGB</a> without
+complications. The header is just text:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>P6
+&lt;width&gt; &lt;height&gt;
+&lt;maxdepth&gt;
+&lt;width * height * 3 binary RGB data&gt;
+</code></pre>
+</div>
+
+<p>The maximum depth is virtually always 255. A smaller value reduces the
+image’s dynamic range without reducing the size. A larger value involves
+byte-order issues (endian). For video frame data, the file will
+typically look like:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>P6
+1920 1080
+255
+&lt;frame RGB&gt;
+</code></pre>
+</div>
+
+<p>Unfortunately the format is actually a little more flexible than this.
+Except for the new line (LF, 0x0A) after the maximum depth, the
+whitespace is arbitrary and comments starting with <code class="highlighter-rouge">#</code> are permitted.
+Since the tools I’m using won’t produce comments, I’m going to ignore
+that detail. I’ll also assume the maximum depth is always 255.</p>
+
+<p>Here’s the structure I used to represent a PPM image, just one frame
+of video. I’m using a <em>flexible array member</em> to pack the data at the
+end of the structure.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">frame</span> <span class="p">{</span>
+    <span class="kt">size_t</span> <span class="n">width</span><span class="p">;</span>
+    <span class="kt">size_t</span> <span class="n">height</span><span class="p">;</span>
+    <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">data</span><span class="p">[];</span>
+<span class="p">};</span>
+</code></pre>
+</div>
+
+<p>Next a function to allocate a frame:</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">static</span> <span class="k">struct</span> <span class="n">frame</span> <span class="o">*</span>
+<span class="nf">frame_create</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">width</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">height</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">frame</span> <span class="o">*</span><span class="n">f</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">f</span><span class="p">)</span> <span class="o">+</span> <span class="n">width</span> <span class="o">*</span> <span class="n">height</span> <span class="o">*</span> <span class="mi">3</span><span class="p">);</span>
+    <span class="n">f</span><span class="o">-&gt;</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span><span class="p">;</span>
+    <span class="n">f</span><span class="o">-&gt;</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>We’ll need a way to write the frames we’ve created.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">static</span> <span class="kt">void</span>
+<span class="nf">frame_write</span><span class="p">(</span><span class="k">struct</span> <span class="n">frame</span> <span class="o">*</span><span class="n">f</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"P6</span><span class="se">\n</span><span class="s">%zu %zu</span><span class="se">\n</span><span class="s">255</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">width</span><span class="p">,</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">height</span><span class="p">);</span>
+    <span class="n">fwrite</span><span class="p">(</span><span class="n">f</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">,</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">width</span> <span class="o">*</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">height</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">stdout</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Finally, a function to read a frame, reusing an existing buffer if
+possible. The most complex part of the whole program is just parsing
+the PPM header. The <code class="highlighter-rouge">%*c</code> in the <code class="highlighter-rouge">scanf()</code> specifically consumes the
+line feed immediately following the maximum depth.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">static</span> <span class="k">struct</span> <span class="n">frame</span> <span class="o">*</span>
+<span class="nf">frame_read</span><span class="p">(</span><span class="k">struct</span> <span class="n">frame</span> <span class="o">*</span><span class="n">f</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">size_t</span> <span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">scanf</span><span class="p">(</span><span class="s">"P6 %zu%zu%*d%*c"</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">width</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">height</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">free</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">f</span> <span class="o">||</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">width</span> <span class="o">!=</span> <span class="n">width</span> <span class="o">||</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">height</span> <span class="o">!=</span> <span class="n">height</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">free</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">frame_create</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">fread</span><span class="p">(</span><span class="n">f</span><span class="o">-&gt;</span><span class="n">data</span><span class="p">,</span> <span class="n">width</span> <span class="o">*</span> <span class="n">height</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">stdin</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">f</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Since this program will only be part of a pipeline, I’m not worried
+about checking the results of <code class="highlighter-rouge">fwrite()</code> and <code class="highlighter-rouge">fread()</code>. The process
+will be killed by the shell if something goes wrong with the pipes.
+However, if we’re out of video data and get an EOF, <code class="highlighter-rouge">scanf()</code> will
+fail, indicating the EOF, which is normal and can be handled cleanly.</p>
+
+<h4 id="an-identity-filter">An identity filter</h4>
+
+<p>That’s all the infrastructure we need to built an identity filter that
+passes frames through unchanged:</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">frame</span> <span class="o">*</span><span class="n">frame</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">((</span><span class="n">frame</span> <span class="o">=</span> <span class="n">frame_read</span><span class="p">(</span><span class="n">frame</span><span class="p">)))</span>
+        <span class="n">frame_write</span><span class="p">(</span><span class="n">frame</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Processing a frame is just matter of adding some stuff to the body of
+the <code class="highlighter-rouge">while</code> loop.</p>
+
+<h4 id="a-rolling-shutter-filter">A rolling shutter filter</h4>
+
+<p>For the rolling shutter filter, in addition to the input frame we need
+an image to hold the result of the rolling shutter. Each input frame
+will be copied into the rolling shutter frame, but a little less will be
+copied from each frame, locking a little bit more of the image in place.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span>
+<span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">shutter_step</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+    <span class="kt">size_t</span> <span class="n">shutter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">frame</span> <span class="o">*</span><span class="n">f</span> <span class="o">=</span> <span class="n">frame_read</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+    <span class="k">struct</span> <span class="n">frame</span> <span class="o">*</span><span class="n">out</span> <span class="o">=</span> <span class="n">frame_create</span><span class="p">(</span><span class="n">f</span><span class="o">-&gt;</span><span class="n">width</span><span class="p">,</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">height</span><span class="p">);</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">shutter</span> <span class="o">&lt;</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">height</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">f</span> <span class="o">=</span> <span class="n">frame_read</span><span class="p">(</span><span class="n">f</span><span class="p">)))</span> <span class="p">{</span>
+        <span class="kt">size_t</span> <span class="n">offset</span> <span class="o">=</span> <span class="n">shutter</span> <span class="o">*</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">width</span> <span class="o">*</span> <span class="mi">3</span><span class="p">;</span>
+        <span class="kt">size_t</span> <span class="n">length</span> <span class="o">=</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">height</span> <span class="o">*</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">width</span> <span class="o">*</span> <span class="mi">3</span> <span class="o">-</span> <span class="n">offset</span><span class="p">;</span>
+        <span class="n">memcpy</span><span class="p">(</span><span class="n">out</span><span class="o">-&gt;</span><span class="n">data</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">f</span><span class="o">-&gt;</span><span class="n">data</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">length</span><span class="p">);</span>
+        <span class="n">frame_write</span><span class="p">(</span><span class="n">out</span><span class="p">);</span>
+        <span class="n">shutter</span> <span class="o">+=</span> <span class="n">shutter_step</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">out</span><span class="p">);</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>The <code class="highlighter-rouge">shutter_step</code> controls how many rows are capture per frame of
+video. Generally capturing one row per frame is too slow for the
+simulation. For a 1080p video, that’s 1,080 frames for the entire
+simulation: 18 seconds at 60 FPS or 36 seconds at 30 FPS. If this
+program were to accept command line arguments, controlling the shutter
+rate would be one of the options.</p>
+
+<p>Putting it all together:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ ffmpeg -i input.mp4 -f image2pipe -vcodec ppm pipe:1 | \
+    ./rolling-shutter | \
+    x264 -o output.mp4 /dev/stdin
+</code></pre>
+</div>
+
+<p>Here are some of the results for different shutter rates: 1, 3, 5, 8,
+10, and 15 rows per frame. Feel free to right-click and “View Video”
+to see the full resolution video.</p>
+
+<div class="grid">
+<video src="http://nullprogram.s3.amazonaws.com/rolling-shutter/rolling-shutter-1.mp4" width="300" height="300" controls="controls">
+</video>
+<video src="http://nullprogram.s3.amazonaws.com/rolling-shutter/rolling-shutter-3.mp4" width="300" height="300" controls="controls">
+</video>
+<video src="http://nullprogram.s3.amazonaws.com/rolling-shutter/rolling-shutter-5.mp4" width="300" height="300" controls="controls">
+</video>
+<video src="http://nullprogram.s3.amazonaws.com/rolling-shutter/rolling-shutter-8.mp4" width="300" height="300" controls="controls">
+</video>
+<video src="http://nullprogram.s3.amazonaws.com/rolling-shutter/rolling-shutter-10.mp4" width="300" height="300" controls="controls">
+</video>
+<video src="http://nullprogram.s3.amazonaws.com/rolling-shutter/rolling-shutter-15.mp4" width="300" height="300" controls="controls">
+</video>
+</div>
+
+<h3 id="source-and-original-input">Source and original input</h3>
+
+<p>This post contains the full source in parts, but here it is all together:</p>
+
+<ul>
+  <li><a href="/download/rshutter.c" class="download">rshutter.c</a></li>
+</ul>
+
+<p>Here’s the original video, filmed by my wife using her Nikon D5500, in
+case you want to try it for yourself:</p>
+
+<video src="http://nullprogram.s3.amazonaws.com/rolling-shutter/original.mp4" width="300" height="300" controls="controls">
+</video>
+
+<p>It took much longer to figure out the string-pulling contraption to
+slowly spin the fan at a constant rate than it took to write the C
+filter program.</p>
+
+<h3 id="followup-links">Followup Links</h3>
+
+<p>On Hacker News, <a href="https://news.ycombinator.com/item?id=14684793">morecoffee shared a video of the second order
+effect</a> (<a href="http://antidom.com/fan.webm">direct link</a>), where the rolling shutter
+speed changes over time.</p>
+
+<p>A deeper analysis of rolling shutter: <a href="http://danielwalsh.tumblr.com/post/54400376441/playing-detective-with-rolling-shutter-photos"><em>Playing detective with rolling
+shutter photos</em></a>.</p>
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title>Stack Clashing for Fun and Profit</title>
+    <link rel="alternate" type="text/html" href="http://nullprogram.com/blog/2017/06/21/"/>
+    <id>urn:uuid:43402771-3340-3dff-c18f-7110caeedb7d</id>
+    <updated>2017-06-21T05:28:56Z</updated>
+    <category term="c"/><category term="posix"/><category term="netsec"/>
+    <content type="html">
+      <![CDATA[<p><em>Stack clashing</em> has been in the news lately due to <a href="https://blog.qualys.com/securitylabs/2017/06/19/the-stack-clash">some recently
+discovered vulnerablities</a> along with proof-of-concept
+exploits. As the announcement itself notes, this is not a new issue,
+though this appears to be the first time it’s been given this
+particular name. I do know of one “good” use of stack clashing, where
+it’s used for something productive than as part of an attack. In this
+article I’ll explain how it works.</p>
+
+<p>You can find the complete code for this article here, ready to run:</p>
+
+<ul>
+  <li><a href="https://github.com/skeeto/stack-clash-coroutine">https://github.com/skeeto/stack-clash-coroutine</a></li>
+</ul>
+
+<p>But first, what is a stack clash? Here’s a rough picture of the
+typical way process memory is laid out. The stack starts at a high
+memory address and grows downwards. Code and static data sit at low
+memory, with a <code class="highlighter-rouge">brk</code> pointer growing upward to make small allocations.
+In the middle is the heap, where large allocations and memory mappings
+take place.</p>
+
+<p><img src="/img/diagram/process-memory.svg" alt="" /></p>
+
+<p>Below the stack is a slim <em>guard page</em> that divides the stack and the
+region of memory reserved for the heap. Reading or writing to that
+memory will trap, causing the program to crash or some special action
+to be taken. The goal is to prevent the stack from growing into the
+heap, which could cause all sorts of trouble, like security issues.</p>
+
+<p>The problem is that this thin guard page isn’t enough. It’s possible to
+put a large allocation on the stack, never read or write to it, and
+completely skip over the guard page, such that the heap and stack
+overlap without detection.</p>
+
+<p>Once this happens, writes into the heap will change memory on the
+stack and vice versa. If an attacker can cause the program to make
+such a large allocation on the stack, then legitimate writes into
+memory on the heap can manipulate local variables or <a href="/blog/2017/01/21/">return pointers,
+changing the program’s control flow</a>. This can bypass buffer
+overflow protections, such as stack canaries.</p>
+
+<h3 id="binary-trees-and-coroutines">Binary trees and coroutines</h3>
+
+<p><img src="/img/diagram/binary-search-tree.svg" alt="" /></p>
+
+<p>Now, I’m going to abruptly change topics to discuss binary search
+trees. We’ll get back to stack clash in a bit. Suppose we have a
+binary tree which we would like to iterate depth-first. For this
+demonstration, here’s the C interface to the binary tree.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">tree</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">left</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">right</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">key</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">value</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="kt">void</span>  <span class="n">tree_insert</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">**</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">k</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">v</span><span class="p">);</span>
+<span class="kt">char</span> <span class="o">*</span><span class="n">tree_find</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">k</span><span class="p">);</span>
+<span class="kt">void</span>  <span class="n">tree_visit</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="p">,</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">f</span><span class="p">)(</span><span class="kt">char</span> <span class="o">*</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">));</span>
+<span class="kt">void</span>  <span class="n">tree_destroy</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="p">);</span>
+</code></pre>
+</div>
+
+<p>An empty tree is the NULL pointer, hence the double-pointer for
+insert. In the demonstration it’s an unbalanced search tree, but this
+could very well be a balanced search tree with the addition of another
+field on the structure.</p>
+
+<p>For the traversal, first visit the root node, then traverse its left
+tree, and finally traverse its right tree. It makes for a simple,
+recursive definition — the sort of thing you’d teach a beginner.
+Here’s a definition that accepts a callback, which the caller will use
+to <em>visit</em> each key/value in the tree. This really is as simple as it
+gets.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span>
+<span class="nf">tree_visit</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">t</span><span class="p">,</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">f</span><span class="p">)(</span><span class="kt">char</span> <span class="o">*</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">))</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">f</span><span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">,</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">);</span>
+        <span class="n">tree_visit</span><span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">,</span> <span class="n">f</span><span class="p">);</span>
+        <span class="n">tree_visit</span><span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">,</span> <span class="n">f</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Unfortunately this isn’t so convenient for the caller, who has to
+split off a callback function that <a href="/blog/2017/01/08/">lacks context</a>, then hand
+over control to the traversal function.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">void</span>
+<span class="nf">printer</span><span class="p">(</span><span class="kt">char</span> <span class="o">*</span><span class="n">k</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">v</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"%s = %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span>
+<span class="nf">print_tree</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">tree</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">tree_visit</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">printer</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Usually it’s much nicer for the caller if instead it’s provided an
+<em>iterator</em>, which the caller can invoke at will. Here’s an interface
+for it, just two functions.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">tree_iterator</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="p">);</span>
+<span class="kt">int</span>             <span class="n">tree_next</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">k</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">v</span><span class="p">);</span>
+</code></pre>
+</div>
+
+<p>The first constructs an iterator object, and the second one visits a
+key/value pair each time it’s called. It returns 0 when traversal is
+complete, automatically freeing any resources associated with the
+iterator.</p>
+
+<p>The caller now looks like this:</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code>    <span class="kt">char</span> <span class="o">*</span><span class="n">k</span><span class="p">,</span> <span class="o">*</span><span class="n">v</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span> <span class="o">=</span> <span class="n">tree_iterator</span><span class="p">(</span><span class="n">tree</span><span class="p">);</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">tree_next</span><span class="p">(</span><span class="n">it</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">k</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">v</span><span class="p">))</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"%s = %s</span><span class="se">\n</span><span class="s">"</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">);</span>
+</code></pre>
+</div>
+
+<p>Notice I haven’t defined <code class="highlighter-rouge">struct tree_it</code>. That’s because I’ve got
+four different implementations, each taking a different approach. The
+last one will use stack clashing.</p>
+
+<h4 id="manual-state-tracking">Manual State Tracking</h4>
+
+<p>With just the standard facilities provided by C, there’s a some manual
+bookkeeping that has to take place in order to convert the recursive
+definition into an iterator. Depth-first traversal is a stack-oriented
+process, and with recursion the stack is implicit in the call stack.
+As an iterator, the traversal stack needs to be <a href="/blog/2016/11/13/">managed
+explicitly</a>. The iterator needs to keep track of the path it
+took so that it can backtrack, which means keeping track of parent
+nodes as well as which branch was taken.</p>
+
+<p>Here’s my little implementation, which, to keep things simple, has a
+hard depth limit of 32. It’s structure definition includes a stack of
+node pointers, and 2 bits of information per visited node, stored
+across a 64-bit integer.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">tree_it</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">stack</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span> <span class="kt">long</span> <span class="n">state</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">nstack</span><span class="p">;</span>
+<span class="p">};</span>
+
+<span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span>
+<span class="nf">tree_iterator</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">t</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">it</span><span class="p">));</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">stack</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="p">;</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">state</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">nstack</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">it</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>The 2 bits track three different states for each visited node:</p>
+
+<ol>
+  <li>Visit the current node</li>
+  <li>Traverse the left tree</li>
+  <li>Traverse the right tree</li>
+</ol>
+
+<p>It works out to the following. Don’t worry too much about trying to
+understand how this works. My point is to demonstrate that converting
+the recursive definition into an iterator complicates the
+implementation.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span>
+<span class="nf">tree_next</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">k</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">v</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">nstack</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">shift</span> <span class="o">=</span> <span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">nstack</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">state</span> <span class="o">=</span> <span class="mi">3u</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">state</span> <span class="o">&gt;&gt;</span> <span class="n">shift</span><span class="p">);</span>
+        <span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">t</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">stack</span><span class="p">[</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">nstack</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>
+        <span class="n">it</span><span class="o">-&gt;</span><span class="n">state</span> <span class="o">+=</span> <span class="mi">1ull</span> <span class="o">&lt;&lt;</span> <span class="n">shift</span><span class="p">;</span>
+        <span class="k">switch</span> <span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">case</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="o">*</span><span class="n">k</span> <span class="o">=</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">;</span>
+                <span class="o">*</span><span class="n">v</span> <span class="o">=</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">it</span><span class="o">-&gt;</span><span class="n">stack</span><span class="p">[</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">nstack</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">;</span>
+                    <span class="n">it</span><span class="o">-&gt;</span><span class="n">state</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="mi">3ull</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">shift</span> <span class="o">+</span> <span class="mi">2</span><span class="p">));</span>
+                <span class="p">}</span>
+                <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="k">case</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">it</span><span class="o">-&gt;</span><span class="n">stack</span><span class="p">[</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">nstack</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">;</span>
+                    <span class="n">it</span><span class="o">-&gt;</span><span class="n">state</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="mi">3ull</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">shift</span> <span class="o">+</span> <span class="mi">2</span><span class="p">));</span>
+                <span class="p">}</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="n">it</span><span class="o">-&gt;</span><span class="n">nstack</span><span class="o">--</span><span class="p">;</span>
+                <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">it</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Wouldn’t it be nice to keep both the recursive definition while also
+getting an iterator? There’s an exact solution to that: coroutines.</p>
+
+<h4 id="coroutines">Coroutines</h4>
+
+<p>C doesn’t come with coroutines, but there are a number of libraries
+available. We can also build our own coroutines. One way to do that is
+with <em>user contexts</em> (<code class="highlighter-rouge">&lt;ucontext.h&gt;</code>) provided by the X/Open System
+Interfaces Extension (XSI), an extension to POSIX. This set of
+functions allow programs to create their own call stacks and switch
+between them. That’s the key ingredient for coroutines. Caveat: These
+functions aren’t widely available, and probably shouldn’t be used in
+new code.</p>
+
+<p>Here’s my iterator structure definition.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="cp">#define _XOPEN_SOURCE 600
+#include &lt;ucontext.h&gt;
+</span>
+<span class="k">struct</span> <span class="n">tree_it</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">k</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">v</span><span class="p">;</span>
+    <span class="n">ucontext_t</span> <span class="n">coroutine</span><span class="p">;</span>
+    <span class="n">ucontext_t</span> <span class="n">yield</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre>
+</div>
+
+<p>It needs one context for the original stack and one context for the
+iterator’s stack. Each time the iterator is invoked, it the program
+will switch to the other stack, find the next value, then switch back.
+This process is called <em>yielding</em>. Values are passed between context
+using the <code class="highlighter-rouge">k</code> (key) and <code class="highlighter-rouge">v</code> (value) fields on the iterator.</p>
+
+<p>Before I get into initialization, here’s the actual traversal
+coroutine. It’s nearly the same as the original recursive definition
+except for the <code class="highlighter-rouge">swapcontext()</code>. This is the <em>yield</em>, pausing execution
+and sending control back to the caller. The current context is saved
+in the first argument, and the second argument becomes the current
+context.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">static</span> <span class="kt">void</span>
+<span class="nf">coroutine</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">t</span><span class="p">,</span> <span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span> <span class="o">=</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">;</span>
+        <span class="n">it</span><span class="o">-&gt;</span><span class="n">v</span> <span class="o">=</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">;</span>
+        <span class="n">swapcontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">coroutine</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">yield</span><span class="p">);</span>
+        <span class="n">coroutine</span><span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">,</span> <span class="n">it</span><span class="p">);</span>
+        <span class="n">coroutine</span><span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">,</span> <span class="n">it</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>While the actual traversal is simple again, initialization is more
+complicated. The first problem is that there’s no way to pass pointer
+arguments to the coroutine. Technically only <code class="highlighter-rouge">int</code> arguments are
+permitted. (All the online tutorials get this wrong.) To work around
+this problem, I smuggle the arguments in as global variables. This
+would cause problems should two different threads try to create
+iterators at the same time, even on different trees.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">static</span> <span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">tree_arg</span><span class="p">;</span>
+<span class="k">static</span> <span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">tree_it_arg</span><span class="p">;</span>
+
+<span class="k">static</span> <span class="kt">void</span>
+<span class="nf">coroutine_init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">coroutine</span><span class="p">(</span><span class="n">tree_arg</span><span class="p">,</span> <span class="n">tree_it_arg</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>The stack has to be allocated manually, which I do with a call to
+<code class="highlighter-rouge">malloc()</code>. Nothing <a href="/blog/2015/05/15/">fancy is needed</a>, though this means the new
+stack won’t have a guard page. For the stack size, I use the suggested
+value of <code class="highlighter-rouge">SIGSTKSZ</code>. The <code class="highlighter-rouge">makecontext()</code> function is what creates the
+new context from scratch, but the new context must first be
+initialized with <code class="highlighter-rouge">getcontext()</code>, even though that particular snapshot
+won’t actually be used.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span>
+<span class="nf">tree_iterator</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">t</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">it</span><span class="p">));</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">coroutine</span><span class="p">.</span><span class="n">uc_stack</span><span class="p">.</span><span class="n">ss_sp</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">SIGSTKSZ</span><span class="p">);</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">coroutine</span><span class="p">.</span><span class="n">uc_stack</span><span class="p">.</span><span class="n">ss_size</span> <span class="o">=</span> <span class="n">SIGSTKSZ</span><span class="p">;</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">coroutine</span><span class="p">.</span><span class="n">uc_link</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">yield</span><span class="p">;</span>
+    <span class="n">getcontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">coroutine</span><span class="p">);</span>
+    <span class="n">makecontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">coroutine</span><span class="p">,</span> <span class="n">coroutine_init</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">tree_arg</span> <span class="o">=</span> <span class="n">t</span><span class="p">;</span>
+    <span class="n">tree_it_arg</span> <span class="o">=</span> <span class="n">it</span><span class="p">;</span>
+    <span class="k">return</span> <span class="n">it</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Notice I gave it a function pointer, a lot like I’m starting a new
+thread. This is no coincidence. There’s a lot of similarity between
+coroutines and multiple threads, as you’ll soon see.</p>
+
+<p>Finally the iterator function itself. Since NULL isn’t a valid key, it
+initializes the key to NULL before yielding to the iterator context.
+If the iterator has no more nodes to visit, it doesn’t set the key,
+which can be detected when control returns.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span>
+<span class="nf">tree_next</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">k</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">v</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">swapcontext</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">yield</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">coroutine</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+        <span class="o">*</span><span class="n">k</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span><span class="p">;</span>
+        <span class="o">*</span><span class="n">v</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">v</span><span class="p">;</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">free</span><span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">coroutine</span><span class="p">.</span><span class="n">uc_stack</span><span class="p">.</span><span class="n">ss_sp</span><span class="p">);</span>
+        <span class="n">free</span><span class="p">(</span><span class="n">it</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>That’s all it takes to create and operate a coroutine in C, provided
+you’re on a system with these XSI extensions.</p>
+
+<h4 id="semaphores">Semaphores</h4>
+
+<p>Instead of a coroutine, we could just use actual threads and a couple
+of semaphores to synchronize them. This is a heavy implementation and
+also probably shouldn’t be used in practice, but at least it’s fully
+portable.</p>
+
+<p>Here’s the structure definition:</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">tree_it</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">t</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">k</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">v</span><span class="p">;</span>
+    <span class="n">sem_t</span> <span class="n">visitor</span><span class="p">;</span>
+    <span class="n">sem_t</span> <span class="n">main</span><span class="p">;</span>
+    <span class="n">pthread_t</span> <span class="kr">thread</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre>
+</div>
+
+<p>The main thread will wait on one semaphore and the iterator thread
+will wait on the other. This <a href="/blog/2017/02/14/">should sound very familiar</a>.</p>
+
+<p>The actual traversal function looks the same, but with <code class="highlighter-rouge">sem_post()</code>
+and <code class="highlighter-rouge">sem_wait()</code> as the yield.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">static</span> <span class="kt">void</span>
+<span class="nf">visit</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">t</span><span class="p">,</span> <span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span> <span class="o">=</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">;</span>
+        <span class="n">it</span><span class="o">-&gt;</span><span class="n">v</span> <span class="o">=</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">;</span>
+        <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">main</span><span class="p">);</span>
+        <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">visitor</span><span class="p">);</span>
+        <span class="n">visit</span><span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">,</span> <span class="n">it</span><span class="p">);</span>
+        <span class="n">visit</span><span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">,</span> <span class="n">it</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>There’s a separate function to initialize the iterator context again.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">static</span> <span class="kt">void</span> <span class="o">*</span>
+<span class="nf">thread_entrance</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span> <span class="o">=</span> <span class="n">arg</span><span class="p">;</span>
+    <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">visitor</span><span class="p">);</span>
+    <span class="n">visit</span><span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">t</span><span class="p">,</span> <span class="n">it</span><span class="p">);</span>
+    <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">main</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Creating the iterator only requires initializing the semaphores and
+creating the thread:</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span>
+<span class="nf">tree_iterator</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">t</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">it</span><span class="p">));</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">t</span> <span class="o">=</span> <span class="n">t</span><span class="p">;</span>
+    <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">visitor</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">sem_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">main</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+    <span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="kr">thread</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">thread_entrance</span><span class="p">,</span> <span class="n">it</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">it</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>The iterator function looks just like the coroutine version.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span>
+<span class="nf">tree_next</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">k</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">v</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">sem_post</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">visitor</span><span class="p">);</span>
+    <span class="n">sem_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">main</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+        <span class="o">*</span><span class="n">k</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span><span class="p">;</span>
+        <span class="o">*</span><span class="n">v</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">v</span><span class="p">;</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">pthread_join</span><span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="kr">thread</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+        <span class="n">sem_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">main</span><span class="p">);</span>
+        <span class="n">sem_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">visitor</span><span class="p">);</span>
+        <span class="n">free</span><span class="p">(</span><span class="n">it</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Overall, this is almost identical to the coroutine version.</p>
+
+<h4 id="coroutines-using-stack-clashing">Coroutines using stack clashing</h4>
+
+<p>Finally I can tie this back into the topic at hand. Without either XSI
+extensions or Pthreads, we can (usually) create coroutines by abusing
+<code class="highlighter-rouge">setjmp()</code> and <code class="highlighter-rouge">longjmp()</code>. Technically this violates two of the C’s
+rules and relies on undefined behavior, but it generally works. This
+<a href="http://fanf.livejournal.com/105413.html">is not my own invention</a>, and it dates back to at least 2010.</p>
+
+<p>From the very beginning, C has provided a crude “exception” mechanism
+that allows the stack to be abruptly unwound back to a previous state.
+It’s a sort of non-local goto. Call <code class="highlighter-rouge">setjmp()</code> to capture an opaque
+<code class="highlighter-rouge">jmp_buf</code> object to be used in the future. This function returns 0
+this first time. Hand that value to <code class="highlighter-rouge">longjmp()</code> later, even in a
+different function, and <code class="highlighter-rouge">setjmp()</code> will return again, this time with a
+non-zero value.</p>
+
+<p>It’s technically unsuitable for coroutines because the jump is a
+one-way trip. The unwound stack invalidates any <code class="highlighter-rouge">jmp_buf</code> that was
+created after the target of the jump. In practice, though, you can
+still use these jumps, which is one rule being broken.</p>
+
+<p>That’s where stack clashing comes into play. In order for it to be a
+proper coroutine, it needs to have its own stack. But how can we do
+that with these primitive C utilities? <strong>Extend the stack to overlap
+the heap, call <code class="highlighter-rouge">setjmp()</code> to capture a coroutine on it, then return.</strong>
+Generally we can get away with using <code class="highlighter-rouge">longjmp()</code> to return to this
+heap-allocated stack.</p>
+
+<p>Here’s my iterator definition for this one. Like the XSI context
+struct, this has two <code class="highlighter-rouge">jmp_buf</code> “contexts.” The <code class="highlighter-rouge">stack</code> holds the
+iterator’s stack buffer so that it can be freed, and the <code class="highlighter-rouge">gap</code> field
+will be used to prevent the optimizer from spoiling our plans.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">tree_it</span> <span class="p">{</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">k</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">v</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="o">*</span><span class="n">stack</span><span class="p">;</span>
+    <span class="k">volatile</span> <span class="kt">char</span> <span class="o">*</span><span class="n">gap</span><span class="p">;</span>
+    <span class="kt">jmp_buf</span> <span class="n">coroutine</span><span class="p">;</span>
+    <span class="kt">jmp_buf</span> <span class="n">yield</span><span class="p">;</span>
+<span class="p">};</span>
+</code></pre>
+</div>
+
+<p>The coroutine looks familiar again. This time the yield is performed
+with <code class="highlighter-rouge">setjmmp()</code> and <code class="highlighter-rouge">longjmp()</code>, just like <code class="highlighter-rouge">swapcontext()</code>. Remember
+that <code class="highlighter-rouge">setjmp()</code> returns twice, hence the branch. The <code class="highlighter-rouge">longjmp()</code> never
+returns.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">static</span> <span class="kt">void</span>
+<span class="nf">coroutine</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">t</span><span class="p">,</span> <span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span> <span class="o">=</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">;</span>
+        <span class="n">it</span><span class="o">-&gt;</span><span class="n">v</span> <span class="o">=</span> <span class="n">t</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">setjmp</span><span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">coroutine</span><span class="p">))</span>
+            <span class="n">longjmp</span><span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">yield</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+        <span class="n">coroutine</span><span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">,</span> <span class="n">it</span><span class="p">);</span>
+        <span class="n">coroutine</span><span class="p">(</span><span class="n">t</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">,</span> <span class="n">it</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>Next is the tricky part to cause the stack clash. First, allocate the
+new stack with <code class="highlighter-rouge">malloc()</code> so that we can get its address. Then use a
+local variable on the stack to determine how much the stack needs to
+grow in order to overlap with the allocation. Taking the difference
+between these pointers is illegal as far as the language is concerned,
+making this the second rule I’m breaking. I can <a href="/blog/2017/05/03/">imagine an
+implementation</a> where the stack and heap are in two separate
+kinds of memory, and it would be meaningless to take the difference. I
+don’t actually have to imagine very hard, because this is actually how
+it used to work on the 8086 with its <a href="https://en.wikipedia.org/wiki/X86_memory_segmentation">segmented memory
+architecture</a>.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span>
+<span class="nf">tree_iterator</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree</span> <span class="o">*</span><span class="n">t</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">it</span><span class="p">));</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">stack</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">STACK_SIZE</span><span class="p">);</span>
+    <span class="kt">char</span> <span class="n">marker</span><span class="p">;</span>
+    <span class="kt">char</span> <span class="n">gap</span><span class="p">[</span><span class="o">&amp;</span><span class="n">marker</span> <span class="o">-</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">stack</span> <span class="o">-</span> <span class="n">STACK_SIZE</span><span class="p">];</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">gap</span> <span class="o">=</span> <span class="n">gap</span><span class="p">;</span> <span class="c1">// prevent optimization
+</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">setjmp</span><span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">yield</span><span class="p">))</span>
+        <span class="n">coroutine_init</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">it</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">it</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>I’m using a variable-length array (VLA) named <code class="highlighter-rouge">gap</code> to indirectly
+control the stack pointer, moving it over the heap. I’m assuming the
+stack grows downward, since otherwise the sign would be wrong.</p>
+
+<p>The compiler is smart and will notice I’m not actually using <code class="highlighter-rouge">gap</code>,
+and it’s happy to throw it away. In fact, it’s vitally important that
+I <em>don’t</em> touch it since the guard page, along with a bunch of
+unmapped memory, is actually somewhere in the middle of that array. I
+only want the array for its side effect, but that side effect isn’t
+officially supported, which means the optimizer doesn’t need to
+consider it in its decisions. To inhibit the optimizer, I store the
+array’s address where someone might potentially look at it, meaning
+the array has to exist.</p>
+
+<p>Finally, the iterator function looks just like the others, again.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">int</span>
+<span class="nf">tree_next</span><span class="p">(</span><span class="k">struct</span> <span class="n">tree_it</span> <span class="o">*</span><span class="n">it</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">k</span><span class="p">,</span> <span class="kt">char</span> <span class="o">**</span><span class="n">v</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">setjmp</span><span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">yield</span><span class="p">))</span>
+        <span class="n">longjmp</span><span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">coroutine</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+        <span class="o">*</span><span class="n">k</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">k</span><span class="p">;</span>
+        <span class="o">*</span><span class="n">v</span> <span class="o">=</span> <span class="n">it</span><span class="o">-&gt;</span><span class="n">v</span><span class="p">;</span>
+        <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">free</span><span class="p">(</span><span class="n">it</span><span class="o">-&gt;</span><span class="n">stack</span><span class="p">);</span>
+        <span class="n">free</span><span class="p">(</span><span class="n">it</span><span class="p">);</span>
+        <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>And that’s it: a nasty hack using a stack clash to create a context
+for a <code class="highlighter-rouge">setjmp()</code>+<code class="highlighter-rouge">longjmp()</code> coroutine.</p>
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title>Building and Installing Software in $HOME</title>
+    <link rel="alternate" type="text/html" href="http://nullprogram.com/blog/2017/06/19/"/>
+    <id>urn:uuid:ae490550-a3b8-3b8f-4338-c2aba7306c8f</id>
+    <updated>2017-06-19T02:34:39Z</updated>
+    <category term="linux"/><category term="tutorial"/><category term="debian"/><category term="c"/><category term="cpp"/>
+    <content type="html">
+      <![CDATA[<p>For more than 5 years now I’ve kept a private “root” filesystem within
+my home directory under <code class="highlighter-rouge">$HOME/.local/</code>. Within are the standard
+<code class="highlighter-rouge">/usr</code> directories, such as <code class="highlighter-rouge">bin/</code>, <code class="highlighter-rouge">include/</code>, <code class="highlighter-rouge">lib/</code>, etc.,
+containing my own software, libraries, and man pages. These are
+first-class citizens, indistinguishable from the system-installed
+programs and libraries. With one exception (setuid programs), none of
+this requires root privileges.</p>
+
+<p>Installing software in $HOME serves two important purposes, both of
+which are indispensable to me on a regular basis.</p>
+
+<ul>
+  <li><strong>No root access</strong>: Sometimes I’m using a system administered by
+someone else, and I don’t have root access.</li>
+</ul>
+
+<p>This prevents me from installing packaged software myself through the
+system’s package manager. Building and installing the software myself in
+my home directory, without involvement from the system administrator,
+neatly works around this issue. As a software developer, it’s already
+perfectly normal for me to build and run custom software, and this is
+just an extension of that behavior.</p>
+
+<p>In the most desperate situation, all I need from the sysadmin is a
+decent C compiler and at least a minimal POSIX environment. I can
+<a href="/blog/2016/11/17/">bootstrap anything I might need</a>, both libraries and
+programs, including a better C compiler along the way. This is one
+major strength of open source software.</p>
+
+<p>I have noticed one alarming trend: Both GCC (since 4.8) and Clang are
+written in C++, so it’s becoming less and less reasonable to bootstrap
+a C++ compiler from a C compiler, or even from a C++ compiler that’s
+more than a few years old. So you may also need your sysadmin to
+supply a fairly recent C++ compiler if you want to bootstrap an
+environment that includes C++. I’ve had to avoid some C++ software
+(such as CMake) for this reason.</p>
+
+<ul>
+  <li><strong>Custom software builds</strong>: Even if I <em>am</em> root, I may still want to
+install software not available through the package manager, a version
+not available in the package manager, or a version with custom
+patches.</li>
+</ul>
+
+<p>In theory this is what <code class="highlighter-rouge">/usr/local</code> is all about. It’s typically the
+location for software not managed by the system’s package manager.
+However, I think it’s cleaner to put this in <code class="highlighter-rouge">$HOME/.local</code>, so long
+as other system users don’t need it.</p>
+
+<p>For example, I have an installation of each version of Emacs between
+24.3 (the oldest version worth supporting) through the latest stable
+release, each suffixed with its version number, under <code class="highlighter-rouge">$HOME/.local</code>.
+This is useful for quickly running a test suite under different
+releases.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ git clone https://github.com/skeeto/elfeed
+$ cd elfeed/
+$ make EMACS=emacs24.3 clean test
+...
+$ make EMACS=emacs25.2 clean test
+...
+</code></pre>
+</div>
+
+<p>Another example is NetHack, which I prefer to play with a couple of
+custom patches (<a href="https://bilious.alt.org/?11">Menucolors</a>, <a href="https://gist.github.com/skeeto/11fed852dbfe9889a5fce80e9f6576ac">wchar</a>). The install to
+<code class="highlighter-rouge">$HOME/.local</code> <a href="https://gist.github.com/skeeto/5cb9d5e774ce62655aff3507cb806981">is also captured as a patch</a>.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ tar xzf nethack-343-src.tar.gz
+$ cd nethack-3.4.3/
+$ patch -p1 &lt; ~/nh343-menucolor.diff
+$ patch -p1 &lt; ~/nh343-wchar.diff
+$ patch -p1 &lt; ~/nh343-home-install.diff
+$ sh sys/unix/setup.sh
+$ make -j$(nproc) install
+</code></pre>
+</div>
+
+<p>Normally NetHack wants to be setuid (e.g. run as the “games” user) in
+order to restrict access to high scores, saves, and bones — saved levels
+where a player died, to be inserted randomly into other players’ games.
+This prevents cheating, but requires root to set up. Fortunately, when I
+install NetHack in my home directory, this isn’t a feature I actually
+care about, so I can ignore it.</p>
+
+<p><a href="/blog/2017/06/15/">Mutt</a> is in a similar situation, since it wants to install a
+special setgid program (<code class="highlighter-rouge">mutt_dotlock</code>) that synchronizes mailbox
+access. All MUAs need something like this.</p>
+
+<p>Everything described below is relevant to basically any modern
+unix-like system: Linux, BSD, etc. I personally install software in
+$HOME across a variety of systems and, fortunately, it mostly works
+the same way everywhere. This is probably in large part due to
+everyone standardizing around the GCC and GNU binutils interfaces,
+even if the system compiler is actually LLVM/Clang.</p>
+
+<h3 id="configuring-for-home-installs">Configuring for $HOME installs</h3>
+
+<p>Out of the box, installing things in <code class="highlighter-rouge">$HOME/.local</code> won’t do anything
+useful. You need to set up some environment variables in your shell
+configuration (i.e. <code class="highlighter-rouge">.profile</code>, <code class="highlighter-rouge">.bashrc</code>, etc.) to tell various
+programs, such as your shell, about it. The most obvious variable is
+$PATH:</p>
+
+<div class="language-sh highlighter-rouge"><pre class="highlight"><code><span class="nb">export </span><span class="nv">PATH</span><span class="o">=</span><span class="nv">$HOME</span>/.local/bin:<span class="nv">$PATH</span>
+</code></pre>
+</div>
+
+<p>Notice I put it in the front of the list. This is because I want my
+home directory programs to override system programs with the same
+name. For what other reason would I install a program with the same
+name if not to override the system program?</p>
+
+<p>In the simplest situation this is good enough, but in practice you’ll
+probably need to set a few more things. If you install libraries in
+your home directory and expect to use them just as if they were
+installed on the system, you’ll need to tell the compiler where else
+to look for those headers and libraries, both for C and C++.</p>
+
+<div class="language-sh highlighter-rouge"><pre class="highlight"><code><span class="nb">export </span><span class="nv">C_INCLUDE_PATH</span><span class="o">=</span><span class="nv">$HOME</span>/.local/include
+<span class="nb">export </span><span class="nv">CPLUS_INCLUDE_PATH</span><span class="o">=</span><span class="nv">$HOME</span>/.local/include
+<span class="nb">export </span><span class="nv">LIBRARY_PATH</span><span class="o">=</span><span class="nv">$HOME</span>/.local/lib
+</code></pre>
+</div>
+
+<p>This is like the <code class="highlighter-rouge">-I</code> compiler option and the <code class="highlighter-rouge">-L</code> linker option,
+except you won’t need to use them explicitly. Some software uses
+<code class="highlighter-rouge">pkg-config</code> to determine its compiler and linker flags, and your home
+directory will contain some of the needed information. So set that up
+too:</p>
+
+<div class="language-sh highlighter-rouge"><pre class="highlight"><code><span class="nb">export </span><span class="nv">PKG_CONFIG_PATH</span><span class="o">=</span><span class="nv">$HOME</span>/.local/lib/pkgconfig
+</code></pre>
+</div>
+
+<h4 id="run-time-linker">Run-time linker</h4>
+
+<p>Finally, when you install libraries in your home directory, the run-time
+dynamic linker will need to know where to find them. There are three
+ways to deal with this:</p>
+
+<ol>
+  <li>The <a href="https://web.archive.org/web/20090312014334/http://blogs.sun.com/rie/entry/tt_ld_library_path_tt">crude, easy way</a>: <code class="highlighter-rouge">LD_LIBRARY_PATH</code>.</li>
+  <li>The elegant, difficult way: ELF runpath.</li>
+  <li>Screw it, just statically link the bugger. (Not always possible.)</li>
+</ol>
+
+<p>For the crude way, point the run-time linker at your <code class="highlighter-rouge">lib/</code> and you’re
+done:</p>
+
+<div class="language-sh highlighter-rouge"><pre class="highlight"><code><span class="nb">export </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="nv">$HOME</span>/.local/lib
+</code></pre>
+</div>
+
+<p>However, this is like using a shotgun to kill a fly. If you install a
+library in your home directory that is also installed on the system,
+and then run a system program, it may be linked against <em>your</em> library
+rather than the library installed on the system as was originally
+intended. This could have detrimental effects.</p>
+
+<p>The precision method is to set the ELF “runpath” value. It’s like a
+per-binary <code class="highlighter-rouge">LD_LIBRARY_PATH</code>. The run-time linker uses this path first
+in its search for libraries, and it will only have an effect on that
+particular program/library. This also applies to <code class="highlighter-rouge">dlopen()</code>.</p>
+
+<p>Some software will configure the runpath by default, but usually you
+need to configure this yourself with the linker <code class="highlighter-rouge">-rpath</code> option in
+<code class="highlighter-rouge">LDFLAGS</code>. It’s used directly like this:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ gcc -Wl,-rpath=$HOME/.local/lib -o foo bar.o baz.o -lquux
+</code></pre>
+</div>
+
+<p>Verify with <code class="highlighter-rouge">readelf</code>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ readelf -d foo | grep runpath
+Library runpath: [/home/username/.local/lib]
+</code></pre>
+</div>
+
+<p>ELF supports a special <code class="highlighter-rouge">$ORIGIN</code> “variable” set to the binary’s
+location. This allows the program and associated libraries to be
+installed anywhere without changes, so long as they have the same
+relative position to each other . (Note the quotes to prevent shell
+interpolation.)</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ gcc -Wl,-rpath='$ORIGIN/../lib' -o foo bar.o baz.o -lquux
+</code></pre>
+</div>
+
+<p>There is one situation where <code class="highlighter-rouge">runpath</code> won’t work: when you want a
+system-installed program to find a home directory library with
+<code class="highlighter-rouge">dlopen()</code> — e.g. as an extension to that program. You either need to
+ensure it uses a relative or absolute path (i.e. the argument to
+<code class="highlighter-rouge">dlopen()</code> contains a slash) or you must use <code class="highlighter-rouge">LD_LIBRARY_PATH</code>.</p>
+
+<p>Personally, I always use the <a href="https://www.jwz.org/doc/worse-is-better.html">Worse is Better</a> <code class="highlighter-rouge">LD_LIBRARY_PATH</code>
+shotgun. Occasionally it’s caused some annoying issues, but the vast
+majority of the time it gets the job done with little fuss. This is
+just my personal development environment, after all, not a production
+server.</p>
+
+<h4 id="manual-pages">Manual pages</h4>
+
+<p>Another potentially tricky issue is man pages. When a program or
+library installs a man page in your home directory, it would certainly
+be nice to access it with <code class="highlighter-rouge">man &lt;topic&gt;</code> just like it was installed on
+the system. Fortunately, Debian and Debian-derived systems, using a
+mechanism I haven’t yet figured out, discover home directory man pages
+automatically without any assistance. No configuration needed.</p>
+
+<p>It’s more complicated on other systems, such as the BSDs. You’ll need to
+set the <code class="highlighter-rouge">MANPATH</code> variable to include <code class="highlighter-rouge">$HOME/.local/share/man</code>. It’s
+unset by default and it overrides the system settings, which means you
+need to manually include the system paths. The <code class="highlighter-rouge">manpath</code> program can
+help with this … if it’s available.</p>
+
+<div class="language-sh highlighter-rouge"><pre class="highlight"><code><span class="nb">export </span><span class="nv">MANPATH</span><span class="o">=</span><span class="nv">$HOME</span>/.local/share/man:<span class="k">$(</span>manpath<span class="k">)</span>
+</code></pre>
+</div>
+
+<p>I haven’t figured out a portable way to deal with this issue, so I
+mostly ignore it.</p>
+
+<h3 id="how-to-install-software-in-home">How to install software in $HOME</h3>
+
+<p>While I’ve <a href="/blog/2017/03/30/">poo-pooed autoconf</a> in the past, the standard
+<code class="highlighter-rouge">configure</code> script usually makes it trivial to build and install
+software in $HOME. The key ingredient is the <code class="highlighter-rouge">--prefix</code> option:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ tar xzf name-version.tar.gz
+$ cd name-version/
+$ ./configure --prefix=$HOME/.local
+$ make -j$(nproc)
+$ make install
+</code></pre>
+</div>
+
+<p>Most of the time it’s that simple! If you’re linking against your own
+libraries and want to use <code class="highlighter-rouge">runpath</code>, it’s a little more complicated:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ ./configure --prefix=$HOME/.local \
+              LDFLAGS="-Wl,-rpath=$HOME/.local/lib"
+</code></pre>
+</div>
+
+<p>For <a href="https://cmake.org/">CMake</a>, there’s <code class="highlighter-rouge">CMAKE_INSTALL_PREFIX</code>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ cmake -DCMAKE_INSTALL_PREFIX=$HOME/.local ..
+</code></pre>
+</div>
+
+<p>The CMake builds I’ve seen use ELF runpath by default, and no further
+configuration may be required to make that work. I’m sure that’s not
+always the case, though.</p>
+
+<p>Some software is just a single, static, standalone binary with
+<a href="/blog/2016/11/15/">everything baked in</a>. It doesn’t need to be given a prefix, and
+installation is as simple as copying the binary into place. For example,
+<a href="https://github.com/skeeto/enchive">Enchive</a> works like this:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ git clone https://github.com/skeeto/enchive
+$ cd enchive/
+$ make
+$ cp enchive ~/.local/bin
+</code></pre>
+</div>
+
+<p>Some software uses its own unique configuration interface. I can respect
+that, but it does add some friction for users who now have something
+additional and non-transferable to learn. I demonstrated a NetHack build
+above, which has a configuration much more involved than it really
+should be. Another example is LuaJIT, which uses <code class="highlighter-rouge">make</code> variables that
+must be provided consistently on every invocation:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ tar xzf LuaJIT-2.0.5.tar.gz
+$ cd LuaJIT-2.0.5/
+$ make -j$(nproc) PREFIX=$HOME/.local
+$ make PREFIX=$HOME/.local install
+</code></pre>
+</div>
+
+<p>(You <em>can</em> use the “install” target to both build and install, but I
+wanted to illustrate the repetition of <code class="highlighter-rouge">PREFIX</code>.)</p>
+
+<p>Some libraries aren’t so smart about <code class="highlighter-rouge">pkg-config</code> and need some
+handholding — for example, <a href="https://www.gnu.org/software/ncurses/">ncurses</a>. I mention it because
+it’s required for both Vim and Emacs, among many others, so I’m often
+building it myself. It ignores <code class="highlighter-rouge">--prefix</code> and needs to be told a
+second time where to install things:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ ./configure --prefix=$HOME/.local \
+              --enable-pc-files \
+              --with-pkg-config-libdir=$PKG_CONFIG_PATH
+</code></pre>
+</div>
+
+<p>Another issue is that a whole lot of software has been hardcoded for
+ncurses 5.x (i.e. <code class="highlighter-rouge">ncurses5-config</code>), and it requires hacks/patching
+to make it behave properly with ncurses 6.x. I’ve avoided ncurses 6.x
+for this reason.</p>
+
+<h3 id="learning-through-experience">Learning through experience</h3>
+
+<p>I could go on and on like this, discussing the quirks for the various
+libraries and programs that I use. Over the years I’ve gotten used to
+many of these issues, committing the solutions to memory.
+Unfortunately, even within the same version of a piece of software,
+the quirks can change <a href="https://www.debian.org/News/2017/20170617.en.html">between major operating system
+releases</a>, so I’m continuously learning my way around new
+issues. It’s really given me an appreciation for all the hard work
+that package maintainers put into customizing and maintaining software
+builds to <a href="https://www.debian.org/doc/manuals/maint-guide/">fit properly into a larger ecosystem</a>.</p>
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title>Switching to the Mutt Email Client</title>
+    <link rel="alternate" type="text/html" href="http://nullprogram.com/blog/2017/06/15/"/>
+    <id>urn:uuid:ef3edda3-ddaa-37cd-6bfc-fc9d13cd3414</id>
+    <updated>2017-06-15T21:55:01Z</updated>
+    <category term="vim"/><category term="debian"/>
+    <content type="html">
+      <![CDATA[<p><em>Note: The way I manage my email wouldn’t really work for most people,
+so don’t read this as a recommendation. This is just a discussion of
+how I prefer to use email.</em></p>
+
+<p>It was almost four years ago I switched from webmail to a customized
+email configuration <a href="/blog/2013/09/03/">based on Notmuch and Emacs</a>. Notmuch served
+as both as a native back-end that provided indexing and tagging, as well
+as a front-end, written in Emacs Lisp. It dramatically improved my email
+experience, and I wished I had done it earlier. I’ve really enjoyed
+having so much direct control over my email.</p>
+
+<p>However, I’m always fiddling with things — fiddling feels a lot more
+productive than it actually is — and last month I re-invented my email
+situation, this time switching to a combination of <a href="http://www.mutt.org/">Mutt</a>,
+<a href="http://www.vim.org/">Vim</a>, <a href="https://www.djcbsoftware.nl/code/mu/">mu</a>, and <a href="https://tmux.github.io/">tmux</a>. The entirety of my email
+interface now resides inside a terminal, and I’m enjoying it even more.
+I feel I’ve “leveled up” again in my email habits.</p>
+
+<p><a href="/img/screenshot/mutt.png"><img src="/img/screenshot/mutt-thumb.png" alt="" /></a></p>
+
+<p>On the server-side I also switched from Exim to Postfix and procmail,
+making the server configuration a whole lot simpler. Including
+SpamAssassin, it’s just three lines added to the default Debian
+configuration. It leaves a lot less room for error, and I could rebuild
+it from scratch with little trouble if there was an emergency. My
+previous configuration required quite a bit of system configuration,
+such as relying on <a href="http://inotify.aiken.cz/?section=incron&amp;page=about">incron</a> to sort incoming mail, particularly
+spam, but procmail now does this job more cleanly.</p>
+
+<h3 id="towards-robustness">Towards Robustness</h3>
+
+<p>Over the years I’ve gotten less patient when it comes to <a href="https://www.youtube.com/watch?v=oyLBGkS5ICk">dealing with
+breaking changes</a> in software, and I’ve gotten more conservative
+about system stability. Continuously updating my configurations and
+habits to the latest software changes was an interesting challenge
+earlier in my career, but today there are much better uses of my time.
+Debian Stable, my preferred operating system, runs at pretty much the
+perfect pace for me.</p>
+
+<p>Following these changing preferences, one of the biggest motivations for
+my recent email change was to make my email setup more robust and
+stable. Until now, email was tied tightly to Emacs, with a configuration
+drawing directly from <a href="https://melpa.org/">MELPA</a>, pulling in the bleeding edge
+version of every package I use. Breaking changes arrive at unexpected
+times, and occasionally the current version of a package temporarily
+doesn’t work. Usually it’s because the developer pushed a bad commit
+right before the latest MELPA build, and so the package is broken for a
+few hours or days. I’ve been <a href="https://github.com/skeeto/elfeed/issues/202">guilty of this myself</a>. MELPA
+Stable is intended to address these issues, but it seems to break more
+often than normal MELPA. For example, at the time of this writing,
+<a href="https://github.com/emacs-evil/evil">Evil</a> is not installable via MELPA Stable due to an unmet
+dependency.</p>
+
+<p>Tying something as vital as email to this Rube Goldberg machine made me
+nervous. Access to my email depended on a number of independent systems
+of various levels of stability to mostly work correctly. My switch to
+Mutt cut this down to just a couple of very stable systems.</p>
+
+<h3 id="formatflowed">format=flowed</h3>
+
+<p>I’ve long believed HTML email is an abomination that should never have
+been invented. Text is the ideal format for email, and there are a
+number of specifications to make it work well across different systems.
+One of those standards is <a href="https://tools.ietf.org/html/rfc3676">RFC 3676</a>, colloquially named
+<a href="https://joeclark.org/ffaq.html">format=flowed</a>, or just f=f.</p>
+
+<p>Messages encoded with f=f allow mail clients to safely reflow the
+paragraphs to nicely fit the user’s display, whether that display be
+thinner or wider than the sender’s original message. It’s also
+completely compatible with mail clients that don’t understand
+format=flowed, which will display the message as the sender originally
+wrapped it.</p>
+
+<p>The gist of f=f is that messages can have both “soft” and “hard” line
+breaks. If a line ends with a space, then it’s a soft line break. The
+mail client can safely reflow lines separated by a soft line break.
+Without the trailing space, it’s a hard line break, which prohibits
+flowing with the next line. The last line of a paragraph ends with a
+hard line break. It’s also used for text that shouldn’t reflow, such as
+code samples.</p>
+
+<p>I’ll illustrate using an underscore in place of a space, so that you can
+see it:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>This is a message in the format=flowed style, allowing_
+mail clients to flow this message nicely in displays of_
+different widths.
+
+&gt; This is an example of a quote block in a message,_
+&gt; which is supported by the format=flowed specification.
+&gt;&gt; It also supports nested quote blocks, which means_
+&gt;&gt; this paragraph won't flow into the previous.
+</code></pre>
+</div>
+
+<p>The RFC covers edge cases that require special “space-stuffing” rules,
+but, when editing a text email in an editor, you only need to think
+about soft and hard line breaks. In my case, Mutt takes care of the rest
+of the details.</p>
+
+<p>Unfortunately <a href="https://www.emacswiki.org/emacs/GnusFormatFlowed">Emacs’s lacks decent support for f=f</a>, though
+I’m sure a minor mode could be written to make it work well. On the
+other hand, Vim has been <a href="/blog/2017/04/01/">playing an increasing role in my day-to-day
+editing</a>, and it has excellent built-in support for f=f. Since I’m
+now using Vim to compose all of my email, I get it for free.</p>
+
+<p>First, I tell Mutt that I want to use f=f in my <code class="highlighter-rouge">.muttrc</code>:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>set text_flowed
+</code></pre>
+</div>
+
+<p>Then in Vim, I add the <code class="highlighter-rouge">w</code> flag to <code class="highlighter-rouge">formatoptions</code>, which tells it to
+wrap paragraphs using soft line breaks.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>set fo+=w
+</code></pre>
+</div>
+
+<p>If I want to inspect my f=f formatting, I temporarily enable the <code class="highlighter-rouge">list</code>
+option, which displays a <code class="highlighter-rouge">$</code> for all newlines.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>set list
+</code></pre>
+</div>
+
+<p>Although few people would notice a difference, I feel a little bad for
+<em>not</em> using f=f all these years! A few people may have endured some
+ugly, non-flowing emails from me. My only condolance is that at least it
+wasn’t HTML.</p>
+
+<p>It’s not all roses, though. When I reply to a message, Mutt doesn’t
+insert the quoted text as f=f into my reply, so I have to massage it
+into f=f myself. Also, just as GitHub doesn’t support Markdown in email
+responses, neither does it support f=f. When I reply to issues by email,
+GitHub won’t nicely reflow my carefully crafted f=f message, needlessly
+making email responses an inferior option.</p>
+
+<h3 id="features-unneeded">Features unneeded</h3>
+
+<p>One reason I didn’t choose this particular email arrangement 4 years ago
+was that PGP support was one of my prime requirements. Mutt has solid
+PGP support, but, with a Maildir setup (i.e. not IMAP), I’d have to use
+the key on the server, which was out of the question. Since <a href="/blog/2017/03/12/">I no longer
+care about PGP</a>, my email requirements are more relaxed.</p>
+
+<p>Over the years wasn’t making much use of Notmuch’s tagging system. I
+only used two tags: “unread” and “inbox” (e.g. read, but still needs
+attention). Otherwise I’d use Notmuch’s powerful search to find what I
+wanted. I still needed to keep track of the tags I was using, so the
+Notmuch index, nearly as large as the email messages themselves, became
+part of my mail backup.</p>
+
+<p>The <a href="https://cr.yp.to/proto/maildir.html">Maildir format</a> itself supports some flags: passed (P),
+replied (R), seen (S), trashed (T), draft (D), and flagged (F). These
+are stored in the message’s filename. In my new configuration, the
+“seen” tag (inversely) takes the place of Notmuch’s “unread” tag. The
+“flagged” tag takes place of the “inbox” tag. Normally in Mutt you’d use
+mailboxes — i.e. Maildir subdirectories — for something like this, but I
+prefer all my mail to sit in one big bucket. Search, don’t sort.</p>
+
+<p>Since the two flags are part of the filename, I no longer need to
+include a tag database (i.e. the entire Notmuch index) in the backup,
+and my mail backups are much smaller. I could continue to use Notmuch
+for searching, but I’ve settled on mu instead. When I perform a search,
+mu writes the results to a temporary Maildir using symbolic links, which
+I visit with Mutt. The mu index is transient and doesn’t need to be
+backed up.</p>
+
+<p>Mu also manages my contacts alias list. It can produce a Mutt-style
+alias file based on the contents of my Maildir:</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>mu cfind --format=mutt-alias &gt; aliases
+</code></pre>
+</div>
+
+<p>It’s been really nice to have all my email sitting around as nothing
+more than a big pile of files like this. I’ve begun <a href="https://docs.python.org/3.4/library/email.html">writing little
+scripts to harvest data</a> from it, too.</p>
+
+<h3 id="configuration-files">Configuration files</h3>
+
+<p>As with all my personal configuration files, you can <a href="https://github.com/skeeto/dotfiles/blob/master/_muttrc">see my .muttrc
+online</a>. The first few weeks I was tweaking this file hourly,
+but I’ve now got it basically the way I want.</p>
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title>Web Scraping into an E-book with BeautifulSoup and Pandoc</title>
+    <link rel="alternate" type="text/html" href="http://nullprogram.com/blog/2017/05/15/"/>
+    <id>urn:uuid:8e05a4a5-4601-3717-d1ef-c03ea2413025</id>
+    <updated>2017-05-15T02:39:20Z</updated>
+    <category term="python"/><category term="web"/>
+    <content type="html">
+      <![CDATA[<p>I recently learned how to use <a href="https://www.crummy.com/software/BeautifulSoup/">BeautifulSoup</a>, a Python library for
+manipulating HTML and XML parse trees, and it’s been a fantastic
+addition to my virtual toolbelt. In the past when I’ve needed to process
+raw HTML, I’ve tried nasty hacks with Unix pipes, or <a href="/blog/2013/01/24/">routing the
+content through a web browser</a> so that I could manipulate it via
+the DOM API. None of that worked very well, but now I finally have
+BeautifulSoup to fill that gap. It’s got a selector interface and,
+except for rendering, it’s basically as comfortable with HTML as
+JavaScript.</p>
+
+<p>Today’s problem was that I wanted to read <a href="http://daviddfriedman.blogspot.com/2017/05/something-different-or-maybe-not.html">a recommended</a> online
+book called <a href="https://banter-latte.com/portfolio/interviewing-leather/"><em>Interviewing Leather</em></a>, a story set “in a world where
+caped heroes fight dastardly villains on an everyday basis.” I say
+“online book” because the 39,403 word story is distributed as a series
+of 14 blog posts. I’d rather not read it on the website in a browser,
+instead preferring it in e-book form where it’s more comfortable. The
+<a href="/blog/2015/09/03/">last time I did this</a>, I manually scraped the entire book into
+Markdown, spent a couple of weeks editing it for mistakes, and finally
+sent the Markdown to <a href="http://pandoc.org/">Pandoc</a> to convert into an e-book.</p>
+
+<p>For this book, I just want a quick-and-dirty scrape in order to shift
+formats. I’ve never read it and I may not even like it (<em>update</em>: I
+enjoyed it), so I definitely don’t want to spend much time on the
+conversion. Despite <a href="/blog/2017/04/01/">having fun with typing lately</a>, I’d also
+prefer to keep all the formating — italics, etc. — without re-entering
+it all manually.</p>
+
+<p>Fortunately Pandoc can consume HTML as input, so, in theory, I can feed
+it the original HTML and preserve all of the original markup. The
+challenge is that the HTML is spread across 14 pages surrounded by all
+the expected blog cruft. I need some way to extract the book content
+from each page, concatenate it together along with chapter headings, and
+send the result to Pandoc. Enter BeautifulSoup.</p>
+
+<p>First, I need to construct the skeleton HTML document. Rather than code
+my own HTML, I’m going to build it with BeautifulSoup. I start by
+creating a completely empty document and adding a doctype to it.</p>
+
+<div class="language-py highlighter-rouge"><pre class="highlight"><code><span class="kn">from</span> <span class="nn">bs4</span> <span class="kn">import</span> <span class="n">BeautifulSoup</span><span class="p">,</span> <span class="n">Doctype</span>
+
+<span class="n">doc</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">()</span>
+<span class="n">doc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Doctype</span><span class="p">(</span><span class="s">'html'</span><span class="p">))</span>
+</code></pre>
+</div>
+
+<p>Next I create the <code class="highlighter-rouge">html</code> root element, then add the <code class="highlighter-rouge">head</code> and <code class="highlighter-rouge">body</code>
+elements. I also add a <code class="highlighter-rouge">title</code> element. The original content has fancy
+Unicode markup — left and right quotation marks, em dash, etc. — so it’s
+important to declare the page as UTF-8, since otherwise these characters
+are likely to be interpreted incorrectly. It always feels odd declaring
+the encoding within the content being encoded, but that’s just the way
+things are.</p>
+
+<div class="language-py highlighter-rouge"><pre class="highlight"><code><span class="n">html</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s">'html'</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="s">'en-US'</span><span class="p">)</span>
+<span class="n">doc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">html</span><span class="p">)</span>
+<span class="n">head</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s">'head'</span><span class="p">)</span>
+<span class="n">html</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">head</span><span class="p">)</span>
+<span class="n">meta</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s">'meta'</span><span class="p">,</span> <span class="n">charset</span><span class="o">=</span><span class="s">'utf-8'</span><span class="p">)</span>
+<span class="n">head</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span>
+<span class="n">title</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s">'title'</span><span class="p">)</span>
+<span class="n">title</span><span class="o">.</span><span class="n">string</span> <span class="o">=</span> <span class="s">'Interviewing Leather'</span>
+<span class="n">head</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">title</span><span class="p">)</span>
+<span class="n">body</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s">'body'</span><span class="p">)</span>
+<span class="n">html</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">body</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>If I <code class="highlighter-rouge">print(doc.prettify())</code> then I see the skeleton I want:</p>
+
+<div class="language-html highlighter-rouge"><pre class="highlight"><code><span class="cp">&lt;!DOCTYPE html&gt;</span>
+<span class="nt">&lt;html</span> <span class="na">lang=</span><span class="s">"en-US"</span><span class="nt">&gt;</span>
+ <span class="nt">&lt;head&gt;</span>
+  <span class="nt">&lt;meta</span> <span class="na">charset=</span><span class="s">"utf-8"</span><span class="nt">/&gt;</span>
+  <span class="nt">&lt;title&gt;</span>
+   Interviewing Leather
+  <span class="nt">&lt;/title&gt;</span>
+ <span class="nt">&lt;/head&gt;</span>
+ <span class="nt">&lt;body&gt;</span>
+ <span class="nt">&lt;/body&gt;</span>
+<span class="nt">&lt;/html&gt;</span>
+</code></pre>
+</div>
+
+<p>Next, I assemble a list of the individual blog posts. When I was
+actually writing the script, I first downloaded them locally with <a href="/blog/2016/06/16/">my
+favorite download tool</a>, curl, and ran the script against local
+copies. I didn’t want to hit the web server each time I tested. (Note:
+I’ve truncated these URLs to fit in this article.)</p>
+
+<div class="language-py highlighter-rouge"><pre class="highlight"><code><span class="n">chapters</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s">"https://banter-latte.com/2007/06/26/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/07/03/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/07/10/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/07/17/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/07/24/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/07/31/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/08/07/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/08/14/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/08/21/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/08/28/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/09/04/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/09/20/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/09/25/..."</span><span class="p">,</span>
+    <span class="s">"https://banter-latte.com/2007/10/02/..."</span>
+<span class="p">]</span>
+</code></pre>
+</div>
+
+<p>I visit a few of these pages in my browser to determine which part of
+the page I want to extract. I want to look closely enough to see what
+I’m doing, but not <em>too</em> closely as to not spoil myself! Right clicking
+the content in the browser and selecting “Inspect Element” (Firefox) or
+“Inspect” (Chrome) pops up a pane to structurally navigate the page.
+“View Page Source” would work, too, especially since this is static
+content, but I find the developer pane easier to read. Plus it hides
+most of the content, revealing only the structure.</p>
+
+<p>The content is contained in a <code class="highlighter-rouge">div</code> with the class <code class="highlighter-rouge">entry-content</code>. I
+can use a selector to isolate this element and extract its child <code class="highlighter-rouge">p</code>
+elements. However, it’s not quite so simple. Each chapter starts with a
+bit of commentary that’s not part of the book, and I don’t want to
+include in my extract. It’s separated from the real content by an <code class="highlighter-rouge">hr</code>
+element. There’s also a footer below another <code class="highlighter-rouge">hr</code> element, likely put
+there by someone who wasn’t paying attention to the page structure. It’s
+not quite the shining example of semantic markup, but it’s regular
+enough I can manage.</p>
+
+<div class="language-html highlighter-rouge"><pre class="highlight"><code><span class="nt">&lt;body&gt;</span>
+  <span class="nt">&lt;main</span> <span class="na">class=</span><span class="s">"site-main"</span><span class="nt">&gt;</span>
+    <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"entry-body"</span><span class="nt">&gt;</span>
+      <span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"entry-content"</span><span class="nt">&gt;</span>
+        <span class="nt">&lt;p&gt;</span>A little intro.<span class="nt">&lt;/p&gt;</span>
+        <span class="nt">&lt;p&gt;</span>Some more intro.<span class="nt">&lt;/p&gt;</span>
+        <span class="nt">&lt;hr/&gt;</span>
+        <span class="nt">&lt;p&gt;</span>Actual book content.<span class="nt">&lt;/p&gt;</span>
+        <span class="nt">&lt;p&gt;</span>More content.<span class="nt">&lt;/p&gt;</span>
+        <span class="nt">&lt;hr/&gt;</span>
+        <span class="nt">&lt;p&gt;</span>Footer navigation junk.<span class="nt">&lt;/p&gt;</span>
+      <span class="nt">&lt;/div&gt;</span>
+    <span class="nt">&lt;/div&gt;</span>
+  <span class="nt">&lt;/main&gt;</span>
+<span class="nt">&lt;/body&gt;</span>
+</code></pre>
+</div>
+
+<p>The next step is visiting each of these pages. I use <code class="highlighter-rouge">enumerate</code> since I
+want the chapter numbers when inserting <code class="highlighter-rouge">h1</code> chapter elements. Pandoc
+will use these to build the table of contents.</p>
+
+<div class="language-py highlighter-rouge"><pre class="highlight"><code><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">chapter</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">chapters</span><span class="p">):</span>
+    <span class="c"># Construct h1 for the chapter</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s">'h1'</span><span class="p">)</span>
+    <span class="n">header</span><span class="o">.</span><span class="n">string</span> <span class="o">=</span> <span class="s">'Chapter </span><span class="si">%</span><span class="s">d'</span> <span class="o">%</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,)</span>
+    <span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>Next grab the page content using <code class="highlighter-rouge">urllib</code> and parse it with
+BeautifulSoup. I’m using a selector to locate the <code class="highlighter-rouge">div</code> with the
+book content.</p>
+
+<div class="language-py highlighter-rouge"><pre class="highlight"><code>    <span class="c"># Load chapter content</span>
+    <span class="k">with</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">chapter</span><span class="p">)</span> <span class="k">as</span> <span class="n">url</span><span class="p">:</span>
+        <span class="n">page</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">page</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="s">'.entry-content'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</code></pre>
+</div>
+
+<p>Finally I iterate over the child elements of the <code class="highlighter-rouge">div.entry-content</code>
+element. I keep a running count of the <code class="highlighter-rouge">hr</code> element and only extract
+content when we’ve seen exactly one <code class="highlighter-rouge">hr</code> element.</p>
+
+<div class="language-py highlighter-rouge"><pre class="highlight"><code>    <span class="c"># Append content between hr elements</span>
+    <span class="n">hr_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">content</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">'hr'</span><span class="p">):</span>
+            <span class="n">hr_count</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">'p'</span> <span class="ow">and</span> <span class="n">hr_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">child</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">string</span> <span class="o">==</span> <span class="s">'#'</span><span class="p">):</span>
+                <span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">new_tag</span><span class="p">(</span><span class="s">'hr'</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">body</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>If it’s a <code class="highlighter-rouge">p</code> element, I copy it into the output document, taking a
+moment to strip away any attributes present on the <code class="highlighter-rouge">p</code> tag, since, for
+some reason, some of these elements have old-fashioned alignment
+attributes in the original content.</p>
+
+<p>The original content also uses the text “<code class="highlighter-rouge">#</code>” by itself in a <code class="highlighter-rouge">p</code> to
+separate sections rather than using the appropriate markup. Despite
+being semantically incorrect, I’m thankful for this since more <code class="highlighter-rouge">hr</code>
+elements would have complicated matters further. I convert these to the
+correct markup for the final document.</p>
+
+<p>Finally I pretty print the result:</p>
+
+<div class="language-py highlighter-rouge"><pre class="highlight"><code><span class="k">print</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">prettify</span><span class="p">())</span>
+</code></pre>
+</div>
+
+<p>Alternatively I could pipe it through <a href="http://tidy.sourceforge.net/">tidy</a>.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ python3 extract.py | tidy -indent -utf8 &gt; output.html
+</code></pre>
+</div>
+
+<p>A brief inspection with a browser indicates that everything seems to
+have come out correctly. I won’t know for sure, though, until I actually
+read through the whole book. Finally I have Pandoc perform the
+conversion.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>$ pandoc -t epub3 -o output.epub output.html
+</code></pre>
+</div>
+
+<p>And that’s it! It’s ready to read offline in my e-book reader of
+choice. The crude version of my script took around 15–20 minutes to
+write and test, so I had an e-book conversion in under 30 minutes.
+That’s about as long as I was willing to spend to get it. Tidying the
+script up for this article took a lot longer.</p>
+
+<p>I don’t have permission to share the resulting e-book, but I can share
+my script so that you can generate your own, at least as long as it’s
+hosted at the same place with the same structure.</p>
+
+<ul>
+  <li><a href="/download/leather/extract.py" class="download">extract.py</a></li>
+</ul>
+
+]]>
+    </content>
+  </entry>
+  
+  <entry>
+    <title>The Adversarial Implementation</title>
+    <link rel="alternate" type="text/html" href="http://nullprogram.com/blog/2017/05/03/"/>
+    <id>urn:uuid:e6f370f9-1d35-3295-3bd5-74ae20c52a0e</id>
+    <updated>2017-05-03T17:51:53Z</updated>
+    <category term="c"/><category term="python"/><category term="lang"/>
+    <content type="html">
+      <![CDATA[<p>When <a href="/blog/2017/03/30/">coding against a standard</a>, whether it’s a programming
+language specification or an open API with multiple vendors, a common
+concern is the conformity of a particular construct to the standard.
+This cannot be determined simply by experimentation, since a piece of
+code may work correctly due only to the specifics of a particular
+implementation. It works <em>today</em> with <em>this</em> implementation, but it
+may not work <em>tomorrow</em> or with a <em>different</em> implementation.
+Sometimes an implementation will warn about the use of non-standard
+behavior, but this isn’t always the case.</p>
+
+<p>When I’m reasoning about whether or not something is allowed, I like to
+imagine an <em>adversarial implementation</em>. If the standard allows some
+freedom, this implementation takes an imaginative or unique approach. It
+chooses <a href="/blog/2016/05/30/">non-obvious interpretations</a> with possibly unexpected,
+but valid, results. This is nearly the opposite of <a href="https://groups.google.com/forum/m/#!msg/boring-crypto/48qa1kWignU/o8GGp2K1DAAJ">djb’s hypothetical
+boringcc</a>, though some of the ideas are similar.</p>
+
+<p>Many argue that <a href="http://yarchive.net/comp/linux/gcc.html">this is already the case</a> with modern C and C++
+optimizing compilers. Compiler writers are already <a href="http://blog.llvm.org/2011/05/what-every-c-programmer-should-know.html">creative with the
+standard</a> in order to squeeze out more performance, even if it’s
+at odds with the programmer’s actual intentions. The most prominent
+example in C and C++ is <em>strict aliasing</em>, where the optimizer is
+deliberately blinded to certain kinds of aliasing because the standard
+allows it to be, eliminating some (possibly important) loads. This
+happens despite the compiler’s ability to trivially prove that two
+particular objects really do alias.</p>
+
+<p>I want to be clear that I’m not talking about the <a href="http://www.catb.org/jargon/html/N/nasal-demons.html">nasal daemon</a>
+kind of creativity. That’s not a helpful thought experiment. What I
+mean is this: <strong>Can I imagine a conforming implementation that breaks
+any assumptions made by the code?</strong>.</p>
+
+<p>In practice, compilers typically have to bridge multiple
+specifications: the language standard, the <a href="/blog/2016/11/17/">platform ABI</a>, and
+operating system interface (process startup, syscalls, etc.). This
+really ties its hands on how creative it can be with any one of the
+specifications. Depending on the situation, the imaginary adversarial
+implementation isn’t necessarily running on any particular platform.
+If our program is expected to have a long life, useful for many years
+to come, we should avoid making too many assumptions about future
+computers and imagine an adversarial compiler with few limitations.</p>
+
+<h3 id="c-example">C example</h3>
+
+<p>Take this bit of C:</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="n">printf</span><span class="p">(</span><span class="s">"%d"</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">foo</span><span class="p">));</span>
+</code></pre>
+</div>
+
+<p>The <code class="highlighter-rouge">printf</code> function is variadic, and it relies entirely on the format
+string in order to correctly handle all its arguments. The <code class="highlighter-rouge">%d</code>
+specifier means that its matching argument is of type <code class="highlighter-rouge">int</code>. The result
+of the <code class="highlighter-rouge">sizeof</code> operator is an integer of type <code class="highlighter-rouge">size_t</code>, which has a
+different sign and may even be a different size.</p>
+
+<p>Typically this code will work just fine. An <code class="highlighter-rouge">int</code> and <code class="highlighter-rouge">size_t</code> are
+generally passed the same way, the actual value probably fits in an
+<code class="highlighter-rouge">int</code>, and two’s complement means the signedness isn’t an issue due to
+the value being positive. From the <code class="highlighter-rouge">printf</code> point of view, it
+typically can’t detect that the type is wrong, so everything works by
+chance. In fact, it’s hard to imagine a real situation where this
+wouldn’t work fine.</p>
+
+<p>However, this still undefined behavior — a scenario where a creative
+adversarial implementation can break things. In this case there are a
+few options for an adversarial implementation:</p>
+
+<ol>
+  <li>Arguments of type <code class="highlighter-rouge">int</code> and <code class="highlighter-rouge">size_t</code> are passed differently, so
+<code class="highlighter-rouge">printf</code> will load the argument it from the wrong place.</li>
+  <li>The implementation doesn’t use two’s complement and even small
+positive values have different bit representations.</li>
+  <li>The type of <code class="highlighter-rouge">foo</code> is given crazy padding for arbitrary reasons that
+makes it so large it doesn’t fit in an <code class="highlighter-rouge">int</code>.</li>
+</ol>
+
+<p>What’s interesting about #1 is that <em>this has actually happened</em>. For
+example, here’s a C source file.</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span> <span class="n">foo</span><span class="p">(</span><span class="kt">float</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">);</span>
+
+<span class="kt">float</span>
+<span class="nf">bar</span><span class="p">(</span><span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">foo</span><span class="p">(</span><span class="mi">0</span><span class="p">.</span><span class="mi">0</span><span class="n">f</span><span class="p">,</span> <span class="n">y</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>And in another source file:</p>
+
+<div class="language-c highlighter-rouge"><pre class="highlight"><code><span class="kt">float</span>
+<span class="nf">foo</span><span class="p">(</span><span class="kt">int</span> <span class="n">x</span><span class="p">,</span> <span class="kt">int</span> <span class="n">y</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">x</span><span class="p">;</span>  <span class="c1">// ignore x
+</span>    <span class="k">return</span> <span class="n">y</span> <span class="o">*</span> <span class="mi">2</span><span class="p">.</span><span class="mi">0</span><span class="n">f</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div>
+
+<p>The type of argument <code class="highlighter-rouge">x</code> differs between the prototype and the
+definition, which is undefined behavior. However, since this argument
+is ignored, this code will still work correctly on many different
+real-world computers, particularly where <code class="highlighter-rouge">float</code> and <code class="highlighter-rouge">int</code> arguments
+are passed the same way (i.e. on the stack).</p>
+
+<p>However, in 2003 the x86-64 CPU arrived with its new System V ABI.
+Floating point and integer arguments were now passed differently, and
+the types of preceding arguments mattered when deciding which register
+to use. Some constructs that worked fine, by chance, prior to 2003 would
+soon stop working due to what may have seemed like an adversarial
+implementation years before.</p>
+
+<h3 id="python-example">Python example</h3>
+
+<p>Let’s look at some Python. This snippet opens a file a million times
+without closing any handles.</p>
+
+<div class="language-py highlighter-rouge"><pre class="highlight"><code><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1000000</span><span class="p">):</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">"/dev/null"</span><span class="p">,</span> <span class="s">"r"</span><span class="p">)</span>
+</code></pre>
+</div>
+
+<p>Assuming you have a <code class="highlighter-rouge">/dev/null</code>, this code will work fine without
+throwing any exceptions on CPython, the most widely used Python
+implementation. CPython uses a deterministic reference counting scheme,
+and the handle is automatically closed as soon as its variable falls out
+of scope. It’s like having an invisible <code class="highlighter-rouge">f.close()</code> at the end of the
+block.</p>
+
+<p>However, this code is incorrect. The deterministic handle closing an
+implementation behavior, <a href="https://docs.python.org/3/reference/datamodel.html">not part of the specification</a>. The
+operating system limits the number of files a process can have open at
+once, and there’s a risk that this resource will run out even though
+none of those handles are reachable. Imagine an adversarial Python
+implementation trying to break this code. It could sufficiently delay
+garbage collection, or even <a href="https://blogs.msdn.microsoft.com/oldnewthing/20100809-00/?p=13203">have infinite memory</a>, omitting
+garbage collection altogether.</p>
+
+<p>Like before, such an implementation eventually did come about: PyPy, a
+Python implementation written in Python with a JIT compiler. It uses (by
+default) something closer to mark-and-sweep, not reference counting, and
+those handles <a href="https://utcc.utoronto.ca/~cks/space/blog/programming/NondeterministicGCII">are left open</a> until the next collection.</p>
+
+<div class="highlighter-rouge"><pre class="highlight"><code>&gt;&gt;&gt;&gt; for i in range(1, 1000000):
+....     f = open("/dev/null", "r")
+.... 
+Traceback (most recent call last):
+  File "&lt;stdin&gt;", line 2, in &lt;module&gt;
+IOError: [Errno 24] Too many open files: '/dev/null'
+</code></pre>
+</div>
+
+<h3 id="a-tool-for-understanding-specifications">A tool for understanding specifications</h3>
+
+<p>This fits right in with a broader method of self-improvement:
+Occasionally put yourself in the implementor’s shoes. Think about what
+it would take to correctly implement the code that you write, either
+as a language or the APIs that you call. On reflection, you may find
+that some of those things that <em>seem</em> cheap may not be. Your
+assumptions may be reasonable, but not guaranteed. (Though it may be
+that “reasonable” is perfectly sufficient for your situation.)</p>
+
+<p>An adversarial implementation is one that challenges an assumption
+you’ve taken for granted by turning it on its head.</p>
+
+]]>
+    </content>
+  </entry>
+  
+
+</feed>

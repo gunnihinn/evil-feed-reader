@@ -1,0 +1,2985 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title><![CDATA[Julia Evans]]></title>
+  <link href="http://jvns.ca/atom.xml" rel="self"/>
+  <link href="http://jvns.ca"/>
+  <updated>2017-08-06T16:33:12+00:00</updated>
+  <id>http://jvns.ca</id>
+  <author>
+    <name><![CDATA[Julia Evans]]></name>
+  </author>
+  <generator uri="http://gohugo.io/">Hugo</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Learning at work]]></title>
+    <link href="https://jvns.ca/blog/2017/08/06/learning-at-work/"/>
+    <updated>2017-08-06T16:33:12+00:00</updated>
+    <id>https://jvns.ca/blog/2017/08/06/learning-at-work/</id>
+    <content type="html"><![CDATA[
+
+<p>I asked on Twitter a while back &ldquo;how do you invest in you own learning?&rdquo; (<a href="https://twitter.com/b0rk/status/887111177062555648">this tweet</a>. Some common things people replied with:</p>
+
+<ul>
+<li>Read blog posts</li>
+<li>Go to conferences</li>
+<li>Read books</li>
+<li>Watch talks while washing the dishes</li>
+<li>Build side projects using the technologies you want to learn</li>
+</ul>
+
+<p>These things all totally work. I see that it&rsquo;s pretty common to spend time
+outside of work working on your career development and learning new skills, and
+it&rsquo;s certainly something I&rsquo;ve done a lot.</p>
+
+<p>But I know some great programmers who <em>don&rsquo;t</em> program outside of work at all!
+So I got to thinking &ndash; what if you want to become awesome, but don&rsquo;t want to
+spend a lot of time basically doing extra work after hours?</p>
+
+<p>Here are some things me &amp; people on twitter came up with. Everything in here is
+stuff I can do during my workday.</p>
+
+<h3 id="don-t-learn-programming-languages-frameworks-outside-of-work">Don&rsquo;t learn programming languages/frameworks outside of work</h3>
+
+<p>This one is kind of negative but I think it&rsquo;s useful! My view about learning programming languages is:</p>
+
+<ul>
+<li>I know a few languages reasonably well (python, scala, ruby)</li>
+<li>Learning a new programming language well takes a fair amount of time</li>
+<li>I don&rsquo;t feel like spending my free time on it</li>
+</ul>
+
+<p>Right now at work I&rsquo;m working a bit in Go! That is interesting and I&rsquo;m happy to
+be doing it. But it is not <em>so</em> fun that I feel like spending a lot of my
+personal time on it. And I don&rsquo;t really think it&rsquo;s necessary, I learn languages
+by writing them, reading other people&rsquo;s code to learn about conventions, and
+having my code reviewed. I can just do all of those things at work!</p>
+
+<p>To be clear, I don&rsquo;t think it&rsquo;s <em>bad</em> to learn programming languages outside of
+work. I just don&rsquo;t really do it.</p>
+
+<h3 id="choose-projects-i-think-i-ll-learn-from">Choose projects I think I&rsquo;ll learn from</h3>
+
+<p>Some of the things I&rdquo;ve learned about in the last 3 years at stripe:</p>
+
+<ul>
+<li>Scala/Ruby/Go</li>
+<li>hadoop/mapreduce/scalding</li>
+<li>How to work with java concurrency libraries, how to profile a java program</li>
+<li>A ton about how various AWS services work</li>
+<li>A lot about machine learning</li>
+<li>How networking / CDNs / TLS work</li>
+<li>docker/containers/rkt/kubernetes</li>
+<li>Service discovery / DNS / jenkins<br /></li>
+</ul>
+
+<p>and a bunch more things.</p>
+
+<p>As an small example of choosing something to work on that I wanted to learn from &ndash;
+once I was using a program at work that wasn&rsquo;t parallelizing its work well and
+it was a problem. I could have asked the people who wrote it to figure out the
+program but I thought &ndash; well, I&rsquo;m interested in learning about concurrent
+programming, I can probably do this! So I <a href="https://jvns.ca/blog/2016/03/29/thread-pools-part-ii-i-love-blocking/">learned a bit about how to use thread pools in Java!</a></p>
+
+<p>I only worked on that for a few days but I learned new things!</p>
+
+<p>Right now I am working on Kubernetes which I didn&rsquo;t really pick for its
+learning opportunities, but I <em>am</em> learning quite a few things about
+distributed systems and Go by working with it and I&rsquo;m happy about that.</p>
+
+<p>I think it&rsquo;s silly when people are like &ldquo;hey, we work with X technologies, you
+need to have experience with them to work here&rdquo;. Right now I spend a lot of
+time with networking/puppet/kubernetes/docker/AWS and I had never worked with
+any of those things before this job.</p>
+
+<h3 id="watch-more-senior-people-operate">Watch more senior people operate</h3>
+
+<p>When someone is doing work I really admire, I&rsquo;ll watch how they do it and then try to emulate them / ask them for advice. For example! When <a href="http://onemogin.com/">cory</a> joined I noticed that, when introducing new technology, he would</p>
+
+<ol>
+<li>find another team that had a related problem that needed solving</li>
+<li>Work with them to make sure the technology actually worked to solve their problem!</li>
+</ol>
+
+<p>Right now I am working on a newish project, and I&rsquo;ve been careful about
+remembering who exactly I expect it to help &amp; how, and I think that&rsquo;s made the
+work go a lot better.</p>
+
+<h3 id="read-every-pull-request">Read every pull request</h3>
+
+<p>Two quotes I loved from this thread were:</p>
+
+<blockquote>
+<p>i&rsquo;m on a small team so I read &amp; reread every pull request that comes in until
+I understand the problem &amp; solution fully</p>
+</blockquote>
+
+<p>and</p>
+
+<blockquote>
+<p>I did the same! And I stalked checkins to see how people solved various
+problems</p>
+</blockquote>
+
+<p>I don&rsquo;t actually read every single pull request on my team. But I <strong>do</strong> find
+it useful to pick a few areas I want to keep learning about, and keep track
+over time of the work people are doing in that area.</p>
+
+<p>I definitely can&rsquo;t always do this &ndash; for example I used to work on machine
+learning and while in theory I&rsquo;d like to keep track of what people are up to
+there because I find it really interesting, in practice it&rsquo;s too much for me to
+pay attention to. But I do try to pay attention to things that are closer to me
+(like some of the networking team&rsquo;s work!)</p>
+
+<h3 id="read-the-source-code">Read the source code</h3>
+
+<blockquote>
+<p>Reading source of what I use is a big one for me. Understand what it does
+internally but mainly <em>why</em> it does it a certain way.</p>
+</blockquote>
+
+<p>I think this is a fantastic tip and super important!! A lot of systems aren&rsquo;t
+really that well documented and you can&rsquo;t learn how they work without reading
+their source code.</p>
+
+<h3 id="follow-up-on-bugs-i-couldn-t-figure-out">Follow up on bugs I couldn&rsquo;t figure out</h3>
+
+<p>Sometimes I see a bug that I can&rsquo;t figure out how to fix. And then later,
+sometimes somebody else will figure out the answer! When that happens, I like
+to really take the time to understand what the answer was and how they figured
+it out!</p>
+
+<p>For example recently there was a networking issue that I didn&rsquo;t manage to debug
+and that somebody else just figured out last week. Thinking about it now, I
+understand what the bug <em>was</em>, but I&rsquo;m not 100% sure what tools they used to
+get the information they needed to debug it. When I get back to work I need to
+make sure I go find that out, so that next time I will be better equipped!</p>
+
+<p>Jessica Kerr commented</p>
+
+<blockquote>
+<p>Whenever I have to look something up for troubleshooting, I go a little deeper
+or broader than strictly necessary.</p>
+</blockquote>
+
+<p>which I think is a great philosophy :) :) (it&rsquo;s not good to go <strong>too</strong> far
+down every rabbit hole, but consistently reaching a little further than I have
+to pays dividends for sure)</p>
+
+<p>I also liked this answer:</p>
+
+<blockquote>
+<p>Sometimes I&rsquo;ll just dig into a problem that&rsquo;s work-related but not really
+within my actual duties and see if I can get somewhere.</p>
+</blockquote>
+
+<h3 id="use-your-commute">Use your commute</h3>
+
+<p>I don&rsquo;t have a commute but a lot of people mentioned using their commute time
+to listen to podcasts / read papers / read interesting articles. I think
+this seems like an awesome way to keep up with things you&rsquo;re interested in!</p>
+
+<h3 id="take-the-time-at-work-to-learn">Take the time at work to learn</h3>
+
+<p>Someone on Twitter said &ldquo;I wish I could take 1 hour a day to learn&rdquo;. My view is
+that it&rsquo;s my <em>job</em> to take time out of my workday to learn things. Like
+right now I&rsquo;m using Kubernetes at work, it&rsquo;s a complicated system that takes a
+long time to understand, and I spend time reading about it at work. For
+instance, when we were starting out I spun up a test cluster just to poke
+around and try to understand how container networking works. I also make
+progress on our projects at the same time!</p>
+
+<p>This is probably a bit easier for me because I work remote so nobody really knows
+what I&rsquo;m doing hour-by-hour anyway, People just care about what I&rsquo;m getting
+done overall.</p>
+
+<p>I actually think I would probably be <em>more</em> productive if I took a little more
+time to read in advance. Like I just read Kelsey Hightower&rsquo;s &ldquo;learn kubernetes
+the hard way&rdquo; document, it didn&rsquo;t take that long, and it had one really good
+idea about how to set up a cluster that would have saved me some time.</p>
+
+<p>Some people take this idea even farther! For example, my friend Dan has
+mentioned a few times that he likes to read technical books at work. I
+originally found this kind of surprising but it makes sense &ndash; there are some
+books that are relevant to my work, and there&rsquo;s no reason really why I
+shouldn&rsquo;t read them at
+work.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Figuring out how to contribute to open source]]></title>
+    <link href="https://jvns.ca/blog/2017/08/06/contributing-to-open-source/"/>
+    <updated>2017-08-06T08:48:33+00:00</updated>
+    <id>https://jvns.ca/blog/2017/08/06/contributing-to-open-source/</id>
+    <content type="html"><![CDATA[
+
+<p>Lately at work I&rsquo;ve been working more with large open source projects (like
+Kubernetes and Terraform!)</p>
+
+<p>Sometimes there are bugs in those projects, or features I want to add! I
+haven&rsquo;t contributed to open source projects much in the past (beyond like
+&ldquo;here&rsquo;s a 2-line README fix&rdquo;. (which is useful but is a lot easier than fixing
+a bug)</p>
+
+<p>Historically my approach to bugs / missing features in open source projects has
+been to shrug, say &ldquo;oh well&rdquo;, and find a workaround or wait for a fix. But
+these days I am trying to be more like I AM A PROGRAMMER I CAN MAKE THIS
+HAPPEN. Which is true! I can!!</p>
+
+<p>This post isn&rsquo;t about &ldquo;how to find small issues in open source projects to get
+started with open source&rdquo; &ndash; instead it&rsquo;s about &ldquo;I have a specific change I
+want to make to a specific project, what will help me get that done&rdquo;.</p>
+
+<h3 id="skills-i-already-have">skills I already have</h3>
+
+<p>I sometimes feel kind of intimidated by open source. When I feel intimidated I
+find it helpful to remind myself that I&rsquo;m a professional software developer and
+most of the things you need to do to contribute to open source projects are
+<strong>already things I do every day at work</strong>.</p>
+
+<p>For example!</p>
+
+<ul>
+<li>make a clear/well-organized pull request</li>
+<li>write tests</li>
+<li>run tests and use a CI system</li>
+<li>navigate a codebase that is tens of thousands of lines of code</li>
+<li>figure out whether something is a bug or expected behavior</li>
+<li>read the code to figure out how the code is <em>supposed</em> to work
+even if there isn&rsquo;t a project maintainer I can ask questions</li>
+<li>use git rebase &amp; resolve merge conflicts</li>
+<li>other regular software stuff</li>
+</ul>
+
+<h3 id="things-that-are-still-hard-about-open-source">things that are still hard about open source</h3>
+
+<p>Okay, so we have basic software engineering skills covered. What makes open
+source contributions harder than my regular job, then?</p>
+
+<p>Here are some things that are harder!</p>
+
+<ul>
+<li>In open source, I need to send code reviews to total
+strangers. At work, I generally send code reviews to the same 10 people or
+so, most of whom I&rsquo;ve worked with for a year or more, and who often already
+know exactly what I&rsquo;m working on.</li>
+<li>At work, people mostly share the same goals as me. But if I have a change
+to an open source project that&rsquo;s useful to my company, the open source
+maintainers might not agree that that change is broadly useful enough to
+include.</li>
+<li>In open source, if I&rsquo;m contributing to a new repository I need to learn the
+standards and conventions from scratch. At work I basically always contribute
+to the same 3-4 repositories which I already know inside and out.</li>
+<li>In open source, the code I&rsquo;m modifying is probably used in ways I don&rsquo;t know
+about. At work I usually already know (or can look up) every way the code I&rsquo;m
+changing is used.</li>
+<li>In open source, I can&rsquo;t just DM the project maintainers with questions (or
+bug them about how they haven&rsquo;t reviewed my PR) any time I want.</li>
+</ul>
+
+<p>This list is super useful to me! It takes us from &ldquo;open source is hard and
+scary, how do I do it&rdquo; from &ldquo;there are a bunch of specific challenges when
+contributing to open source projects that I don&rsquo;t usually have to deal with,
+but that&rsquo;s fine, I just need to deal with them!&rdquo;</p>
+
+<p>Here are a few tactics that have helped me when working with open source
+projects.</p>
+
+<h3 id="remember-that-maintaining-an-open-source-project-is-super-hard">remember that maintaining an open source project is super hard</h3>
+
+<p>One thing I always try to remember is &ndash; while contributing to an OSS project
+is definitely work, <strong>maintaining</strong> a project is often pretty thankless
+and is way more work. So through all of this I think it&rsquo;s important to be
+really respectful of open source maintainers&rsquo; time!</p>
+
+<p>They spend a ton of time doing code reviews and making sure the project
+continues to work for a huge variety of people and thinking about weird edge
+cases and a lot of stuff that any individual person contributing to the project
+probably doesn&rsquo;t have to think about anywhere near as much. And often
+maintainers are volunteers &ndash; I think it&rsquo;s useful to be aware of whether a
+project&rsquo;s maintainers are paid to maintain the project, or whether they&rsquo;re
+doing it for free on the side.</p>
+
+<h3 id="start-by-making-a-tiny-pull-request">start by making a tiny pull request</h3>
+
+<p>I read this great short post <a href="http://vaibhavsagar.com/blog/2017/07/31/easy-pull-requests/index.html">Easy Pull Requests</a>
+recently that recommends making a tiny pull request (like fixing a typo or
+something) first when getting started with a new open source project to get a
+sense for</p>
+
+<ol>
+<li>how quickly people respond to pull requests</li>
+<li>how friendly the maintainers are</li>
+<li>what the process for getting something merged is like</li>
+</ol>
+
+<p>I haven&rsquo;t really done this but I think it makes a lot of sense.</p>
+
+<h3 id="read-way-more-code-than-usual">read way more code than usual</h3>
+
+<p>Recently I fixed a bug in the Kubernetes scheduler. I did not know how the
+Kubernetes scheduler worked and did not have anyone to ask about how it worked.</p>
+
+<p>So instead I just spent a bunch of hours scrolling through the scheduler code
+until I <a href="https://jvns.ca/blog/2017/07/27/how-does-the-kubernetes-scheduler-work/">understood how it worked</a>.
+This is maybe sort of obvious (&ldquo;if you don&rsquo;t have anybody to ask questions, just read
+the code until you figure it out&rdquo;) but code-reading is a muscle that maybe I don&rsquo;t
+always exercise as much as I could and so this was a good reminder of how far
+I can get without asking any questions at all.</p>
+
+<h3 id="don-t-be-scared-to-share-a-work-in-progress">don&rsquo;t be scared to share a work in progress</h3>
+
+<p>If I&rsquo;m making a PR I&rsquo;m not sure of the details of how it should work, I&rsquo;ll
+often start a <code>[WIP]</code> PR like &ldquo;here&rsquo;s a sketch, here are the details of what
+I&rsquo;m trying to accomplish, what do you think?&ldquo;.</p>
+
+<p>I think this is actually a super good idea in open source too (especially if
+I&rsquo;m new to the project) &ndash; I&rsquo;ve found that as long as I explain the idea
+clearly maintainers are happy to give early feedback and help me figure out
+what the right direction might be.</p>
+
+<h3 id="write-really-detailed-pr-descriptions">write really detailed PR descriptions</h3>
+
+<p>At work I often write pretty short PR descriptions because the people reviewing
+my code usually already know more or less what I&rsquo;m working on.</p>
+
+<p>I&rsquo;ve been spending way more time on writing clear open source PR descriptions
+(like.. 5 minutes instead of 10 seconds?). So far it has gone really well! I
+will write several paragraphs about what the PR is trying to accomplish, and so
+far everyone seems to totally understand and then give me great code reviews.</p>
+
+<h3 id="smaller-pull-requests-are-better">smaller pull requests are better</h3>
+
+<p>When trying to fix this scheduler bug I started out by writing a PR (+79 lines,
+-25) which made a few different improvements related to the bug. It got a lot of
+helpful code reviews but after a couple of days was clearly stuck.</p>
+
+<p>I decided &ldquo;well, this PR is a little complicated and it&rsquo;s editing a pretty
+sensitive piece of code, I will close it and break it up into 2 smaller PRs!&ldquo;.
+This turned out to be a GREAT IDEA &ndash; the new smaller PR got a lot more reviews
+a lot more quickly and then got merged. Turns out making your code simpler gets
+you more reviewers! :)</p>
+
+<p>Also I&rsquo;ve been really impressed with the Kubernetes project overall, it seems
+well organized so far!</p>
+
+<h3 id="close-the-pr-if-nobody-replies">close the PR if nobody replies</h3>
+
+<p>A while back I had a PR where originally I got a lot of super helpful reviews,
+but after some back and forth eventually I said &ldquo;ok, I fixed all the issues you
+brought up, what do you think about merging this?&rdquo; and they just didn&rsquo;t really
+reply.</p>
+
+<p>I eventually said &ldquo;ok, I&rsquo;m going to close this in a week if nobody replies&rdquo;.
+They didn&rsquo;t reply and I decided I didn&rsquo;t want to spend any more time on it so I
+just closed it. I think this was an okay outcome! It was helpful to decide &ldquo;ok,
+this one isn&rsquo;t working out right now for whatever reason, I&rsquo;ll close this and
+maybe revisit it one day later&rdquo;. No big deal.</p>
+
+<h3 id="use-slack-mailing-lists">use Slack / mailing lists?</h3>
+
+<p>Throughout all of this so far my approach has been &ldquo;I won&rsquo;t ask anyone questions if
+I&rsquo;m confused, I&rsquo;ll just think really hard and eventually figure out the
+answer&rdquo;. So far this has been pretty effective. But a lot of open source
+projects have a mailing list / Slack / gitter / IRC channel for discussion.  I
+haven&rsquo;t really figured this out yet because the social norms are kind of
+unclear to me (there are often hundreds or thousands of people in the
+Kubernetes Slack channels and I don&rsquo;t know almost any of them), but it seems
+like something I should figure out.</p>
+
+<h3 id="open-source-is-a-really-big-world">&ldquo;open source&rdquo; is a really big world</h3>
+
+<p>There are a lot of open source projects with very very different degrees of</p>
+
+<ul>
+<li>whether they&rsquo;re actively maintained at all (one person in their free time? 50
+people who work on it full time?)</li>
+<li>how big the codebase is (100 lines? 1000 lines? 100,000 lines?)</li>
+<li>how many people use the project (how many people will be affected if something
+breaks?)</li>
+<li>how good is the automated testing?</li>
+<li>basically every axis a software project could exist on</li>
+</ul>
+
+<p>So I think it&rsquo;s hard to give general guidelines &ndash; most of what I&rsquo;m trying to
+do really just boils down to</p>
+
+<ol>
+<li>be respectful of maintainers&rsquo; time and contribute helpful patches</li>
+<li>communicate clearly what my goals are</li>
+</ol>
+
+<h3 id="that-s-all-for-now">that&rsquo;s all for now</h3>
+
+<p>I used to want to / think I should contribute to open source in my spare time.
+I have mostly decided/realized that this is not going to happen. I spent many
+hours working on these two PRs to kubernetes and while I think this was a good
+use of work time, I probably would not do that strictly for fun. (I write blog
+posts in my spare time, I don&rsquo;t really code)</p>
+
+<p>But I do think &ldquo;being able to make improvements to open source projects&rdquo; is a
+super good work skill and it&rsquo;s something I&rsquo;m excited about getting better at.
+And I think it&rsquo;s important for companies to contribute back to open source
+projects they use, and I&rsquo;m excited to be a very small part of that.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How Kubernetes certificate authorities work]]></title>
+    <link href="https://jvns.ca/blog/2017/08/05/how-kubernetes-certificates-work/"/>
+    <updated>2017-08-05T09:11:50+00:00</updated>
+    <id>https://jvns.ca/blog/2017/08/05/how-kubernetes-certificates-work/</id>
+    <content type="html"><![CDATA[
+
+<p>Today, let&rsquo;s talk about Kubernetes private/public keys &amp; certificate authorities!</p>
+
+<p>This blog post is about how to take your own requirements about how certificate
+authorities + private keys should be organized and set up your Kubernetes
+cluster the way you need to.</p>
+
+<p>The various Kubernetes components have a TON of different places where
+you can put in a certificate/certificate authority. When we were setting up a
+cluster I felt like there were like 10 billion different command line arguments
+for certificates and keys and certificate authorities and I didn&rsquo;t understand
+how they all fit together.</p>
+
+<p>There are not actually 10 billion command line arguments but there are quite a lot. For example! Let&rsquo;s just look at the command line arguments to the API server.</p>
+
+<p>The API server has more than 16 different command line arguments to do with
+certificates or keys (I actually deleted a bunch to cut it down to this
+list).</p>
+
+<pre><code>--cert-dir string                           The directory where the TLS certs are located. If --tls-cert-file and --tls-private-key-file are provided, this flag will be ignored. (default &quot;/var/run/kubernetes&quot;)
+--client-ca-file string                     If set, any request presenting a client certificate signed by one of the authorities in the client-ca-file is authenticated with an identity corresponding to the CommonName of the client certificate.
+--etcd-certfile string                      SSL certification file used to secure etcd communication.
+--etcd-keyfile string                       SSL key file used to secure etcd communication.
+--kubelet-certificate-authority string      Path to a cert file for the certificate authority.
+--kubelet-client-certificate string         Path to a client cert file for TLS.
+--kubelet-client-key string                 Path to a client key file for TLS.
+--proxy-client-cert-file string             Client certificate used to prove the identity of the aggregator or kube-apiserver when it must call out during a request. This includes proxying requests to a user api-server and calling out to webhook admission plugins. It is expected that this cert includes a signature from the CA in the --requestheader-client-ca-file flag. That CA is published in the 'extension-apiserver-authentication' configmap in the kube-system namespace. Components recieving calls from kube-aggregator should use that CA to perform their half of the mutual TLS verification.
+--proxy-client-key-file string              Private key for the client certificate used to prove the identity of the aggregator or kube-apiserver when it must call out during a request. This includes proxying requests to a user api-server and calling out to webhook admission plugins.
+--requestheader-allowed-names stringSlice   List of client certificate common names to allow to provide usernames in headers specified by --requestheader-username-headers. If empty, any client certificate validated by the authorities in --requestheader-client-ca-file is allowed.
+--requestheader-client-ca-file string       Root certificate bundle to use to verify client certificates on incoming requests before trusting usernames in headers specified by --requestheader-username-headers
+--service-account-key-file stringArray      File containing PEM-encoded x509 RSA or ECDSA private or public keys, used to verify ServiceAccount tokens. If unspecified, --tls-private-key-file is used. The specified file can contain multiple keys, and the flag can be specified multiple times with different files.
+--ssh-keyfile string                        If non-empty, use secure SSH proxy to the nodes, using this user keyfile
+--tls-ca-file string                        If set, this certificate authority will used for secure access from Admission Controllers. This must be a valid PEM-encoded CA bundle. Alternatively, the certificate authority can be appended to the certificate provided by --tls-cert-file.
+--tls-cert-file string                      File containing the default x509 Certificate for HTTPS. (CA cert, if any, concatenated after server cert). If HTTPS serving is enabled, and --tls-cert-file and --tls-private-key-file are not provided, a self-signed certificate and key are generated for the public address and saved to /var/run/kubernetes.
+--tls-private-key-file string               File containing the default x509 private key matching --tls-cert-file.
+--tls-sni-cert-key namedCertKey             A pair of x509 certificate and private key file paths, optionally suffixed with a list of domain patterns which are fully qualified domain names, possibly with prefixed wildcard segments. If no domain patterns are provided, the names of the certificate are extracted. Non-wildcard matches trump over wildcard matches, explicit domain patterns trump over extracted names. For multiple key/certificate pairs, use the --tls-sni-cert-key multiple times. Examples: &quot;example.crt,example.key&quot; or &quot;foo.crt,foo.key:*.foo.com,foo.com&quot;. (default [])
+</code></pre>
+
+<p>and here are the arguments for the controller manager:</p>
+
+<pre><code>--cluster-signing-cert-file string          Filename containing a PEM-encoded X509 CA certificate used to issue cluster-scoped certificates (default &quot;/etc/kubernetes/ca/ca.pem&quot;)
+--cluster-signing-key-file string           Filename containing a PEM-encoded RSA or ECDSA private key used to sign cluster-scoped certificates (default &quot;/etc/kubernetes/ca/ca.key&quot;)
+--root-ca-file string                       If set, this root certificate authority will be included in service account's token secret. This must be a valid PEM-encoded CA bundle.
+--service-account-private-key-file string   Filename containing a PEM-encoded private RSA or ECDSA key used to sign service account tokens.
+</code></pre>
+
+<p>and for the kubelet:</p>
+
+<pre><code>--client-ca-file string                   If set, any request presenting a client certificate signed by one of the authorities in the client-ca-file is authenticated with an identity corresponding to the CommonName of the client certificate.
+--tls-cert-file string                    File containing x509 Certificate used for serving HTTPS (with intermediate certs, if any, concatenated after server cert). If --tls-cert-file and --tls-private-key-file are not provided, a self-signed certificate and key are generated for the public address and saved to the directory passed to --cert-dir.
+--tls-private-key-file string             File containing x509 private key matching --tls-cert-file.
+</code></pre>
+
+<p>In this post I&rsquo;m going to assume you know basically how TLS certificates and
+certificate authorities (&ldquo;CAs&rdquo;) work. When setting this up, I knew how certs
+work but I did not understand how all the different Kubernetes certificate
+authorities fit together.</p>
+
+<p>In this post I&rsquo;ll explain some of the main CAs you can set in Kubernetes and
+how they fit together.</p>
+
+<p>I&rsquo;ll also tell you about a few things I learned while setting all of this up:</p>
+
+<ul>
+<li>You can&rsquo;t use a CA to check the validity of the service account key. The service account key is a weird key which is handled differently from literally every other key.</li>
+<li>You can (and should!!) use an authenticating proxy if the way Kubernetes maps client certificates to usernames and groups doesn&rsquo;t work for you</li>
+<li>Setting up the API server to support too many different authentication methods (&ldquo;more than 2&rdquo;) makes things confusing (though maybe this isn&rsquo;t too surprising :))</li>
+</ul>
+
+<p>(as usual, let me know what mistakes you find in here, I think most of this is
+right but it&rsquo;s a complicated topic!)</p>
+
+<h3 id="pki-kubernetes">PKI &amp; Kubernetes</h3>
+
+<p>When I started reading about kubernetes I saw this term &ldquo;PKI&rdquo; a lot and I
+wasn&rsquo;t sure what it meant.</p>
+
+<p>If you have a Kubernetes cluster, you might have hundreds or thousands of
+private &amp; public keys (in client certificates, server certificates, anywhere!).
+That is a lot of private keys!</p>
+
+<p>If you just had thousands of unrelated independent keys that would be chaos.
+Chaos is not great for security.  So instead the way you manage private/public
+keys is you have certificate authorities (&ldquo;CAs&rdquo;) issue certificates saying
+&ldquo;hey, this public key is OK, it&rsquo;s from me, you should trust it&rdquo;.</p>
+
+<p>Your PKI (&ldquo;public key infrastructure&rdquo;) is how you organize all of your keys &ndash;
+which keys are signed by which certificate authorities.</p>
+
+<p>For example:</p>
+
+<ul>
+<li>You could have one CA per Kubernetes cluster, that&rsquo;s responsible for signing all the private keys in that cluster (this is the model Kubernetes docmentation usually assumes)</li>
+<li>You could have one global CA that&rsquo;s responsible for signing ALL your private keys</li>
+<li>You could have one CA you use for services that are externally visibile and another CA you use for internal-only services</li>
+<li>&hellip; something else</li>
+</ul>
+
+<p>I&rsquo;m not a security expert and I&rsquo;m <strong>not gonna try to tell you how you should
+manage the private keys + certificate authorities</strong> in your infrastructure. But!
+No matter what PKI model you want to use, I&rsquo;m pretty sure you can make it work with Kubernetes.</p>
+
+<p>This blog post is about how to take your own requirements about how certificate
+authorities + private keys should be organized and set up your Kubernetes
+cluster the way you need to.</p>
+
+<h3 id="does-a-kubernetes-cluster-have-to-have-a-single-root-certificate-authority-no">Does a Kubernetes cluster have to have a single root certificate authority? (no)</h3>
+
+<p>If you read a lot of guides to how to set up Kubernetes, you&rsquo;ll see a step like
+&ldquo;set up a certificate authority&rdquo;. Kelsey Hightower&rsquo;s great &ldquo;kubernetes the hard way&rdquo; doc has it as <a href="https://github.com/kelseyhightower/kubernetes-the-hard-way/blob/2983b28f13b294c6422a5600bb6f14142f5e7a26/docs/02-certificate-authority.md">Step 2</a>, and the <a href="https://kubernetes.io/docs/tasks/tls/managing-tls-in-a-cluster/">Trusting TLS in a cluster</a> guide says:</p>
+
+<blockquote>
+<p>Every Kubernetes cluster has a cluster root Certificate Authority
+(CA). The CA is generally used by cluster components to validate the
+API server’s certificate, by the API server to validate kubelet client
+certificates, etc.</p>
+</blockquote>
+
+<p>The way this basically works is:</p>
+
+<ol>
+<li>Set up a certificate authority</li>
+<li>Use that certificate authority to generate a bunch of different certificates that you&rsquo;ll give to different parts of the Kubernetes infrastructure.</li>
+</ol>
+
+<p>But what if you don&rsquo;t want to set up a new certificate authority for
+each kubernetes cluster? We didn&rsquo;t want to do this for various reasons that I won&rsquo;t go into,
+and at first I was worried that you <strong>had</strong> to set up a single root cluster CA.</p>
+
+<p>It turns out that this sentence (&ldquo;every Kubernetes cluster has a
+[single] cluster root Certificate Authority&rdquo;) is not true &ndash; you can
+actually use certificates issued by several completely different CAs to
+manage your Kubernetes cluster and it&rsquo;s fine.</p>
+
+<p>To be clear &ndash; I&rsquo;m not saying you <strong>shouldn&rsquo;t</strong> have a single root certificate
+for your Kubernetes cluster, I&rsquo;m just saying you don&rsquo;t have to if for whatever
+reason that way doesn&rsquo;t meet your requirements.</p>
+
+<p>Let&rsquo;s break down some of these command line arguments about certificates and
+how they relate to each other. Each of these sections is about one certificate
+authority you can define. They&rsquo;re all independent &ndash; none of them need to be the
+same as any other one. (though in practice you will probably want to make some
+of them the same, you don&rsquo;t want to be managing like 6 CAs probably).</p>
+
+<h3 id="the-api-server-s-tls-certificate-and-certificate-authority">The API server&rsquo;s TLS certificate (and certificate authority)</h3>
+
+<pre><code> --tls-cert-file string             
+    File containing the default x509 Certificate for HTTPS. (CA cert, if any,
+    concatenated after server cert). If HTTPS serving is enabled, and
+    --tls-cert-file and --tls-private-key-file are not provided, a self-signed
+    certificate and key are generated for the public address and saved to
+    /var/run/kubernetes.
+ --tls-private-key-file string      
+    File containing the default x509 private key matching --tls-cert-file.
+</code></pre>
+
+<p>You&rsquo;re probably using TLS to connect to your Kubernetes API server. These two
+options (to the API server) let you pick what certificate the API server should use.</p>
+
+<p>Once you set a TLS cert, you&rsquo;ll need to set up a kubeconfig file for the
+components (like the kubelet and kubectl) that want to talk to the API server.</p>
+
+<p>The kubeconfig file will look something like this:</p>
+
+<pre><code>current-context: my-context
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority: /path/to/my/ca.crt # CERTIFICATE AUTHORITY THAT ISSUED YOUR TLS CERT
+    server: https://horse.org:4443 # this name needs to be on the certificate in --tls-cert-file
+  name: my-cluster
+kind: Config
+users:
+- name: green-user
+  user:
+    client-certificate: path/to/my/client/cert # we'll get to this later
+    client-key: path/to/my/client/key # we'll get to this later
+</code></pre>
+
+<p>One thing I found surprising about this is &ndash; almost everything else in the
+universe that uses TLS will look in /etc/ssl to find a list of certificate
+authorities the computer trusts by default. But Kubernetes doesn&rsquo;t do that,
+instead it mandates &ldquo;no, you have to say exactly which CA issued the API
+server&rsquo;s TLS cert&rdquo;.</p>
+
+<p>You can pass this kubeconfig file into any kubernetes component with <code>--kubeconfig /path/to/kubeconfig.yaml</code></p>
+
+<p>So! We&rsquo;ve met our first certificate authority: the CA that issues the API
+server&rsquo;s TLS cert. This CA doesn&rsquo;t need to be the same as any of the other
+certificate authorities we&rsquo;re going to discuss.</p>
+
+<h3 id="the-api-server-client-certificate-authority-certificates">The API server client certificate authority (+ certificates)</h3>
+
+<pre><code>--client-ca-file string    
+    If set, any request presenting a client certificate signed by one of the
+    authorities in the client-ca-file is authenticated with an identity
+    corresponding to the CommonName of the client certificate.
+</code></pre>
+
+<p>One way for Kubernetes components to authenticate to the API server is with
+<strong>client certificates</strong>.</p>
+
+<p>All of these client certs should be issued by the same CA (which, again,
+doesn&rsquo;t need to be the same as the CA that issued the API server&rsquo;s server TLS
+cert).</p>
+
+<p>When using a kubeconfig file (like we talked about above), you set the client certificates in that file, like this:</p>
+
+<pre><code>kind: Config
+users:
+- name: green-user
+  user:
+    client-certificate: path/to/my/client/cert
+    client-key: path/to/my/client/key
+</code></pre>
+
+<p>Kubernetes makes a lot of assumptions about how you&rsquo;ve set up your client
+certificates. (it sets the user to be the Common Name field and the group to be
+the Organization field). If those assumptions don&rsquo;t match what you want,
+the right thing to do is to <strong>not use</strong> client cert auth and instead use
+an authenticating proxy.</p>
+
+<h3 id="the-request-header-certificate-authority-or-using-an-authenticating-proxy">The request header certificate authority (or: using an authenticating proxy)</h3>
+
+<pre><code># API server arguments
+--requestheader-allowed-names stringSlice                 
+  	    List of client
+        certificate common names to allow to provide usernames in headers specified by
+        --requestheader-username-headers. If empty, any client certificate validated by
+        the authorities in --requestheader-client-ca-file is allowed.
+--requestheader-client-ca-file string                     
+        Root certificate bundle to use to verify client certificates on incoming
+        requests before trusting usernames in headers specified by
+        --requestheader-username-headers
+</code></pre>
+
+<p>Another way to set up Kubernetes auth is with an <strong>authenticating proxy</strong>. If
+you have a lot of opinions about what usernames and groups should be sent to the
+API server, you can set up a proxy which passes usernames &amp; groups to the API server in a HTTP header.</p>
+
+<p>The docs basically explain how this works &ndash; the proxy uses a client cert to
+identify itself, and the <code>--requestheader-client-ca-file</code> tells the API server
+which CA to use to verify that client cert.</p>
+
+<p>I don&rsquo;t have too much to say about this except &ndash; we learned pretty quickly
+that having too many auth methods in your API server (&ldquo;accept client
+certificates OR an authenticating proxy OR a token OR&hellip;&ldquo;) makes things
+confusing. It&rsquo;s probably better to pick a small number (like 1 or
+2?) of authentication methods your API server supports because it makes it
+easier to debug problems and understand your security model.</p>
+
+<h3 id="serviceaccount-private-keys-which-aren-t-signed-by-a-certificate-authority">serviceaccount private keys (which aren&rsquo;t signed by a certificate authority)</h3>
+
+<pre><code># API server argument
+--service-account-key-file stringArray
+    File containing PEM-encoded x509 RSA or ECDSA private or public keys, used to
+    verify ServiceAccount tokens. If unspecified, --tls-private-key-file is used.
+    The specified file can contain multiple keys, and the flag can be specified
+    multiple times with different files.
+# controller manager argument
+--service-account-private-key-file string
+    Filename containing a PEM-encoded private RSA or ECDSA key used to sign service
+    account tokens.
+</code></pre>
+
+<p>The controller manager signs serviceaccount tokens with a private key. Unlike
+every other private key that Kubernetes supports, the serviceaccount key
+doesn&rsquo;t support &ldquo;hey use a CA to check if this is the right key&rdquo;. This means
+you have to give exactly the same private key file to every controller manager.</p>
+
+<p>Anyway this key does not need to have a certificate and does not need to be
+signed by any certificate authority. You can just generate a key with</p>
+
+<pre><code>openssl genrsa -out private.key 4096
+</code></pre>
+
+<p>and distribute it to every controller manager / API server.</p>
+
+<p>Using <code>--tls-private-key-file</code> for this seems generally fine to me though, as
+long as you give every API server the same TLS key (which I think you usually
+would?). (I&rsquo;m assuming here that you have a HA setup where you run more than
+one API server and more than one controller manager)</p>
+
+<p>If you give 2 different controller managers 2 different keys, they&rsquo;ll sign
+serviceaccount tokens with different keys and you&rsquo;ll end up with invalid
+serviceaccount tokens (see <a href="https://github.com/kubernetes/kubernetes/issues/22351">this issue</a>). I think this isn&rsquo;t ideal (Kubernetes should probably
+support these keys being issued from a CA like it does for ~every other private
+key). From reading the source code I think the reason it&rsquo;s set up this way is
+that <a href="https://github.com/dgrijalva/jwt-go">jwt-go</a> doesn&rsquo;t support using a CA
+to check signatures.</p>
+
+<h3 id="kubelet-certificate-authorities">kubelet certificate authorities</h3>
+
+<p>Let&rsquo;s talk about the kubelet! Here are the relevant command line arguments for the API server &amp; kubelet:</p>
+
+<pre><code># API server arguments
+--kubelet-certificate-authority string    Path to a cert file for the certificate authority.
+--kubelet-client-certificate string       Path to a client cert file for TLS.
+--kubelet-client-key string               Path to a client key file for TLS.
+# kubelet arguments
+--client-ca-file string                   If set, any request presenting a client certificate signed by one of the authorities in the client-ca-file is authenticated with an identity corresponding to the CommonName of the client certificate.
+--tls-cert-file string                    File containing x509 Certificate used for serving HTTPS (with intermediate certs, if any, concatenated after server cert). If --tls-cert-file and --tls-private-key-file are not provided, a self-signed certificate and key are generated for the public address and saved to the directory passed to --cert-dir.
+--tls-private-key-file string             File containing x509 private key matching --tls-cert-file.
+</code></pre>
+
+<p>It&rsquo;s useful to authenticate requests to the kubelet because the kubelet can
+execute arbitrary code on your machines :) (in fact that&rsquo;s its job)</p>
+
+<p>There are actually 2 CAs here. I won&rsquo;t go into too much detail because this is
+the same as the setup for the APi server &ndash; the kubelet has a TLS cert (that it
+uses to serve TLS requests) and also supports client cert authentication.</p>
+
+<p>You tell the API server what certificate authority to use to check the
+kubelet&rsquo;s TLS cert, and what client certificate to use when talking to the
+kubelet.</p>
+
+<p>Again these 2 CAs could be totally different from each other.</p>
+
+<h3 id="so-many-possible-cas">so many possible CAs</h3>
+
+<p>So far we have found 5 different certificate authorities you can specify as
+part of setting up a Kubernetes cluster! They&rsquo;re all handled independently and
+in theory they could all be totally different.</p>
+
+<p>I didn&rsquo;t discuss every single CA setting that Kubernetes supports (there are
+still more!) but hopefully this gives you some of the tools you need to read
+the docs about the rest.</p>
+
+<p>Again &ndash; it almost certainly doesn&rsquo;t makes sense to make them <strong>all</strong> different
+from each other but I think it&rsquo;s useful to understand how all this is set up if
+you have your own requirements around how you want to handle your
+certificate authorities for Kubernetes and don&rsquo;t want to do exactly what the
+docs suggest.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Cherry picking commits &amp; shell scripting in golang]]></title>
+    <link href="https://jvns.ca/blog/2017/07/30/a-couple-useful-ideas-from-google/"/>
+    <updated>2017-07-30T08:26:12+00:00</updated>
+    <id>https://jvns.ca/blog/2017/07/30/a-couple-useful-ideas-from-google/</id>
+    <content type="html"><![CDATA[
+
+<p>Yesterday I was talking about Kubernetes! One interesting thing about
+working with Kubernetes is that it forces me to think more about
+Google&rsquo;s internal development practices. It&rsquo;s originally a Google
+project, so to contribute it, and to some extent to use it, you need to
+understand a little about Google software development norms. I have never
+worked at Google so I often end up asking my partner (who has) to explain
+what&rsquo;s going on to me.</p>
+
+<p>I don&rsquo;t think any of these are necessarily unique to Google but I think
+they can be useful to understand when working with Google projects.</p>
+
+<h3 id="cherry-pick-commits-for-bugfixes">cherry pick commits for bugfixes</h3>
+
+<p>Here&rsquo;s how Kubernetes release management works! (from <a href="https://github.com/kubernetes/community/blob/8decfe42b8cc1e027da290c4e98fa75b3e98e2cc/contributors/devel/cherry-picks.md">cherry-pick.md</a>)</p>
+
+<ol>
+<li>Start a release branch</li>
+<li>When there are bug fixes that are made for that release in master,
+cherry-pick them into the release branch</li>
+<li>that&rsquo;s it!</li>
+</ol>
+
+<p>For example, the 1.6 release of Kubernetes came out in March,
+but a cherry pick was merged into the release branch <a href="https://github.com/kubernetes/kubernetes/pull/49807">on July 29</a> (4 months later).</p>
+
+<p>It seems like there are new cherry-pick commits to the 1.6 release branch
+basically every day &ndash; there have been
+<a href="https://github.com/kubernetes/kubernetes/compare/release-1.6">447</a> commits
+since its release, probably half of those are merge commits, so I guess about 200 changes in all.</p>
+
+<p>This does make me wonder a bit about the expected stability of Kubernetes
+releases &ndash; if there are so many changes / bugfixes being made after a
+release comes out, maybe it makes sense to delay upgrading to a release
+until it&rsquo;s stabilized a bit?</p>
+
+<p>Related to this, we&rsquo;ve started building more of our software ourselves. This is
+cool because if we mostly want to be on a release (like 1.6) but have a patch
+of our own we want to apply, we can easily rebuild the project from source and
+deploy it.</p>
+
+<h3 id="write-shell-scripts-in-golang">write shell scripts in golang</h3>
+
+<p>There&rsquo;s a bunch of code in Kubernetes administration tooling where
+you&rsquo;re like &ldquo;okay this is basically a shell script&rdquo;. A good example of
+this is <a href="https://github.com/kubernetes/kubernetes/blob/release-1.6/cmd/kubeadm/app/cmd/reset.go">reset.go</a> which is like</p>
+
+<pre><code>fmt.Printf(&quot;[reset] Unmounting mounted directories in %q\n&quot;, &quot;/var/lib/kubelet&quot;)
+umountDirsCmd := &quot;cat /proc/mounts | awk '{print $2}' | grep '/var/lib/kubelet' | xargs -r umount&quot;
+umountOutputBytes, err := exec.Command(&quot;sh&quot;, &quot;-c&quot;, umountDirsCmd).Output()
+if err != nil {
+    fmt.Printf(&quot;[reset] Failed to unmount mounted directories in /var/lib/kubelet: %s\n&quot;, string(umountOutputBytes))
+}
+</code></pre>
+
+<p>So this is literally like &ndash; you write some bash (<code>cat /proc/mounts | awk '{print $2}' | ...</code>), use <code>sh -c</code> to execute it, and embed it in a go program.</p>
+
+<p>I&rsquo;m actually pretty into this &ndash; this script is like 180 lines of code which is quite nontrivial for a bash script. Some cool things about writing bash scripts in Go:</p>
+
+<ul>
+<li>you can actually have okay command line argument handling (unlike in bash where you get to write your own command line argument handling from scratch every time)</li>
+<li>you get a COMPILER so it can tell you if you make typos (this is such a big deal to me)</li>
+<li>I&rsquo;d much rather have an inexperienced Go programmer contribute to a Go program than an inexperienced bash programmer contribute to a Bash script (bash is <a href="https://jvns.ca/blog/2017/03/26/bash-quirks/">extremely quirky</a> in ways that Go isn&rsquo;t)</li>
+<li>go programs are statically compiled so if you want to use libraries in your script it&rsquo;s fine! You don&rsquo;t need to figure out how to distribute dependencies! (we write shell scripts in Ruby a lot and distributing the dependencies is pretty difficult/awful)</li>
+<li>you can&rsquo;t edit the script with vim in production (you could also say this is a &lsquo;con&rsquo; but i&rsquo;m gonna go with &lsquo;pro&rsquo; for now :))</li>
+</ul>
+
+<p>This example also provides a good answer to &ldquo;what if you want to use pipes in a
+go script&rdquo; which is &ldquo;just run <code>sh -c 'thing1 | thing2 | thing3'</code>&rdquo;.</p>
+
+<h3 id="use-services-instead-of-shell-scripts">use services instead of shell scripts</h3>
+
+<p>This one is more of an &ldquo;idea that is interesting but I don&rsquo;t know if it&rsquo;s
+useful to me yet&rdquo;.</p>
+
+<p>Another interesting thing about Kubernetes is &ndash; most of it is structured as a
+set of <strong>services</strong> instead of a set of scripts. I think the idea is that if
+you have a continuously running service that accepts requests, that service can
+ensure the state of the system is right at all times and give you reports about
+its health (instead of having to manually trigger a rerun of the script).</p>
+
+<p>I was looking at the Google SRE book, and there&rsquo;s this section about <a href="https://landing.google.com/sre/book/chapters/automation-at-google.html">automation</a> that talks about &ldquo;service-oriented cluster turnup&rdquo;. I&rsquo;m not exactly sure yet how/if this relates to Kubernetes but I wanted to quote this section here:</p>
+
+<blockquote>
+<p>In the next iteration, Admin Servers became part of service teams’ workflows,
+both as related to the machine-specific Admin Servers (for installing packages
+and rebooting) and cluster-level Admin Servers (for actions like draining or
+turning up a service). SREs moved from writing shell scripts in their home
+directories to building peer-reviewed RPC servers with fine-grained ACLs.</p>
+</blockquote>
+
+<p><br></p>
+
+<blockquote>
+<p>Later on, after the realization that turnup processes had to be owned by the
+teams that owned the services fully sank in, we saw this as a way to approach
+cluster turnup as a Service-Oriented Architecture (SOA) problem: service owners
+would be responsible for creating an Admin Server to handle cluster
+turnup/turndown RPCs, sent by the system that knew when clusters were ready. In
+turn, each team would provide the contract (API) that the turnup automation
+needed, while still being free to change the underlying implementation. As a
+cluster reached &ldquo;network-ready,&rdquo; automation sent an RPC to each Admin Server
+that played a part in turning up the cluster.</p>
+</blockquote>
+
+<p>This idea of &ldquo;admin servers are in charge of installing packages&rdquo; instead of
+&ldquo;scripts are in charge of installing packages&rdquo; is new to me!</p>
+
+<p>I&rsquo;ve been doing a lot of Kubernetes cluster turnup recently, and our Kubernetes
+cluster turnup is definitely not service oriented (though we have managed to
+automate it and I feel happy with it). In fact none of the tooling I&rsquo;ve seen
+for Kubernetes cluster setup (like kops/kubeadm) seems to be service-oriented,
+it&rsquo;s all like &ldquo;run kops on your laptop and hope it sets up a cluster
+correctly&rdquo;.</p>
+
+<p>For now this &ldquo;service oriented admin server&rdquo; idea is gonna stay in the camp of
+&ldquo;things I read in the Google SRE book that I don&rsquo;t understand and am not going
+to try to apply&rdquo;, it&rsquo;s not really clear to me when it makes sense.</p>
+
+<h3 id="some-ideas-from-google-are-useful">some ideas from google are useful!</h3>
+
+<p>I think it&rsquo;s pretty important to be critical of software development practices
+that come out of big companies like google/amazon/twitter/facebook &ndash; it&rsquo;s easy
+to be like &ldquo;oh, if it works for google, it must be the BEST&rdquo;, but google has
+maybe 50,000 engineers. The practices you need to work with 50,000 other
+engineers effectively don&rsquo;t necessarily have any relationship to the practices
+that work with like 20 or 100 or 200 engineers.</p>
+
+<p>Another reason to be critical is that Google is pretty invested in selling
+google cloud products to people, and if they can convince people to adopt their
+operations practices (and software, like kubernetes!), then it makes it much
+more natural for those people to switch to using Google-managed infrastructure. Like when I was at SRECon in March, there was a closing keynote by a Googler that basically felt like a sales pitch for GCE (<a href="https://www.usenix.org/conference/srecon17americas/program/presentation/rensin">Reliability When Everything Is a Platform: Why You Need to SRE Your Customers</a>)</p>
+
+<p>But some of these things (like &ldquo;write shell scripts in golang&rdquo;) do seem like
+good ideas even at a smaller scale, and I&rsquo;ll always take good ideas wherever I
+can get them :)</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[How does the Kubernetes scheduler work?]]></title>
+    <link href="https://jvns.ca/blog/2017/07/27/how-does-the-kubernetes-scheduler-work/"/>
+    <updated>2017-07-27T21:07:12+00:00</updated>
+    <id>https://jvns.ca/blog/2017/07/27/how-does-the-kubernetes-scheduler-work/</id>
+    <content type="html"><![CDATA[
+
+<p>Hello!  We talked about Kubernetes&rsquo; <a href="https://jvns.ca/blog/2017/06/04/learning-about-kubernetes/">overall architecture</a> a while back.</p>
+
+<p>This week I learned a few more things about how the Kubernetes scheduler
+works so I wanted to share! This kind of gets into the weeds of how the
+scheduler works <em>exactly</em>.</p>
+
+<p>It&rsquo;s also an illustration of how to go from &ldquo;how is this system even
+designed I don&rsquo;t know anything about it?&rdquo; to &ldquo;okay I think I understand
+the basic design decisions here and why they were made&rdquo; without
+actually.. asking anyone (because I don&rsquo;t know any kubernetes
+contributors really, certainly not well enough to be like PLEASE EXPLAIN
+THE SCHEDULER TO ME THANKS).</p>
+
+<p>This is a little stream of consciousness but hopefully it will be useful
+to someone anyway. The best most useful link I found while researching
+this was this <a href="https://github.com/kubernetes/community/blob/8decfe4/contributors/devel/controllers.md">Writing Controllers</a> document from the amazing amazing amazing <a href="https://github.com/kubernetes/community/tree/8decfe42b8cc1e027da290c4e98fa75b3e98e2cc/contributors/devel">kubernetes developer documentation folder</a>.</p>
+
+<h3 id="what-is-the-scheduler-for">what is the scheduler for?</h3>
+
+<p>The Kubernetes scheduler is in charge of scheduling pods onto nodes.
+Basically it works like this:</p>
+
+<ol>
+<li>You create a pod</li>
+<li>The scheduler notices that the new pod you created doesn&rsquo;t have a node assigned to it</li>
+<li>The scheduler assigns a node to the pod</li>
+</ol>
+
+<p>It&rsquo;s not responsible for actually <em>running</em> the pod &ndash; that&rsquo;s the
+kubelet&rsquo;s job. So it basically just needs to make sure every pod has a
+node assigned to it. Easy, right?</p>
+
+<p>Kubernetes in general has this idea of a &ldquo;controller&rdquo;. A controller&rsquo;s
+job is to:</p>
+
+<ul>
+<li>look at the state of the system</li>
+<li>notice ways in which the actual state does not match the desired state
+(like &ldquo;this pod needs to be assigned a node&rdquo;)</li>
+<li>repeat</li>
+</ul>
+
+<p>The scheduler is a kind of controller. There are lots of different
+controllers and they all have different jobs and operate independently.</p>
+
+<p>So basically you could imagine the scheduler running a loop like this:</p>
+
+<pre><code>while True:
+    pods = get_all_pods()
+    for pod in pods:
+        if pod.node == nil:
+            assignNode(pod)
+</code></pre>
+
+<p>If you are not that interested in all the details of how the Kubernetes
+scheduler works you can probably stop reading now &ndash; this is a pretty
+reasonable model of how it works.</p>
+
+<p>I thought the scheduler <strong>actually</strong> worked this way because this is how the
+<a href="https://github.com/kubernetes/kubernetes/blob/e4551d50e57c089aab6f67333412d3ca64bc09ae/pkg/controller/cronjob/cronjob_controller.go">cronjob controller</a>
+works and that was the only Kubernetes component code I&rsquo;d really read.
+The cronjob controller basically iterates through all cronjobs, sees if
+it has to anything to do for any of them, sleeps for 10 seconds, and
+repeats forever. Super simple!</p>
+
+<h3 id="this-isn-t-how-it-works-though">this isn&rsquo;t how it works though</h3>
+
+<p>So! This week we were putting a little more load on our Kubernetes
+cluster, and we noticed a problem.</p>
+
+<p>Sometimes a pod would get stuck in the <code>Pending</code> state (with no node
+assigned to it) forever. If we restarted the scheduler, the pod would
+get unstuck. (<a href="https://github.com/kubernetes/kubernetes/issues/49314">this issue</a>)</p>
+
+<p>This didn&rsquo;t really match up with my mental model of how the Kubernetes
+scheduler worked &ndash; surely if a pod is waiting for a node to be
+assigned, the scheduler should notice and assign that pod a node. The
+scheduler shouldn&rsquo;t have to be restarted!</p>
+
+<p>So I went and read a bunch of code. Here is what I learned about how the
+scheduler actually works! As usual probably something here is wrong,
+this stuff is pretty complicated and I just learned about it this week.</p>
+
+<h3 id="how-the-scheduler-works-a-very-quick-code-walkthrough">how the scheduler works: a very quick code walkthrough</h3>
+
+<p>This is basically just what I figured out from reading the code.</p>
+
+<p>We&rsquo;ll start in <a href="https://github.com/kubernetes/kubernetes/blob/e4551d50e57c089aab6f67333412d3ca64bc09ae/plugin/pkg/scheduler/scheduler.go">scheduler.go</a>. (I actually <a href="https://gist.github.com/jvns/5d492d66130a2f47b47820fd6b52eab5">concatenated all the files in the scheduler together</a> which I found helpful for jumping around and navigating.)</p>
+
+<p>The core loop in the scheduler (as of commit e4551d50e5) is:</p>
+
+<p>(<a href="https://github.com/kubernetes/kubernetes/blob/e4551d50e57c089aab6f67333412d3ca64bc09ae/plugin/pkg/scheduler/scheduler.go#L150-L156">link</a>)</p>
+
+<pre><code>go wait.Until(sched.scheduleOne, 0, sched.config.StopEverything)
+</code></pre>
+
+<p>This basically means &ldquo;run <code>sched.scheduleOne</code> forever&rdquo;. Cool, what does that do?</p>
+
+<pre><code>func (sched *Scheduler) scheduleOne() {
+	pod := sched.config.NextPod()
+    // do all the scheduler stuff for `pod`
+}
+</code></pre>
+
+<p>Okay, what is this <code>NextPod()</code> business? Where does that come from?</p>
+
+<pre><code>func (f *ConfigFactory) getNextPod() *v1.Pod {
+	for {
+		pod := cache.Pop(f.podQueue).(*v1.Pod)
+		if f.ResponsibleForPod(pod) {
+			glog.V(4).Infof(&quot;About to try and schedule pod %v&quot;, pod.Name)
+			return pod
+		}
+	}
+}
+</code></pre>
+
+<p>Okay, that&rsquo;s pretty simple! There&rsquo;s a queue of pods (<code>podQueue</code>) and the next
+pod comes from that queue.</p>
+
+<p>But how do pods end up on that queue? Here&rsquo;s the code that does that:</p>
+
+<pre><code class="language-go">podInformer.Informer().AddEventHandler(
+	cache.FilteringResourceEventHandler{
+		Handler: cache.ResourceEventHandlerFuncs{
+			AddFunc: func(obj interface{}) {
+				if err := c.podQueue.Add(obj); err != nil {
+					runtime.HandleError(fmt.Errorf(&quot;unable to queue %T: %v&quot;, obj, err))
+				}
+			},
+</code></pre>
+
+<p>Basically there&rsquo;s an event handler that, whenever a new pod is added,
+puts it on the queue.</p>
+
+<h3 id="how-the-scheduler-works-in-english">how the scheduler works, in English</h3>
+
+<p>Okay now that we&rsquo;ve looked through the code, here&rsquo;s a summary in
+English:</p>
+
+<ol>
+<li>At the beginning, every pod that needs scheduling gets added to a queue</li>
+<li>When new pods are created, they also get added to the queue</li>
+<li>The scheduler continuously takes pods off that queue and schedules them</li>
+<li>That&rsquo;s it</li>
+</ol>
+
+<p>One interesting thing here is that &ndash; if for whatever reason a pod <strong>fails</strong> to
+get scheduled, there&rsquo;s nothing in here yet that would make the scheduler retry.
+It&rsquo;d get taken off the queue, it fails scheduling, and that&rsquo;s it. It lost its
+only chance! (unless you restart the scheduler, in which case everything will
+get added to the pod queue again)</p>
+
+<p>Of course the scheduler is actually smarter than that &ndash; when a pod
+fails to schedule, in general it calls an error handler, like this:</p>
+
+<pre><code class="language-go">host, err := sched.config.Algorithm.Schedule(pod, sched.config.NodeLister)
+if err != nil {
+	glog.V(1).Infof(&quot;Failed to schedule pod: %v/%v&quot;, pod.Namespace, pod.Name)
+	sched.config.Error(pod, err)
+</code></pre>
+
+<p>This <code>sched.config.Error</code> function call adds the pod back to the queue
+of things that need to be scheduled, and so it tries again.</p>
+
+<h3 id="wait-why-did-our-pod-get-stuck-then">wait why did our pod get stuck then?</h3>
+
+<p>This is pretty simple &ndash; it turned out that the <code>Error</code> function wasn&rsquo;t
+always being called when there was an error. We made a patch to call the
+<code>Error</code> function properly and that seems to have made it recover
+properly! Cool!</p>
+
+<h3 id="why-is-the-scheduler-designed-this-way">why is the scheduler designed this way?</h3>
+
+<p>I feel like this design would be more robust:</p>
+
+<pre><code class="language-go">while True:
+    pods = get_all_pods()
+    for pod in pods:
+        if pod.node == nil:
+            assignNode(pod)
+</code></pre>
+
+<p>so why is it instead this more complicated thing with all these caches and queues and callbacks?
+I looked at the history a bit and I think it&rsquo;s basically for performance
+reasons &ndash; for example you can see this <a href="http://blog.kubernetes.io/2017/03/scalability-updates-in-kubernetes-1.6.html">update on scalability updates for Kubernetes 1.6</a>
+and this post from CoreOS about
+<a href="https://coreos.com/blog/improving-kubernetes-scheduler-performance.html">improving Kubernetes scheduler performance</a>. That post says it improved the time to schedule 30,000 pods from 14 minutes to 10 minutes. That post says it improved the time to schedule 30,000 pods from 2 hours to 10 minutes. 2 hours is pretty slow! performance is important!</p>
+
+<p>So it makes sense to me that it would be too slow to query for all
+30,000 pods in your system every time you want to schedule a new pod,
+and that you&rsquo;d actually want to do something more complicated.</p>
+
+<h3 id="what-the-scheduler-actually-uses-kubernetes-informers">what the scheduler actually uses: kubernetes &ldquo;informers&rdquo;</h3>
+
+<p>I want to talk about one thing I learned about that seems very important to
+the design of all kubernetes controllers! That&rsquo;s the idea of an
+&ldquo;informer&rdquo;. Luckily there actually <em>is</em> documentation about this that I
+found in by googling &ldquo;kubernetes informer&rdquo;.</p>
+
+<p>This very useful document is called <a href="https://github.com/kubernetes/community/blob/8decfe4/contributors/devel/controllers.md">Writing Controllers</a>
+and it gives you design advice when you&rsquo;re writing a controller (like
+the scheduler or the cronjob controller). VERY COOL.</p>
+
+<p>If I&rsquo;d found this document in the first place I think I would have
+understood what is going on a little more quickly.</p>
+
+<p>So! Informers! The doc says this:</p>
+
+<blockquote>
+<p>Use SharedInformers. SharedInformers provide hooks to receive
+notifications of adds, updates, and deletes for a particular resource.
+They also provide convenience functions for accessing shared caches
+and determining when a cache is primed.</p>
+</blockquote>
+
+<p>Basically when a controller runs it creates an &ldquo;informer&rdquo; (for example a
+&ldquo;pod informer&rdquo;) which is in charge of</p>
+
+<ol>
+<li>listing all pods in the first place</li>
+<li>telling you about updates</li>
+</ol>
+
+<p>The cronjob controller does not use an informer (using informers is more
+complicated, and I think it just doesn&rsquo;t care as much about performance
+yet), but many (most?) other controllers do. In particular, the scheduler uses informers! You
+can see it configuring its informer <a href="https://github.com/kubernetes/kubernetes/blob/e4551d50e57c089aab6f67333412d3ca64bc09ae/plugin/pkg/scheduler/factory/factory.go#L175">here</a>.</p>
+
+<h3 id="requeueing">requeueing</h3>
+
+<p>There&rsquo;s actually also some guidance about how to handle requeuing of
+items that you&rsquo;re handling in the &ldquo;writing controllers&rdquo; documentation!</p>
+
+<blockquote>
+<p>Percolate errors to the top level for consistent re-queuing. We have a
+workqueue.RateLimitingInterface to allow simple requeuing with
+reasonable backoffs.</p>
+
+<p>Your main controller func should return an error when requeuing is
+necessary. When it isn&rsquo;t, it should use utilruntime.HandleError and
+return nil instead. This makes it very easy for reviewers to inspect
+error handling cases and to be confident that your controller doesn&rsquo;t
+accidentally lose things it should retry for.</p>
+</blockquote>
+
+<p>This seems to be good advice, it seems tricky to handle all errors
+correctly and so having a simple way to make sure reviewers can tell
+errors are being handled correctly is important! Cool!</p>
+
+<h3 id="you-should-sync-your-informers-or-should-you">you should &ldquo;sync&rdquo; your informers (or should you?)</h3>
+
+<p>Okay, this is the last interesting thing I learned.</p>
+
+<p>Informers have this concept of a &ldquo;sync&rdquo;. A sync is a little bit like
+restarting the program &ndash; you get a list of every resource you were
+watching, so that you can check that it&rsquo;s actually okay. Here&rsquo;s what the
+&ldquo;writing controllers&rdquo; guidance has to say about syncing.</p>
+
+<blockquote>
+<p>Watches and Informers will “sync”. Periodically, they will deliver
+every matching object in the cluster to your Update method. This is
+good for cases where you may need to take additional action on the
+object, but sometimes you know there won&rsquo;t be more work to do.</p>
+
+<p>In cases where you are certain that you don&rsquo;t need to requeue items when
+there are no new changes, you can compare the resource version of the
+old and new objects. If they are the same, you skip requeuing the work.
+Be careful when you do this. If you ever skip requeuing your item on
+failures, you could fail, not requeue, and then never retry that item
+again.</p>
+</blockquote>
+
+<p>So this implies &ldquo;you should sync, if you don&rsquo;t sync thne you
+can end up in a situation where an item gets lost and never retried&rdquo;.
+Which is what happened to us!</p>
+
+<h3 id="the-kubernetes-scheduler-doesn-t-resync">the kubernetes scheduler doesn&rsquo;t resync</h3>
+
+<p>So!! Once I learned about this idea of a &ldquo;sync&rdquo;, I was like.. wait,
+does that mean the kubernetes scheduler never resyncs? It seems that the
+answer is &ldquo;no, it doesn&rsquo;t!&rdquo;. here&rsquo;s <a href="https://github.com/kubernetes/kubernetes/blob/e4551d50e57c089aab6f67333412d3ca64bc09ae/plugin/cmd/kube-scheduler/app/server.go#L75-L77">the code</a>:</p>
+
+<pre><code>informerFactory := informers.NewSharedInformerFactory(kubecli, 0)
+// cache only non-terminal pods
+podInformer := factory.NewPodInformer(kubecli, 0)`
+</code></pre>
+
+<p>Those numbers <code>0</code> &ndash; those are the &ldquo;resync period&rdquo;, which I interpret to
+mean that it never resyncs. Interesting!! Why doesn&rsquo;t it ever resync? I
+don&rsquo;t know for sure, but I googled &ldquo;kubernetes scheduler resync&rdquo; and
+found this pull request <a href="https://github.com/kubernetes/kubernetes/pull/16840">#16840</a> (which added a resync to the scheduler), with the following 2 comments:</p>
+
+<blockquote>
+<p>@brendandburns - what is it supposed to fix? I&rsquo;m really against having
+such small resync periods, because it will significantly affect
+performance.</p>
+</blockquote>
+
+<p>and</p>
+
+<blockquote>
+<p>I agree with @wojtek-t . If resync ever fixes a problem, it means
+there is an underlying correctness bug that we are hiding. I do not
+think resync is the right solution.</p>
+</blockquote>
+
+<p>So it seems like the project maintainers decided never to resync,
+because when there are correctness bugs, they&rsquo;d like them to be surfaced
+and fixed instead of hidden by a resync.</p>
+
+<h3 id="some-code-reading-tips">some code-reading tips</h3>
+
+<p>As far as I know &ldquo;how the kubernetes scheduler actually works
+internally&rdquo; is not written down anywhere (like most things!).</p>
+
+<p>Here are a couple of things that helped me when reading it:</p>
+
+<ol>
+<li>Concatenate the whole thing into a big file. I said this already but
+it really helped me jump around between function calls &ndash; switching
+between files is confusing, especially when I don&rsquo;t understand the
+overall organization yet!</li>
+<li>Have some specific questions. Here I was mostly trying to figure out
+&ldquo;how is error handling even supposed to work? What happens if a pod
+doesn&rsquo;t get scheduled?&ldquo;. So there was a lot of code about like.. the
+details of how it picks which node exactly to schedule a pod to that
+I didn&rsquo;t need to care about at all (I still don&rsquo;t know how that works)</li>
+</ol>
+
+<h3 id="kubernetes-is-pretty-good-to-work-with-so-far">kubernetes is pretty good to work with so far</h3>
+
+<p>Kubernetes is a really complicated piece of software! To get a cluster
+working at all, you need to set up at least 6 different components (api
+server, scheduler, controller manager, container networking thing like
+flannel, kube-proxy, the kubelet). And so (if you care about
+understanding the software you run, which I very much do), I have to
+understand what all of those components do and how they interact with
+each other and how to set each of their 50 bajillion configuration
+operations in order to accomplish what I want.</p>
+
+<p>But so far the documentation is pretty good, when there are things that
+aren&rsquo;t documented the code is pretty easy to read, and they seem really
+willing to review pull requests.</p>
+
+<p>I&rsquo;ve definitely had to practice &ldquo;read the documentation and if it&rsquo;s not
+there read the code&rdquo; more than usual. But that&rsquo;s a good skill to get
+better at anyway!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Linux tracing zine]]></title>
+    <link href="https://jvns.ca/blog/2017/07/09/linux-tracing-zine/"/>
+    <updated>2017-07-09T12:39:25+00:00</updated>
+    <id>https://jvns.ca/blog/2017/07/09/linux-tracing-zine/</id>
+    <content type="html"><![CDATA[<p>Wrote a really quick zine out of the linux tracing tools post from yesterday.
+It&rsquo;s not super fancy but here it is. It&rsquo;s 12 pages, there&rsquo;s a print version &amp; a
+version to read on your computer as usual.</p>
+
+<p>I&rsquo;m experimenting with various methods of distribution. This one asks for you
+email, and the idea is that if I update the zine with new awesome stuff, you&rsquo;ll
+get an email. Also it&rsquo;s useful for me to get an idea of how many people are
+reading it (like, is it worth me making these things? :)).</p>
+
+<div align="center">
+<img src="https://drawings.jvns.ca/drawings/linux-tracing-1.png" width=300px>
+</div>
+
+<div align="center">
+<a class="button" href="https://gum.co/HPeS?wanted=true" target="_blank" data-gumroad-single-product="true">Get the zine! (pay-what-you-want)</a>
+</div>
+
+<p><link href="https://jvns.ca/stylesheets/buttons.css" media="screen, projection" rel="stylesheet" type="text/css">
+<script src="https://gumroad.com/js/gumroad.js"></script></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Linux tracing systems &amp; how they fit together]]></title>
+    <link href="https://jvns.ca/blog/2017/07/05/linux-tracing-systems/"/>
+    <updated>2017-07-05T22:28:08+00:00</updated>
+    <id>https://jvns.ca/blog/2017/07/05/linux-tracing-systems/</id>
+    <content type="html"><![CDATA[
+
+<p>I&rsquo;ve been confused about Linux tracing systems for <em>years</em>. There&rsquo;s strace, and
+ltrace, kprobes, and tracepoints, and uprobes, and ftrace, and perf, and eBPF,<br />
+and how does it all fit together and what does it all MEAN?</p>
+
+<p>Last week I went to Papers We Love and later me &amp; Kamal hung out with<br />
+<a href="https://twitter.com/tuxology">Suchakra</a> at <a href="http://www.dorsal.polymtl.ca/">Polytechnique Montréal</a> (where LTTng comes from) and<br />
+finally I think I understand how all these pieces fit together, more or less.
+There are still probably some mistakes in this post, please let me know what
+they are! (I&rsquo;m b0rk on twitter).</p>
+
+<p>I&rsquo;m going to leave strace out of this post (even though it&rsquo;s my favorite thing)
+because the overhead is so high &ndash; in this post we&rsquo;re only going to talk about
+tracing systems that are relatively fast / low overhead.  This post also isn&rsquo;t
+about sampling profilers at all (which is a whole other topic!). Just tracing.</p>
+
+<p>The thing I learned last week that helped me really understand was &ndash; you can
+split linux tracing systems into <strong>data sources</strong> (where the tracing data comes
+from), <strong>mechanisms for collecting data for those sources</strong> (like &ldquo;ftrace&rdquo;)
+and <strong>tracing frontends</strong> (the tool you actually interact with to
+collect/analyse data). The overall picture is still kind of fragmented
+and confusing, but it&rsquo;s at least a more approachable
+fragmented/confusing system.</p>
+
+<p>here&rsquo;s what we&rsquo;ll talk about: (with links if you want to jump to a specific section).</p>
+
+<ul>
+<li><a href="#zine">summary in pictures</a></li>
+<li><a href="#stuff-to-trace">What can you trace?</a></li>
+<li><a href="#data-sources">Data sources</a>:
+
+<ul>
+<li><a href="#kprobes">kprobes</a></li>
+<li><a href="#uprobes">uprobes</a></li>
+<li><a href="#kernel-tracepoints">Tracepoints</a></li>
+<li><a href="#lttng-ust">lttng-ust</a></li>
+<li><a href="#dtrace-probes">USDT / dtrace probes</a></li>
+</ul></li>
+<li><a href="#delicious-data">Mechanisms for collecting your delicious data</a>:
+
+<ul>
+<li><a href="#ftrace">ftrace</a></li>
+<li><a href="#perf-events"><code>perf_events</code></a></li>
+<li><a href="#ebpf">eBPF</a></li>
+<li><a href="#sysdig">sysdig</a></li>
+<li><a href="#systemtap">Systemtap kernel module</a></li>
+<li><a href="#lttng">LTTng</a></li>
+</ul></li>
+<li><a href="#frontends">User frontends</a>:
+
+<ul>
+<li><a href="#perf"><code>perf</code></a></li>
+<li><a href="#ftrace-frontends">Various ftrace frontends</a> (trace-cmd, catapult, kernelshark, <code>perf-tools</code>)</li>
+<li><a href="#bcc">The bcc frontend for eBPF</a></li>
+<li><a href="#lttng-systemtap">LTTng &amp; SystemTap frontends</a></li>
+</ul></li>
+<li><a href="#conclusions">some conclusions</a></li>
+</ul>
+
+<p>It&rsquo;s still kind of complicated but breaking it up this way really helps me
+understand (thanks to Brendan Gregg for suggesting this breakdown on twitter!)</p>
+
+<p><a name="zine"></a></p>
+
+<h3 id="a-picture-version">a picture version</h3>
+
+<p>here are 6 drawings summarizing what this post is about:</p>
+
+<div align="center">
+<a href="https://drawings.jvns.ca/drawings/linux-tracing-1.png"><img src="https://drawings.jvns.ca/drawings/linux-tracing-1.png" width=400px></a>
+<a href="https://drawings.jvns.ca/drawings/linux-tracing-2.png"><img src="https://drawings.jvns.ca/drawings/linux-tracing-2.png" width=400px></a>
+<a href="https://drawings.jvns.ca/drawings/linux-tracing-3.png"><img src="https://drawings.jvns.ca/drawings/linux-tracing-3.png" width=400px></a>
+<a href="https://drawings.jvns.ca/drawings/linux-tracing-4.png"><img src="https://drawings.jvns.ca/drawings/linux-tracing-4.png" width=400px></a>
+<a href="https://drawings.jvns.ca/drawings/linux-tracing-5.png"><img src="https://drawings.jvns.ca/drawings/linux-tracing-5.png" width=400px></a>
+<a href="https://drawings.jvns.ca/drawings/linux-tracing-6.png"><img src="https://drawings.jvns.ca/drawings/linux-tracing-6.png" width=400px></a>
+</div>
+
+<p><a name="stuff-to-trace"></a></p>
+
+<h3 id="what-can-you-trace">What can you trace?</h3>
+
+<p>A few different kinds of things you might want to trace:</p>
+
+<ul>
+<li>System calls</li>
+<li>Linux kernel function calls (which functions in my TCP stack are being called?)</li>
+<li>Userspace function calls (did <code>malloc</code> get called?)</li>
+<li>Custom &ldquo;events&rdquo; that you&rsquo;ve defined either in userspace or in the kernel</li>
+</ul>
+
+<p>All of these things are possible, but it turns out the tracing landscape is actually pretty complicated.</p>
+
+<p><a name="data-sources"></a></p>
+
+<h3 id="data-sources-kprobes-tracepoints-uprobes-dtrace-probes-more">Data sources: kprobes, tracepoints, uprobes, dtrace probes &amp; more</h3>
+
+<p>Okay, let&rsquo;s do data sources! This is kind of the most fun part &ndash; there are so many EXCITING PLACES you can get data about your programs.</p>
+
+<p>I&rsquo;m going to split these up into &ldquo;probes&rdquo; (kprobes/uprobes) and &ldquo;tracepoints&rdquo; (USDT/kernel tracepoints / lttng-ust). I&rsquo;m think I&rsquo;m not using the right terminology exactly but there are 2 distinct ideas here that are useful to understand</p>
+
+<p>A <strong>probe</strong> is when the kernel dynamically modifies your assembly program at
+runtime (like, it changes the instructions) in order to enable tracing. This is
+super powerful (and kind of scary!) because you can enable a probe on literally
+any instruction in the program you&rsquo;re tracing. (though dtrace probes aren&rsquo;t
+&ldquo;probes&rdquo; in this sense). Kprobes and uprobes are examples of this pattern.</p>
+
+<p>A <strong>tracepoint</strong> is something you compile into your program. When someone using
+your program wants to see when that tracepoint is hit and extract data, they
+can &ldquo;enable&rdquo; or &ldquo;activate&rdquo; the tracepoint to start using it. Generally a
+tracepoint in this sense doesn&rsquo;t cause any extra overhead when it&rsquo;s not
+activated, and is relatively low overhead when it is activated. USDT (&ldquo;dtrace
+probes&rdquo;), lttng-ust, and kernel tracepoints are all examples of this pattern.</p>
+
+<p><a name="kprobes"></a>
+<strong>kprobes</strong></p>
+
+<p>Next up is kprobes! What&rsquo;s that? <a href="https://lwn.net/Articles/132196/">From an LWN article</a>:</p>
+
+<blockquote>
+<p>KProbes are a debugging mechanism for the Linux kernel which can also be used
+for monitoring events inside a production system. You can use it to weed out
+performance bottlenecks, log specific events, trace problems etc.</p>
+</blockquote>
+
+<p>To reiterate &ndash; basically kprobes let you dynamically change the Linux kernel&rsquo;s
+assembly code at runtime (like, insert extra assembly instructions) to trace
+when a given instruction is called. I usually think of kprobes as tracing Linux
+kernel function calls, but you can actually trace <strong>any instruction inside the
+kernel and inspect the registers</strong>. Weird, right?</p>
+
+<p><a href="https://github.com/brendangregg/perf-tools/blob/master/kernel/kprobe">Brendan Gregg has a <code>kprobe</code> script</a> that you can use to play around with kprobes.</p>
+
+<p>For example! Let&rsquo;s use kprobes to spy on which files are being opened on our computer. I ran</p>
+
+<pre><code>$ sudo ./kprobe 'p:myopen do_sys_open filename=+0(%si):string' 
+</code></pre>
+
+<p>from the examples and right away it started printing out every file that was being opened on my computer. Neat!!!</p>
+
+<p>You&rsquo;ll notice that the kprobes interface by itself is a little gnarly though &ndash; like, you have to know that the filename argument to <code>do_sys_open</code> is in the <code>%si</code> register and dereference that pointer and tell the kprobes system that it&rsquo;s a string.</p>
+
+<p>I think kprobes are useful in 3 scenarios:
+1. You&rsquo;re tracing a system call. System calls all have  corresponding kernel functions like <code>do_sys_open</code>
+2. You&rsquo;re debugging some performance issue in the network stack or to do with file I/O and you understand the kernel functions that are called well enough that it&rsquo;s useful for you to trace them (not impossible!!! The linux kernel is just code after all!)
+3. You&rsquo;re a kernel developer,or you&rsquo;re otherwise trying to debug a kernel bug, which happens sometimes!! (I am not a kernel developer)</p>
+
+<p><a name="uprobes"></a>
+<strong>uprobes</strong></p>
+
+<p>Uprobes are kind of like kprobes, except that instead of instrumenting a <em>kernel</em> function you&rsquo;re instrumenting <em>userspace</em> functions (like malloc). <a href="http://www.brendangregg.com/blog/2015-06-28/linux-ftrace-uprobe.html">brendan gregg has a good post from 2015</a>.</p>
+
+<p>My understanding of how uprobes work is:</p>
+
+<ol>
+<li>You decide you want to trace the <code>malloc</code> function in libc</li>
+<li>You ask the linux kernel to trace malloc for you from libc</li>
+<li>Linux goes and finds the copy of libc that&rsquo;s loaded into memory (there should be just one, shared across all processes), and changes the code for <code>malloc</code> so that it&rsquo;s traced</li>
+<li>Linux reports the data back to you somehow (we&rsquo;ll talk about how &ldquo;asking linux&rdquo; and &ldquo;getting the data back somehow&rdquo; works later)</li>
+</ol>
+
+<p>This is pretty cool! One example of a thing you can do is spy on what people are typing into their bash terminals</p>
+
+<pre><code>bork@kiwi~/c/perf-tools&gt; sudo ./bin/uprobe 'r:bash:readline +0($retval):string' 
+Tracing uprobe readline (r:readline /bin/bash:0x9a520 +0($retval):string). Ctrl-C to end. 
+            bash-10482 [002] d...  1061.417373: readline: (0x42176e &lt;- 0x49a520) arg1=&quot;hi&quot; 
+            bash-10482 [003] d...  1061.770945: readline: (0x42176e &lt;- 0x49a520) arg1=(fault)
+            bash-10717 [002] d...  1063.737625: readline: (0x42176e &lt;- 0x49a520) arg1=&quot;hi&quot; 
+            bash-10717 [002] d...  1067.091402: readline: (0x42176e &lt;- 0x49a520) arg1=&quot;yay&quot; 
+            bash-10717 [003] d...  1067.738581: readline: (0x42176e &lt;- 0x49a520) arg1=&quot;wow&quot; 
+            bash-10717 [001] d...  1165.196673: readline: (0x42176e &lt;- 0x49a520) arg1=&quot;cool-command&quot; 
+</code></pre>
+
+<p><a name="dtrace-probes"></a>
+<strong>USDT/dtrace probes</strong></p>
+
+<p>USDT stands for &ldquo;Userland Statically Defined Tracing&rdquo;, and &ldquo;USDT probe&rdquo; means the same thing as &ldquo;dtrace probe&rdquo; (which was surprising to me!). You might have heard of dtrace on BSD/Solaris, but you can actually also use dtrace probes on Linux, though the system is different. It&rsquo;s basically a way to expose custom events. For example! <a href="https://docs.python.org/3/howto/instrumentation.html">Python 3 has dtrace probes</a>, if you compile it right.</p>
+
+<p><code>python.function.entry(str filename, str funcname, int lineno, frameptr)</code></p>
+
+<p>This means that if you have a tool that can consume dtrace probes, (like eBPF / systemtap), and a version of Python compiled with dtrace support, you can automagically trace Python function calls. That&rsquo;s really cool! (though this is a little bit of an &ldquo;if&rdquo; &ndash; not all Pythons are compiled with dtrace support, and the version of Python I have in Ubuntu 16.04 doesn&rsquo;t seem to be)</p>
+
+<p><strong>How to tell if you have dtrace probes</strong>, from <a href="(https://docs.python.org/3/howto/instrumentation.html)">the Python docs</a>. Basically you poke around in the binaries with readelf and look for the string &ldquo;stap&rdquo; in the notes.</p>
+
+<pre><code>$ readelf -S ./python | grep .note.stapsdt 
+[30] .note.stapsdt        NOTE         0000000000000000 00308d78 
+# sometimes you need to look in the .so file instead of the binary 
+$ readelf -S libpython3.3dm.so.1.0 | grep .note.stapsdt 
+[29] .note.stapsdt        NOTE         0000000000000000 00365b68 
+$ readelf -n ./python 
+</code></pre>
+
+<p>If you want to read more about dtrace you can read <a href="https://www.cs.princeton.edu/courses/archive/fall05/cos518/papers/dtrace.pdf">this paper from 2004</a> but I&rsquo;m not actually sure what the best reference is.</p>
+
+<p><a name="kernel-tracepoints"></a>
+<strong>kernel tracepoints</strong></p>
+
+<p>Tracepoints are also in the Linux kernel. (here&rsquo;s an <a href="https://lwn.net/Articles/379903/">LWN article</a>). The system was written by Mathieu Desnoyers (who&rsquo;s from Montreal! :)). Basically there&rsquo;s a <code>TRACE_EVENT</code> macro that lets you define tracepoints like this one (which has something to do with UDP… queue failures?):</p>
+
+<pre><code>TRACE_EVENT(udp_fail_queue_rcv_skb, 
+           TP_PROTO(int rc, struct sock *sk), 
+        TP_ARGS(rc, sk), 
+        TP_STRUCT__entry( 
+                __field(int, rc) 
+                __field(__u16, lport) 
+        ), 
+…. 
+</code></pre>
+
+<p>I don&rsquo;t really understand how it works (I think it&rsquo;s pretty involved) but basically tracepoints:</p>
+
+<ul>
+<li>Are better than kprobes because they stay more constant across kernel versions (kprobes just depend on whatever code happens to be in the kernel at that time)</li>
+<li>Are worse than kprobes because somebody has to write them explicitly</li>
+</ul>
+
+<p><strong>lttng-ust</strong></p>
+
+<p>I don&rsquo;t understand LTTng super well yet but &ndash; my understanding is that all of the 4 above things (dtrace probes, kprobes, uprobes, and tracepoints) all need to go through the kernel at some point. <code>lttng-ust</code> is a tracing system that lets you compile tracing probes into your programs, and all of the tracing happens in userspace. This means it&rsquo;s faster because you don&rsquo;t have to do context switching. I&rsquo;ve still used LTTng 0 times so that&rsquo;s mostly all I&rsquo;m going to say about that.</p>
+
+<p><a name="delicious-data"></a></p>
+
+<h3 id="mechanisms-for-collecting-your-delicious-delicious-data">Mechanisms for collecting your delicious delicious data</h3>
+
+<p>To understand the frontend tools you use to collect &amp; analyze tracing data, it&rsquo;s important to understand the fundamental mechanisms by which tracing data gets out of the kernel and into your grubby hands. Here they are. (there are just 5! ftrace, perf_events, eBPF, systemtap, and lttng).</p>
+
+<p>Let&rsquo;s start with the 3 that are actually part of the core Linux kernel: ftrace, perf_events, and eBPF.</p>
+
+<p><a name="ftrace"></a>
+<strong>ftrace</strong></p>
+
+<p>Those <code>./kprobe</code> and <code>./uprobe</code> scripts up there? Those both use <code>ftrace</code> to get data out of the kernel. Ftrace is a kind of janky interface which is a pain to use directly. Basically there&rsquo;s a filesystem at <code>/sys/kernel/debug/tracing/</code> that lets you get various tracing data out of the kernel.</p>
+
+<p>The way you fundamentally interact with ftrace is
+1. Write to files in <code>/sys/kernel/debug/tracing/</code>
+2. Read output from files in <code>/sys/kernel/debug/tracing/</code></p>
+
+<p>Ftrace supports:
+* Kprobes
+* Tracepoints
+* Uprobes<br />
+* I think that&rsquo;s it.</p>
+
+<p>Ftrace&rsquo;s output looks like this and it&rsquo;s a pain to parse and build on top of:</p>
+
+<pre><code>            bash-10482 [002] d...  1061.417373: readline: (0x42176e &lt;- 0x49a520) arg1=&quot;hi&quot; 
+            bash-10482 [003] d...  1061.770945: readline: (0x42176e &lt;- 0x49a520) arg1=(fault) 
+            bash-10717 [002] d...  1063.737625: readline: (0x42176e &lt;- 0x49a520) arg1=&quot;hi&quot; 
+            bash-10717 [002] d...  1067.091402: readline: (0x42176e &lt;- 0x49a520) arg1=&quot;yay&quot; 
+            bash-10717 [003] d...  1067.738581: readline: (0x42176e &lt;- 0x49a520) arg1=&quot;wow&quot; 
+            bash-10717 [001] d...  1165.196673: readline: (0x42176e &lt;- 0x49a520)  
+</code></pre>
+
+<p><a name="perf-events"></a>
+<strong>perf_events</strong></p>
+
+<p>The second way to get data out of the kernel is with the <code>perf_event_open</code> system call. The way this works is:</p>
+
+<ol>
+<li>You call the <code>perf_event_open</code> system call</li>
+<li>The kernel writes events to a ring buffer in user memory, which you can read from</li>
+</ol>
+
+<p>As far as I can tell the only thing you can read this way is tracepoints. This is what running <code>sudo perf trace</code> does (there&rsquo;s a tracepoint for every system call)</p>
+
+<p><a name="ebpf"></a>
+<strong>eBPF</strong></p>
+
+<p>eBPF is a VERY EXCITING WAY to get data. Here&rsquo;s how it works.</p>
+
+<ol>
+<li>You write an &ldquo;eBPF program&rdquo; (often in C, or likely you use a tool that generates that program for you).<br /></li>
+<li>You ask the kernel to attach that probe to a kprobe/uprobe/tracepoint/dtrace probe</li>
+<li>Your program writes out data to an eBPF map / ftrace / perf buffer</li>
+<li>You have your precious precious data!</li>
+</ol>
+
+<p>eBPF is cool because it&rsquo;s part of Linux (you don&rsquo;t have to install any kernel modules) and you can define your own programs to do any fancy aggregation you want so it&rsquo;s really powerful. You usually use it with the <a href="https://github.com/iovisor/bcc">bcc</a> frontend which we&rsquo;ll talk about a bit later. It&rsquo;s only available on newer kernels though (the kernel version you need depends on what data sources you want to attach your eBPF programs to)</p>
+
+<p>Different eBPF features are available at different kernel versions,
+here&rsquo;s a slide with an awesome summary:</p>
+
+<script async class="speakerdeck-embed" data-slide="20" data-id="130bc7df16db4556a55105af45cdf3ba" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+ 
+
+<p><a name="sysdig"></a>
+<strong>sysdig</strong></p>
+
+<p>Sysdig is a kernel module + tracing system. It lets you trace system calls and maybe some other things? I find their site kind of confusing to navigate, but I think <a href="https://github.com/draios/sysdig/blob/dev/driver/event_table.c">this file</a> contains the list of all the events sysdig supports. So it will tell you what files are being opened but not the weird internal details of what your TCP stack is doing.</p>
+
+<p><a name="systemtap"></a>
+<strong>systemtap</strong></p>
+
+<p>I&rsquo;m a little fuzzy how SystemTap works so we&rsquo;re going to go from this <a href="https://sourceware.org/systemtap/archpaper.pdf">architecture document</a></p>
+
+<ol>
+<li>You decide you want to trace a kprobe</li>
+<li>You write a &ldquo;systemtap program&rdquo; &amp; compile it into a kernel module</li>
+<li>That kernel module, when inserted, creates kprobes that call code from your kernel module when triggered (it calls <a href="https://github.com/torvalds/linux/blob/v4.10/Documentation/kprobes.txt"><code>register_kprobe</code></a>)</li>
+<li>You kernel modules prints output to userspace (using <a href="https://lwn.net/Articles/174669/">relayfs or something</a>)</li>
+</ol>
+
+<p>SystemTap supports:
+* tracepoints
+* kprobes
+* uprobes
+* USDT</p>
+
+<p>Basically lots of things! There are some more useful words about systemtap in <a href="http://www.brendangregg.com/blog/2015-07-08/choosing-a-linux-tracer.html">choosing a linux tracer</a></p>
+
+<p><a name="lttng"></a>
+<strong>LTTng</strong></p>
+
+<p><a href="http://lttng.org/">LTTng</a> (linux tracing: the next generation)  is from Montreal (a lab at ecole polytechnique)!! which makes me super happy (montreal!!). I saw an AMAZING demo of tool called <a href="http://tracecompass.org/">trace compass</a> the other day that reads data that comes from LTTng. Basically it was able to show all the <code>sched_switch</code> transitions between programs and system calls when running <code>tar -xzf somefile.tar.gz</code>, and you could really see exactly what was happening in a super clear way.</p>
+
+<p>The downside of LTTng (like SystemTap) is that you have to install a kernel module for the kernel parts to work. With <code>lttng-ust</code> everything happens in userspace and there&rsquo;s no kernel module needed.</p>
+
+<p><a name="frontends"></a></p>
+
+<h3 id="frontends">Frontends</h3>
+
+<p>Okay! Time for frontends! I&rsquo;m going to categorize them by mechanism (how the data gets  out of the kernel) to make it easier</p>
+
+<p><a name="perf"></a>
+<strong>perf frontends</strong></p>
+
+<p>The only frontend here is <code>perf</code>, it&rsquo;s simple.</p>
+
+<p><code>perf trace</code> will trace system calls for you, fast. That&rsquo;s great and I love it. <code>perf trace</code> is the only one of these I actually use day to day right now. (the ftrace stuff is more powerful and also more confusing / difficult to use)</p>
+
+<p><a name="ftrace-frontends"></a>
+<strong>ftrace frontends</strong></p>
+
+<p>Ftrace is a pain to use on its own and so there are various frontend tools to help you. I haven&rsquo;t found the best thing to use yet but here are some starting points:</p>
+
+<ul>
+<li><strong>trace-cmd</strong> is a frontend for ftrace, you can use it to collect and display ftrace data. I wrote about it a bit in <a href="https://jvns.ca/blog/2017/03/19/getting-started-with-ftrace/">this blog post</a> and there&rsquo;s an <a href="https://lwn.net/Articles/410200/">article on LWN</a> about it</li>
+<li><a href="https://github.com/catapult-project/catapult">Catapult</a> lets you analyze ftrace output. It&rsquo;s for Android / chrome performance originally but you can also just analyze ftrace. So far the only thing I&rsquo;ve gotten it to do is graph <code>sched_switch</code> events so you know which processes were running at what time exactly, and which CPU they were on. Which is pretty cool but I don&rsquo;t really have a use for yet?</li>
+<li><a href="http://rostedt.homelinux.com/kernelshark/">kernelshark</a> consumes ftrace output but I haven&rsquo;t tried it yet</li>
+<li>The <strong>perf</strong> command line tool is a perf frontend and (confusingly) also a frontend for some ftrace functionality (see <a href="http://man7.org/linux/man-pages/man1/perf-ftrace.1.html"><code>perf ftrace</code></a>)</li>
+</ul>
+
+<p><a name="bcc"></a>
+<strong>eBPF frontends: bcc</strong></p>
+
+<p>The only I know of is  the <strong>bcc</strong> framework: <a href="https://github.com/iovisor/bcc">https://github.com/iovisor/bcc</a>. It lets you write eBPF programs, it&rsquo;ll insert them into the kernel for you, and it&rsquo;ll help you get the data out of the kernel so you can process it with a Python script. It&rsquo;s pretty easy to get started with.</p>
+
+<p>If you&rsquo;re curious about the relationship between eBPF and the BPF you use in
+tcpdump I wrote a <a href="https://jvns.ca/blog/2017/06/28/notes-on-bpf---ebpf/">post about eBPF &amp; its relationship with BPF for packet filtering the other day</a>.
+I think it might be easiest though to think of them as unrelated because eBPF
+is so much more powerful.</p>
+
+<p>bcc is a bit weird because you write a C program inside a Python program but
+there are a lot of examples. Kamal and I wrote a program with bcc the other day
+for the first time and it was pretty easy.</p>
+
+<p><a name="lttng-systemtap"></a>
+<strong>LTTng &amp; SystemTap frontends</strong></p>
+
+<p>LTTng &amp; SystemTap both have their own sets of tools that I don&rsquo;t really understand. THAT SAID &ndash; there&rsquo;s this cool graphical tool called <a href="http://tracecompass.org/">Trace Compass</a> that seems really powerful. It consumes a trace format called CTF (&ldquo;common trace format&rdquo;) that LTTng emits.</p>
+
+<p><a name="conclusions"></a></p>
+
+<h3 id="what-tracing-tool-should-i-use-though">what tracing tool should I use though</h3>
+
+<p>Here&rsquo;s kind of how I think about it right now (though you should note that I only just figured out how all this stuff fits together very recently so I&rsquo;m not an expert):</p>
+
+<ul>
+<li>if you&rsquo;re mostly interested in computers running kernels &gt; linux 4.9,
+probably just learn about eBPF</li>
+<li><code>perf trace</code> is good, it will trace system calls with low overhead and it&rsquo;s super simple, there&rsquo;s not much to learn. A+.</li>
+<li>For everything else, they&rsquo;re, well, an investment, they take time to get used to.</li>
+<li>I think playing with kprobes is a good idea (via eBPF/ftrace/systemtap/lttng/whatever, for me right now ftrace is easiest). Being able to know what&rsquo;s going on in the kernel is a good superpower.</li>
+<li>eBPF is only available in kernel versions above 4.4, and some features only above 4.7. I think it makes sense to invest in learning it but on older systems it won&rsquo;t help you out yet</li>
+<li>ftrace is kind of a huge pain, I think it would be worth it for me if I could find a good frontend tool but I haven&rsquo;t managed it yet.</li>
+</ul>
+
+<h3 id="i-hope-this-helped">I hope this helped!</h3>
+
+<p>I&rsquo;m really excited that now I (mostly) understand how all these pieces fit together, I am literally typing some of this post at a free show at the jazz festival and listening to blues and having a fun time.</p>
+
+<p>Now that I know how everything fits together, I think I&rsquo;ll have a much easier time navigating the landscape of tracing frontends!</p>
+
+<p><a href="http://www.brendangregg.com/blog/index.html">Brendan Gregg</a>&rsquo;s awesome
+blog discusses a ton of these topics in a lot of detail &ndash; if you&rsquo;re interested
+in hearing about improvements in the Linux tracing ecosystem as they happen
+(it&rsquo;s always changing!), that&rsquo;s the best place to subscribe.</p>
+
+<p><small>thanks to Annie Cherkaev, Harold Treen, Iain McCoy, and David
+ Turner for reading a draft of this.</small></p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Notes on BPF &amp; eBPF]]></title>
+    <link href="https://jvns.ca/blog/2017/06/28/notes-on-bpf---ebpf/"/>
+    <updated>2017-06-28T23:47:21+00:00</updated>
+    <id>https://jvns.ca/blog/2017/06/28/notes-on-bpf---ebpf/</id>
+    <content type="html"><![CDATA[
+
+<p>Today it was Papers We Love, my favorite meetup! Today <a href="http://suchakra.in/">Suchakra Sharma</a> (<a href="https://twitter.com/tuxology">@tuxology</a> on twitter/github)
+gave a GREAT talk about the original BPF paper and recent work in Linux on
+eBPF. It really made me want to go write eBPF programs!</p>
+
+<p>The paper is <a href="http://www.vodun.org/papers/net-papers/van_jacobson_the_bpf_packet_filter.pdf">The BSD Packet Filter: A New Architecture for User-level Packet Capture</a></p>
+
+<p>I wanted to write some notes on the talk here because I thought it was super
+super good.</p>
+
+<p>To start, here are the
+<a href="https://speakerdeck.com/tuxology/the-bsd-packet-filter">slides</a> and a
+<a href="http://step.polymtl.ca/~suchakra/PWL-Jun28-MTL.pdf">pdf</a>. The pdf is good
+because there are links at the end and in the PDF you can click the links.</p>
+
+<script async class="speakerdeck-embed" data-id="130bc7df16db4556a55105af45cdf3ba" data-ratio="1.33333333333333" src="//speakerdeck.com/assets/embed.js"></script>
+
+<h3 id="what-s-bpf">what&rsquo;s BPF?</h3>
+
+<p>Before BPF, if you wanted to do packet filtering you had to copy all the
+packets into userspace and then filter them there (with &ldquo;tap&rdquo;).</p>
+
+<p>this had 2 problems:</p>
+
+<ol>
+<li>if you filter in userspace, it means you have to copy all the packets into userspace, copying data is expensive</li>
+<li>the filtering algorithms people were using were inefficient</li>
+</ol>
+
+<p>The solution to problem #1 seems sort of obvious, move the filtering logic into
+the kernel somehow. Okay. (though the details of how that&rsquo;s done isn&rsquo;t obvious,
+we&rsquo;ll talk about that in a second)</p>
+
+<p>But why were the filtering algorithms inefficient! Well!!</p>
+
+<p>If you run <code>tcpdump host foo</code> it actually runs a relatively complicated query,
+which you could represent with this tree:</p>
+
+<div align="center">
+<img src="https://jvns.ca/images/bpf-1.png">
+</div>
+
+<p>Evaluating this tree is kind of expensive. so the first insight is that you can
+actually represent this tree in a simpler way, like this:</p>
+
+<div align="center">
+<img src="https://jvns.ca/images/bpf-2.png">
+</div>
+
+<p>Then if you have <code>ether.type = IP</code> and <code>ip.src = foo</code> you automatically know
+that the packet matches <code>host foo</code>, you don&rsquo;t need to check anything else. So
+this data structure (they call it a &ldquo;control flow graph&rdquo; or &ldquo;CFG&rdquo;) is a way
+better representation of the program you actually want to execute to check
+matches than the tree we started with.</p>
+
+<h3 id="how-bpf-works-in-the-kernel">How BPF works in the kernel</h3>
+
+<p>The main important here is that packets are just arrays of bytes. BPF programs
+run on these arrays of bytes. They&rsquo;re not allowed to have loops but they <em>can</em>
+have smart stuff to figure out the length of the IP header (IPv6 &amp; IPv4 are
+different lengths!) and then find the TCP port based on that length</p>
+
+<pre><code>x = ip_header_length
+port = *(packet_start + x + port_offset) 
+</code></pre>
+
+<p>(it looks different from that but it&rsquo;s basically the same). There&rsquo;s a nice
+description of the virtual machine in the paper/slides so I won&rsquo;t explain it.</p>
+
+<p>When you run <code>tcpdump host foo</code> this is what happens, as far as I understand</p>
+
+<ol>
+<li>convert <code>host foo</code> into an efficient DAG of the rules</li>
+<li>convert that DAG into a BPF program (in BPF bytecode) for the BPF virtual machine</li>
+<li>Send the BPF bytecode to the Linux kernel, which verifies it</li>
+<li>compile the BPF bytecode program into native code. For example <a href="https://github.com/torvalds/linux/blob/v4.10/arch/arm/net/bpf_jit_32.c#L512">here&rsquo;s the JIT code for ARM</a> and for <a href="https://github.com/torvalds/linux/blob/v3.18/arch/x86/net/bpf_jit_comp.c#L189">x86</a></li>
+<li>when packets come in, Linux runs the native code to decide if that packet should be filtered or not. It&rsquo;l often run only 100-200 CPU instructions for each packet that needs to be processed, which is super fast!</li>
+</ol>
+
+<h3 id="the-present-ebpf">the present: eBPF</h3>
+
+<p>But BPF has been around for a long time! Now we live in the EXCITING FUTURE
+which is eBPF. I&rsquo;d heard about eBPF a bunch before but I felt like this helped
+me put the pieces together a little better. (i wrote this <a href="https://jvns.ca/blog/2017/04/07/xdp-bpf-tutorial/">XDP &amp; eBPF post</a> back in April when I was at netdev)</p>
+
+<p>some facts about eBPF:</p>
+
+<ul>
+<li>eBPF programs have their own bytecode language, and are compiled from that
+bytecode language into native code in the kernel, just like BPF programs</li>
+<li>eBPF programs run in the kernel</li>
+<li>eBPF programs can&rsquo;t access arbitrary kernel memory. Instead the kernel
+provides functions to get at some restricted subset of things.</li>
+<li>they <em>can</em> communicate with userspace programs through BPF maps</li>
+<li>there&rsquo;s a <code>bpf</code> syscall as of Linux 3.18</li>
+</ul>
+
+<h3 id="kprobes-ebpf">kprobes &amp; eBPF</h3>
+
+<p>You can pick a function (any function!) in the Linux kernel and execute a
+program that you write every time that function happens. This seems really
+amazing and magical.</p>
+
+<p>For example! There&rsquo;s this <a href="https://github.com/iovisor/bcc/blob/0c8c179fc1283600887efa46fe428022efc4151b/examples/tracing/disksnoop.py">BPF program called disksnoop</a> which tracks when you start/finish writing a block to disk.
+Here&rsquo;s a snippet from the code:</p>
+
+<pre><code>BPF_HASH(start, struct request *);
+void trace_start(struct pt_regs *ctx, struct request *req) {
+	// stash start timestamp by request ptr
+	u64 ts = bpf_ktime_get_ns();
+	start.update(&amp;req, &amp;ts);
+}
+...
+b.attach_kprobe(event=&quot;blk_start_request&quot;, fn_name=&quot;trace_start&quot;)
+b.attach_kprobe(event=&quot;blk_mq_start_request&quot;, fn_name=&quot;trace_start&quot;)
+</code></pre>
+
+<p>This basically declares a BPF hash (which the program uses to keep track of
+when the request starts / finishes), a
+function called <code>trace_start</code> which is going to be compiled into BPF bytecode,
+and attaches <code>trace_start</code> to the <code>blk_start_request</code> kernel function.</p>
+
+<p>This is all using the <code>bcc</code> framework which lets you write Python-ish programs
+that generate BPF code. You can find it (it has tons of example programs) at
+<a href="https://github.com/iovisor/bcc">https://github.com/iovisor/bcc</a></p>
+
+<h3 id="uprobes-ebpf">uprobes &amp; eBPF</h3>
+
+<p>So I sort of knew you could attach eBPF programs to kernel functions, but I
+didn&rsquo;t realize you could attach eBPF programs to userspace functions! That&rsquo;s
+really exciting. Here&rsquo;s
+<a href="https://github.com/iovisor/bcc/blob/00f662dbea87a071714913e5c7382687fef6a508/tests/lua/test_uprobes.lua">an example of counting malloc calls in Python using an eBPF program</a>.</p>
+
+<h3 id="things-you-can-attach-ebpf-programs-to">things you can attach eBPF programs to</h3>
+
+<ul>
+<li>network cards, with XDP (which I wrote about a while back)</li>
+<li>tc egress/ingress (in the network stack)</li>
+<li>kprobes (any kernel function)</li>
+<li>uprobes (any userspace function apparently ?? like in any C program with
+symbols.)</li>
+<li>probes that were built for dtrace called &ldquo;USDT probes&rdquo; (like <a href="https://dev.mysql.com/doc/refman/5.7/en/dba-dtrace-ref-query.html">these mysql probes</a>).
+Here&rsquo;s an <a href="https://github.com/iovisor/bcc/blob/master/examples/tracing/mysqld_query.py">example program using dtrace probes</a></li>
+<li><a href="http://blogs.microsoft.co.il/sasha/2016/03/31/probing-the-jvm-with-bpfbcc/">the JVM</a></li>
+<li>tracepoints (not sure what that is yet)</li>
+<li>seccomp / landlock security things</li>
+<li>a bunch more things</li>
+</ul>
+
+<h3 id="this-talk-was-super-cool">this talk was super cool</h3>
+
+<p>There are a bunch of great links in the slides and in
+<a href="https://github.com/iovisor/bcc/blob/master/LINKS.md">LINKS.md</a> in the iovisor
+repository. It is late now but soon I want to actually write my first eBPF
+program!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[3 short screencasts (/proc, tcpdump, strace)]]></title>
+    <link href="https://jvns.ca/blog/2017/06/26/3-screencasts/"/>
+    <updated>2017-06-26T22:29:15+00:00</updated>
+    <id>https://jvns.ca/blog/2017/06/26/3-screencasts/</id>
+    <content type="html"><![CDATA[
+
+<p>On Sunday I was thinking about how I like giving short talks, but travelling to
+give talks is so much work. What if I could give talks from my house?</p>
+
+<p>So I recorded 3 2-minute screencasts (nothing fancy, 1 take, no editing)
+showing demos of /proc, strace, and tcpdump. Here they are!</p>
+
+<p>These were surprisingly easy to do and some people seemed to like them so maybe
+I&rsquo;ll do more. Who knows!</p>
+
+<h3 id="stracing-python-s-asyncio-library">stracing python&rsquo;s asyncio library</h3>
+
+<iframe width="500" height="315"
+src="https://www.youtube.com/embed/77EgOtYUW-A?ecver=1" frameborder="0"
+allowfullscreen></iframe>
+
+<h3 id="tcpdump-some-dns-queries">tcpdump some dns queries</h3>
+
+<iframe width='500' height='315' src='https://www.useloom.com/embed/c0902ca704c244398860bb236b729440' frameborder='0' allowfullscreen></iframe>
+
+<h3 id="proc-is-awesome">/proc is awesome</h3>
+
+<iframe width='500' height='315' src='https://www.useloom.com/embed/77cac1938b8f4d0e8d4dc84267e44ef7' frameborder='0' allowfullscreen></iframe>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[a tiny whack-a-mole game]]></title>
+    <link href="https://jvns.ca/blog/2017/06/26/vue-js-fun/"/>
+    <updated>2017-06-26T20:51:03+00:00</updated>
+    <id>https://jvns.ca/blog/2017/06/26/vue-js-fun/</id>
+    <content type="html"><![CDATA[
+
+<script src="https://unpkg.com/vue"></script>
+
+<p>Hello! The other day I was learning about <a href="https://vuejs.org/">vue.js</a> and I
+thought it was kind of fun so I made this whack-a-mole game
+(<a href="https://jsfiddle.net/e3fj6dzb/">jsfiddle</a>).  (if you&rsquo;re reading this in RSS /
+email you should maybe click on the post to see the game).</p>
+
+<p><strong>Rules</strong>:</p>
+
+<ul>
+<li>moles are orange. click them to whack them</li>
+<li>if you whack all the moles you win</li>
+</ul>
+
+<p>Here, you can play it:</p>
+
+<div align="center">
+<div id="app">
+  <h2 style="color: orange" v-if="won()">
+     YOU WIN!!!
+  </h2>
+  <table v-if="!won()">
+    <tr v-for="(array, x_coord) in mole_grid">
+      <td v-for="(value, y_coord) in array">
+        <div class="circle" v-on:click="squash(x_coord, y_coord)"
+v-bind:style="{ background: value ? 'orange' : 'black'}"></div>
+      </td>
+    </tr>
+  </table>
+</div>
+</div>
+
+<p>To make this game work I needed to:</p>
+
+<ol>
+<li>make event handlers that whack the mole when I click on an orange mole</li>
+<li>make the game disappear when the player wins</li>
+<li>automatically add new moles every 0.5 seconds to be whacked</li>
+</ol>
+
+<p>Usually when I write Javascript I use jQuery and make a lot of callbacks and
+the code I write is sort of a disaster.</p>
+
+<p>I&rsquo;m excited about vue.js right now because it feels like an easier way to make
+tiny interactive javascript programs like this one.</p>
+
+<p>Here is the display logic for this game! It is pretty simple! There is some
+HTML and it only displays the table if the game is still going (<code>!won()</code>).</p>
+
+<p>The thing I like about this is &ndash; I just need to define a data structure for my
+game state (<code>mole_grid</code>). Each entry in that grid is 1 if there&rsquo;s a mole there
+an 0 if there&rsquo;s no mole. Vue.js automatically takes care of updating the HTML
+when my game state updates. This is also how React works but vue seems less
+complicated to me than React and I only want to do simple things anyway.</p>
+
+<p><xmp>
+<div id="app">
+  <h2 v-if="won()">
+     YOU WIN!!!
+  </h2>
+  <table v-if="!won()">
+    <tr v-for="(array, x_coord) in mole_grid">
+      <td v-for="(value, y_coord) in array">
+        <div class="circle" v-on:click="squash(x_coord, y_coord)"
+v-bind:style="{ background: value ? 'orange' : 'black'}"></div>
+      </td>
+    </tr>
+  </table>
+<!-- and some css to make the circles -->
+<style type="text/css">
+.circle {
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  /* width and height can be anything, as long as they&rsquo;re equal */
+}
+</xmp></p>
+
+<h3 id="javascript">javascript</h3>
+
+<p>Okay, but the app needs, like, callbacks and Javascript and stuff. Here&rsquo;s all
+the javascript! It has a <code>squash</code> function and a <code>won</code> function. It feels about
+as simple as the code for a whack-a-mole game should be which is.. pretty
+simple.</p>
+
+<pre><code class="language-javascript">var app = new Vue({
+  el: '#app',
+  data: {
+    mole_grid: [ // this is the initial grid, with 2 moles on it
+                 // all the game state is here basically!
+      [0, 1, 0],
+      [0, 0, 0],
+      [1, 0, 1]
+    ],
+    has_won: false, // also store if the player won yet
+  },
+  methods: {
+    set_mole: function(x_coord, y_coord, value) {
+      this.mole_grid[x_coord][y_coord] = value;
+      Vue.set(this.mole_grid, x_coord, this.mole_grid[x_coord]);
+    },
+    squash: function(x_coord, y_coord) {
+      this.set_mole(x_coord, y_coord, 0);
+    },
+    // check if we won yet
+    won: function () {
+    	if (this.has_won) {
+      	return true
+      }
+      var sum = 0;
+      for (var i in this.mole_grid) {
+      	for (var j in this.mole_grid[i]) {
+        	sum += parseInt(this.mole_grid[i][j]);
+        }
+      }
+      if (sum == 0) {
+      	this.has_won = true;
+      }
+      return this.has_won;
+    }
+  }
+})
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+// add a new mole to squash every 500ms
+setInterval(function() {
+console.log(app.won());
+  app.set_mole(getRandomInt(0, app.mole_grid.length), getRandomInt(0, app.mole_grid[0].length), 1)
+}, 500);
+
+</code></pre>
+
+<script type="text/javascript">
+
+var app = new Vue({
+  el: '#app',
+  data: {
+    mole_grid: [
+      [0, 1, 0],
+      [0, 0, 0],
+      [1, 0, 1]
+    ],
+    has_won: false,
+  },
+  methods: {
+    set_mole: function(x_coord, y_coord, value) {
+      this.mole_grid[x_coord][y_coord] = value;
+      Vue.set(this.mole_grid, x_coord, this.mole_grid[x_coord]);
+    },
+    squash: function(x_coord, y_coord) {
+      this.set_mole(x_coord, y_coord, 0);
+    },
+    won: function () {
+        if (this.has_won) {
+        return true
+      }
+        var sum = 0;
+      for (var i in this.mole_grid) {
+        for (var j in this.mole_grid[i]) {
+            sum += parseInt(this.mole_grid[i][j]);
+        }
+      }
+      if (sum == 0) {
+        this.has_won = true;
+      }
+      return this.has_won;
+    }
+  }
+})
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+setInterval(function() {
+console.log(app.won());
+  app.set_mole(getRandomInt(0, app.mole_grid.length), getRandomInt(0, app.mole_grid[0].length), 1)
+}, 500);
+
+app.squash(0, 1)
+</script>
+
+<style type="text/css">
+.circle {
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  /* width and height can be anything, as long as they're equal */
+}
+</style>
+
+<h3 id="that-s-all">that&rsquo;s all</h3>
+
+<p>I don&rsquo;t have a lot of opinions about javascript libraries (my local npm
+installation is definitely broken), but I do like to make tiny interactive
+webpages on the internet occasionally and this seems like a nice way to do
+that.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[What can developers learn from being on call?]]></title>
+    <link href="https://jvns.ca/blog/2017/06/18/operate-your-software/"/>
+    <updated>2017-06-18T00:31:45+00:00</updated>
+    <id>https://jvns.ca/blog/2017/06/18/operate-your-software/</id>
+    <content type="html"><![CDATA[
+
+<p>We often talk about being on call as being a bad thing. For example, the night
+before I wrote this my phone woke me up in the middle of the night because
+something went wrong on a computer. That&rsquo;s no fun! I was grumpy.</p>
+
+<p>In this post, though, we&rsquo;re going to talk about what you can learn from being
+on call and how it can make you a better software engineer!. And to learn from
+being on call you don&rsquo;t necessarily need to get woken up in the middle of the
+night. By &ldquo;being on call&rdquo;, here, I mean &ldquo;being responsible for your code when
+it breaks&rdquo;. It could mean waking up to issues that happened overnight and
+needing to fix them during your workday!</p>
+
+<p>Everything in here is synthesized from an amazing Twitter thread by Charity Majors where she asked &ldquo;How has being on call made you a better engineer?&rdquo;: <a href="https://twitter.com/mipsytipsy/status/847508734188191745">https://twitter.com/mipsytipsy/status/847508734188191745</a></p>
+
+<h3 id="learn-what-kinds-of-production-problems-are-common-and-uncommon">Learn what kinds of production problems are common and uncommon</h3>
+
+<p>When you&rsquo;re designing a system, you need to design for its error cases! When I
+was just starting out as an engineer, I found coming up with error cases really
+hard. ANYTHING could go wrong! But it&rsquo;s important to have a better model of
+system failure than &ldquo;anything could go wrong, protect against everything!&rdquo;
+because often you have to prioritize where to spend your time, and you should
+spend your time worrying about edge cases that are actually likely to happen.</p>
+
+<p>Being on call can teach you very fast what kinds of edge cases your system runs
+into frequently!</p>
+
+<p>For example, after seeing some software fail, I know that DNS queries can fail.
+It&rsquo;s useful to have error handling for DNS queries (and network requests in
+general), even if you think the servers you&rsquo;re talking to are mostly reliable!</p>
+
+<p>I also know that in principle RAM can be faulty (when you set a value in memory, it can get set to something else!) but it&rsquo;s not something that&rsquo;s ever happened to me in practice (yet!) so I worry about it less. (this might be because servers use ECC memory?) This post <a href="https://googleprojectzero.blogspot.ca/2015/03/exploiting-dram-rowhammer-bug-to-gain.html">Exploiting the DRAM rowhammer bug to gain kernel privileges</a> is a good example about how you can use RAM being faulty to make an exploit.</p>
+
+<h3 id="learn-to-build-in-monitoring-and-diagnostics-early">Learn to build in monitoring and diagnostics early</h3>
+
+<p>There&rsquo;s nothing quite like a system breaking, being in charge of fixing it, and
+having no way of seeing what&rsquo;s wrong to convince you of the value of building
+monitoring and logging into your application.</p>
+
+<p>Being on call will teach you quickly what <em>kinds</em> of diagnostics you need to
+debug your application. If you get paged because your application is taking an
+abnormally long time to make database queries, you can start monitoring how
+long your database queries take! Then next time it&rsquo;ll be much easier for the
+person on call to see if that&rsquo;s the problem.</p>
+
+<p>The great thing about this is that these lessons last even beyond your current
+on-call rotations &ndash; you can notice &ldquo;hey, every time I write a program I end up
+logging how long its database queries take, I&rsquo;ll just put that in at the
+beginning this time!&rdquo;</p>
+
+<h3 id="understand-the-parts-of-the-system-that-aren-t-yours">Understand the parts of the system that aren&rsquo;t yours</h3>
+
+<p>It&rsquo;s easy to think of the parts of the system you don&rsquo;t own as a black box. &ldquo;I
+just make database queries and they work, it&rsquo;s fine, the database team is in
+charge of the database&rdquo;.</p>
+
+<p>But it&rsquo;s actually incredibly useful to have a basic understanding of the
+limitations of the systems you work with! If you&rsquo;re working on the backend for
+a web application, you want to know how many queries it&rsquo;s okay to make to your
+database, approximately how much network bandwidth you have to work with, how
+much it&rsquo;s okay to write to disk, and more.</p>
+
+<p>If you get paged because your application is making too many database queries,
+this is an awesome opportunity to learn more about the limitations of the
+database you use! And then (can you see a pattern here?) the next time you work
+on something that makes a lot of database queries, you can check up front to
+make sure that it&rsquo;s okay.</p>
+
+<h3 id="gain-confidence-in-your-judgement">Gain confidence in your judgement</h3>
+
+<p>A couple great quotes from this thread:</p>
+
+<blockquote>
+<p>It helped me gain confidence in my own judgment. You have to make big calls, take scary actions, live through terrible decisions.</p>
+
+<p>I stop second guessing myself. If I&rsquo;m getting paged, shits down and broken hard - no time to second guess yourself.</p>
+</blockquote>
+
+<h3 id="learn-what-needs-urgent-attention">Learn what needs urgent attention</h3>
+
+<p>Some problems need to be fixed RIGHT NOW, and other problems&hellip; really don&rsquo;t.
+It used to be really mysterious to me how some engineers could just tell you
+&ldquo;yeah, that&rsquo;s not a big deal&rdquo; and be.. right about it?</p>
+
+<p>This intuition is really important to build (otherwise you&rsquo;ll panic every time
+there&rsquo;s an error and you&rsquo;ll never get anything done!). When you&rsquo;re on call for
+a system, you see the urgent problems when they happen and you understand what
+causes them. So you slowly gain intuition for &ldquo;oh, okay, when X happens it
+often causes a serious issue, but when Y happens it&rsquo;s not a big deal&rdquo;.</p>
+
+<p>This also lets you prevent upcoming problems proactively &ndash; if you see
+something worrisome happening, you can fix it before anyone on your team has to
+be woken up in the middle of the night.</p>
+
+<h3 id="learn-to-design-reliable-systems">Learn to design reliable systems</h3>
+
+<p>There&rsquo;s been a common thread through all of this. A huge part of our jobs as
+software engineers is to design systems that continues working for your
+customers even when things don&rsquo;t happen quite as your expected. A great way to
+learn how to design for failure is to be on call for your software.</p>
+
+<p>Kamal pointed out to me that it&rsquo;s easy to have a system where the code is fine
+(not too many bugs, etc), but because of some fundamental design choice it
+doesn&rsquo;t run well in production. For example, you could design a system which
+needs to make many database queries every time a user makes a request. So
+having a good understanding of the production implications of different design
+choices will help you design better systems!</p>
+
+<h3 id="learn-how-to-make-minimum-effective-change">Learn how to make minimum effective change</h3>
+
+<p>When there&rsquo;s an
+<a href="https://increment.com/on-call/when-the-pager-goes-off/">incident</a>, you want to
+stabilize the system before fixing the root cause (ok, this server is on FIRE,
+can we just divert traffic away from it before figuring out why?)! This is a
+useful skill when you&rsquo;re being paged, but also when you have a system that
+needs help but don&rsquo;t necessarily have the time/resources to completely fix it
+right now.</p>
+
+<h3 id="learn-about-distributed-systems-consistency-race-conditions">Learn about distributed systems &amp; consistency &amp; race conditions</h3>
+
+<blockquote>
+<p>Being on call has taught me about race conditions</p>
+</blockquote>
+
+<p>Recently I got an alert that a job I&rsquo;d written was failing. I looked at it for
+a while, and then I realized &ldquo;oh, this is happening because S3 list operations
+are eventually consistent&rdquo; &ndash; my code was listing a prefix in S3, and the
+result it was getting wasn&rsquo;t up to date. (and &ldquo;eventually consistent&rdquo; here
+really means &ldquo;eventually&rdquo; &ndash; apparently sometimes you&rsquo;ll add / delete an object
+from an S3 bucket and it won&rsquo;t show up in list operations for minutes)</p>
+
+<p>This is how S3 is <em>supposed</em> to work, but I hadn&rsquo;t really thought about that
+when I wrote the code.  Arguably I should have read the docs more carefully,
+but seeing issues like this in practice helps me understand what &ldquo;eventually
+consistent&rdquo; systems look like when they fail and remember to write my code with
+that in mind next time.</p>
+
+<h3 id="other-quotes-i-liked">Other quotes I liked</h3>
+
+<blockquote>
+<p>I&rsquo;ve had teams that took on-call very seriously: each issue that paged
+us was reviewed in a weekly meeting, and tasks were assigned to solve</p>
+
+<p>The lesson for me is that processes are important, and working towards
+continuous improvement is worth it.</p>
+</blockquote>
+
+<p>and</p>
+
+<blockquote>
+<p>Being on call means I can&rsquo;t pick and choose favorite/comfortable subjects
+avoiding hard/unhappy ones. I&rsquo;m forced to stretch and learn.</p>
+</blockquote>
+
+<p>and</p>
+
+<blockquote>
+<p>Being able to put aside one&rsquo;s pride and say &ldquo;I need help with this
+even though I&rsquo;m waking someone up to help me.&rdquo;</p>
+</blockquote>
+
+<p>and</p>
+
+<blockquote>
+<p>It made me much better at figuring out how to break up a complex
+failure condition into smaller pieces that are easier to debug&hellip;</p>
+</blockquote>
+
+<h3 id="being-responsible-for-my-programs-operations-makes-me-a-better-developer">Being responsible for my programs&rsquo; operations makes me a better developer</h3>
+
+<p>I&rsquo;ve never really worked in a world where I wrote software and threw it over
+the wall to be operated by another team. But I do feel like writing software
+and then seeing how it fails in practice has been a good experience! I feel
+like it&rsquo;s a great privilege to be able to write software and see how it
+holds up in practice over the course of months/years.</p>
+
+<p>That said &ndash; I&rsquo;ve never been on a particularly arduous on-call rotation
+personally, the most I&rsquo;ve probably ever been paged is like.. 2-3 times per
+week, once every 4 weeks. But I feel like I learned a lot from that still!</p>
+
+<p>I&rsquo;ve probably left out many important things here but I wrote this 2 months ago
+and so it&rsquo;s already being published far later than my usual &ldquo;write this and
+publish it within 4 hours&rdquo;.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Awesome NLP tutorials by Allison Parrish]]></title>
+    <link href="https://jvns.ca/blog/2017/06/17/allison-parrish/"/>
+    <updated>2017-06-17T12:56:54+00:00</updated>
+    <id>https://jvns.ca/blog/2017/06/17/allison-parrish/</id>
+    <content type="html"><![CDATA[
+
+<p>I love fun programming tutorials, and I love the Jupyter notebook for showing how to do cool Python stuff. So I was
+really happy this morning when I saw <a href="http://www.decontextualize.com/">Allison Parrish</a> (who makes a lot of delightful
+computer-generated language art) post these tutorials she&rsquo;s written (which mostly use the Jupyter notebook) about how to parse and generate English text this morning!</p>
+
+<p>First, some links to cool stuff Allison has done:</p>
+
+<ul>
+<li><a href="http://www.decontextualize.com/">her awesome website with a billion cool links</a></li>
+<li>Her !!Con talk <a href="https://youtu.be/meovx9OqWJc">lossy text compression, for some reason?!?!</a> (which is basically about using JPEG compression to compress text, with weird and wonderful results. It&rsquo;s 10 minutes, watch it, really)</li>
+<li><a href="https://twitter.com/the_ephemerides">The Ephemerides</a> is a lovely Twitter bot that posts computer-generated poems and pictures from space</li>
+<li><a href="https://twitter.com/everyword">everyword</a> tweeted every word in the English language</li>
+<li><a href="http://opentranscripts.org/transcript/semantic-space-literal-robots/">awesome transcript of &ldquo;Exploring (Semantic) Space With (Literal) Robots&rdquo;</a>, a talk by her about computer-generated poetry.</li>
+<li>A game called <a href="http://rewordable.com/">rewordable</a> that I want to buy</li>
+</ul>
+
+<p>And now the tutorials! To start, there&rsquo;s this a  basic intro to <a href="https://gist.github.com/aparrish/f8e7eab47542678a39a39dddbca4ec2f">working with CSV files in Python</a> (which is extremely useful, but I know that.</p>
+
+<p>Here are the links to the 4 tutorials I was really excited about if you just want the links and don&rsquo;t care what I have to say about them :)</p>
+
+<ul>
+<li><a href="http://air.decontextualize.com/tracery/">Tracery tutorial</a></li>
+<li><a href="https://gist.github.com/aparrish/73c19a36b9cdcf604d04e95020418cd4">Working with Tracery in Python</a></li>
+<li><a href="https://gist.github.com/aparrish/f21f6abbf2367e8eb23438558207e1c3">NLP concepts with spaCy</a></li>
+<li><a href="https://gist.github.com/aparrish/2f562e3737544cf29aaf1af30362f469">Understanding word vectors</a></li>
+</ul>
+
+<h3 id="text-generation">Text generation</h3>
+
+<p>First! Suppose you want to generate random text, like &ldquo;I&rsquo;m a banana, not a cucumber&rdquo;. You could do this by writing like <code>&quot;I'm a %s, not a %s&quot; % (&quot;banana&quot;, &quot;cucumber&quot;)</code>, but you&rsquo;ll run into problems fast because it&rsquo;s &ldquo;I&rsquo;m <em>an</em> apple&rdquo;, not &ldquo;I&rsquo;m a apple&rdquo;.</p>
+
+<p>It turns out that there&rsquo;s a cool library called Tracery to help you with text generation. Allison has 2 cool tutorials about Tracery:</p>
+
+<ul>
+<li><a href="http://air.decontextualize.com/tracery/">Tracery tutorial</a></li>
+<li><a href="https://gist.github.com/aparrish/73c19a36b9cdcf604d04e95020418cd4">Working with Tracery in Python</a></li>
+</ul>
+
+<h3 id="parsing-text-with-spacy">Parsing text with spaCy</h3>
+
+<p>The next tutorial is <a href="https://gist.github.com/aparrish/f21f6abbf2367e8eb23438558207e1c3">NLP concepts with spaCy</a>. Basically you can take a sentence or paragraph and parse it to figure out what it means! Some example of stuff she explains how to figure out:</p>
+
+<p>Where the sentences are
+Whether a word is a verb or a noun or what
+Identify more complicated grammar constructs like the &ldquo;prepositional phrases&rdquo;  (&lsquo;with reason and conscience&rsquo;, &lsquo;towards one another&rsquo;)</p>
+
+<p>She linked to some <a href="https://github.com/aparrish/rwet-examples/tree/master/spacy">examples</a> of how to use spacy. I ran the &ldquo;what they&rsquo;re doing&rdquo; example on Pride and Prejudice and it wrote out:</p>
+
+<pre><code>Hurst is returning
+Bingley is blaming
+Collins is coming
+Darcy is viewing
+Bingley is providing
+Wickham is caring
+Darcy is viewing
+Lady is remaining
+Hill is coming
+</code></pre>
+
+<p>So it seems to have done a good job of identifying the characters in Pride and
+Prejudice! Neat!</p>
+
+<p>Previously the NLP library I&rsquo;d heard about was NLTK, and she has this very
+useful note in the tutorial:</p>
+
+<blockquote>
+<p>(Traditionally, most NLP work in Python was done with a library called NLTK.
+NLTK is a fantastic library, but it&rsquo;s also a writhing behemoth: large and
+slippery and difficult to understand. Also, much of the code in NLTK is decades
+out of date with contemporary practices in NLP.)</p>
+</blockquote>
+
+<h3 id="understanding-word-vectors">Understanding word vectors</h3>
+
+<p>Ok, the next tutorial is <a href="https://gist.github.com/aparrish/2f562e3737544cf29aaf1af30362f469">Understanding word vectors</a></p>
+
+<p>The cool thing I learned from this is that you can programmatically &ldquo;average&rdquo;
+words like &lsquo;day&rsquo; and &lsquo;night&rsquo; to end up with &lsquo;evening&rsquo;! You can also figure out
+which animals are similar and all kinds of really cool stuff. I didn&rsquo;t know
+that you could do this, if you want to know more you should read the excellent
+tutorial.</p>
+
+<h3 id="fun-building-blocks-for-doing-text-experiments">Fun building blocks for doing text experiments!</h3>
+
+<p>I think these 3 things (tracery for generating sentences, spacy for parsing
+text, and spacy (again) for seeing which words are similar to each other) seem
+like a super awesome way to get started with playing with text!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Log-structured storage]]></title>
+    <link href="https://jvns.ca/blog/2017/06/11/log-structured-storage/"/>
+    <updated>2017-06-11T10:41:48+00:00</updated>
+    <id>https://jvns.ca/blog/2017/06/11/log-structured-storage/</id>
+    <content type="html"><![CDATA[
+
+<p>This morning I&rsquo;m reading <a href="http://dataintensive.net/">Designing data-intensive applications</a> by Martin Kleppmann.</p>
+
+<p>I&rsquo;m only a couple chapters in, but it&rsquo;s already definitely the best
+thing about databases I&rsquo;ve ever read. It&rsquo;s doing an amazing job of</p>
+
+<ul>
+<li>introducing totally new-to-me concepts (like &ldquo;log-structured storage&rdquo;)</li>
+<li>explaining what terms like &ldquo;ACID&rdquo; mean in a rigorous and clear way
+(turns out that the &ldquo;C&rdquo; in ACID stands for &ldquo;consistency&rdquo;, but has
+nothing to do with either linearizability or &ldquo;eventual consistency&rdquo;,
+it&rsquo;s actually about maintaining application-level invariants.
+It&rsquo;s really helpful to know that there are actually 5 completely
+unrelated uses of the word &ldquo;consistency&rdquo; when talking about
+databases). He&rsquo;s also very up front about &ldquo;this word is used
+very inconsistently in practice, be careful!&rdquo;</li>
+<li>explaining how the concepts in the book relate to real-world databases
+like PostgreSQL, MySQL, Redis, Cassandra, and many many more</li>
+<li>giving references (just the first chapter on storage engines has 65
+amazing-looking references), if you want to learn more and go deeper</li>
+</ul>
+
+<p>I often find blog posts/papers on databases difficult because there&rsquo;s so
+much terminology+concepts, and this book introduces concepts in a way that I can
+relate back to my actual experiences with using databases in practice.
+Now I feel more like I can use this to read database documentation and
+understand what&rsquo;s going on!</p>
+
+<p>For example here&rsquo;s a comic summary of the explanation of ACID he gives
+(which I loved, I seriously thought atomicity in databases was the same
+idea as atomicity in concurrent programs like an &ldquo;atomic instruction&rdquo;
+and it&rsquo;s a TOTALLY DIFFERENT THING).</p>
+
+<div align="center">
+<a href="https://drawings.jvns.ca/drawings/acid.svg">
+<img src="https://drawings.jvns.ca/drawings/acid.png">
+</a>
+</div>
+
+<p>But! Raving about this book aside (for now), let&rsquo;s talk about a new idea
+I learned this morning from it, log-structured storage!</p>
+
+<h3 id="log-structured-storage-the-simplest-database">log-structured storage: the simplest database</h3>
+
+<p>This chapter starts by describing the &ldquo;world&rsquo;s simplest database&rdquo;: these
+2 bash functions (save it to a file <code>db.sh</code> and run <code>source db.sh</code> to
+install it!)</p>
+
+<pre><code>#!/bin/bash
+
+db_set() {
+    echo &quot;$1,$2&quot; &gt;&gt; database
+}
+
+db_get() {
+    grep &quot;^$1,&quot; database | sed -e &quot;s/^$1,//&quot; | tail -n 1
+}
+</code></pre>
+
+<p>Basically this appends to a text file (called <code>database</code>) every time you
+write, and greps that text file for the latest update every time you
+read. I tried it! This is a totally functional database :)</p>
+
+<h3 id="2-kinds-of-database-storage">2 kinds of database storage</h3>
+
+<p>There are a lot of ways to segment databases &ndash; &ldquo;SQL vs not-SQL&rdquo;,
+&ldquo;replicated vs not replicated&rdquo;, and, er, a lot more. This storage
+chapter started by saying that there are 2 basic ways to do database
+storage (which I hadn&rsquo;t heard before!)</p>
+
+<ul>
+<li>log-structured storage engines (like &ldquo;log-structured merge trees&rdquo;)</li>
+<li>page-oriented storage engines (like b-trees)</li>
+</ul>
+
+<p>A log-structured storage engine is a little like our Bash script &ndash; you write new
+stuff to the end of the log, and then query for the latest update to
+read. The idea here is that this way you don&rsquo;t need to make random disk
+writes &ndash; you can just write to the end, and so writes can be a lot
+faster. Unlike our bash script, you don&rsquo;t just grep to query (that would
+be way too slow!!). One thing you can do (a &ldquo;SSTable&rdquo;) is write the new
+data to a red-black tree in memory, and then periodically (every few megabytes,
+maybe?) write the tree to disk.</p>
+
+<p>When you want to write a page-oriented database, you need to search for
+the right page (4k of data or so) that contains your data and update it. I wrote a blog post about <a href="https://jvns.ca/blog/2014/10/02/how-does-sqlite-work-part-2-btrees/">sqlite and  btrees</a> a while back.</p>
+
+<p>PostgreSQL, MySQL, etcd, and sqlite all use page-oriented storage engines.</p>
+
+<p>I was googling for what MongoDB uses, and it turns out that MongoDB&rsquo;s
+new WiredTiger storage engine actually supports both a log-structured
+backend and a btree backend! There&rsquo;s a <a href="https://github.com/wiredtiger/wiredtiger/wiki/Btree-vs-LSM">Btree vs LSM</a>
+benchmark in the MongoDB wiki, and it shows that in that benchmark, the
+BTree table has higher read throughput and lower write throughout, and
+the LSM table has higher write throughput and lower read throughput.</p>
+
+<p>Leveldb, Rocksdb, and Cassandra all use log-structured storage.</p>
+
+<h3 id="the-write-ahead-log">the write-ahead log</h3>
+
+<p>This chapter also helped me understand what&rsquo;s going on with write-ahead
+logs better! Write-ahead logs are different from log-structured storage,
+both kinds of storage engines can use write-ahead logs.</p>
+
+<p>Recently at work the team that maintains Splunk wrote a post called
+&ldquo;Splunk is not a write-ahead log&rdquo;. I thought this was interesting
+because I had never heard the term &ldquo;write-ahead log&rdquo; before!</p>
+
+<p>Here&rsquo;s what I think the deal is now.</p>
+
+<p>Writing to disk is expensive. Because of that, databases will often just
+do writes to memory, and then save their state to disk later. This is
+smart and efficient!</p>
+
+<p>But if you crash, then you can lose data. Losing data is bad. To avoid
+losing data, you can just log all your writes to disk by appending to a
+file (just like our &ldquo;simplest database ever&rdquo;). Most of the time you
+don&rsquo;t use this log at all (you don&rsquo;t use it to query!). But if you crash
+or something goes wrong, you can go back and use the log to recover. You
+can see that <a href="https://www.postgresql.org/docs/9.1/static/wal-intro.html">Postgres does this in its doc</a>.</p>
+
+<p>From the Postgres docs:</p>
+
+<blockquote>
+<p>If we follow this procedure, we do not need to flush data pages to
+disk on every transaction commit, because we know that in the event of
+a crash we will be able to recover the database using the log: any
+changes that have not been applied to the data pages can be redone
+from the log records. (This is roll-forward recovery, also known as
+REDO.)</p>
+</blockquote>
+
+<p>There&rsquo;s a nice post about how <a href="https://sqlite.org/wal.html">SQLite uses a WAL</a> on its site.
+I think in practice a WAL can actually mean a few different things &ndash;
+for example SQLite is an embedded database and I think its WAL implementation
+doesn&rsquo;t involve holding data in memory at all, it has different goals.</p>
+
+<h3 id="more-things-i-m-excited-to-understand-from-this-book">more things I&rsquo;m excited to understand from this book</h3>
+
+<ul>
+<li>raft &amp; consensus algorithms (I&rsquo;m using etcd now and I don&rsquo;t really
+understand what&rsquo;s going on with Raft yet)</li>
+<li>how different database systems handle replications</li>
+<li>and partitioning!</li>
+<li>and more</li>
+</ul>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Iptables basics]]></title>
+    <link href="https://jvns.ca/blog/2017/06/07/iptables-basics/"/>
+    <updated>2017-06-07T21:15:09+00:00</updated>
+    <id>https://jvns.ca/blog/2017/06/07/iptables-basics/</id>
+    <content type="html"><![CDATA[
+
+<p>Yesterday I tweeted &ldquo;hey, I learned some stuff about iptables today&rdquo;!
+A few people replied &ldquo;oh no, I&rsquo;m sorry&rdquo;. iptables has kind of a reputation
+for being hard to understand (and I&rsquo;ve also found it intimidating) so I
+wanted to write down a few things I learned about iptables in the last
+few days. I don&rsquo;t like being scared of things and understanding a few of
+the basics of iptables seems like it shouldn&rsquo;t be scary!</p>
+
+<p>I have been looking at Kubernetes things, and Kubernetes creates 5
+bajillion iptables rules, so it has been time to learn a little bit
+about iptables.</p>
+
+<p>The best references I&rsquo;ve found for understanding iptables so far have
+been:</p>
+
+<ul>
+<li>the <a href="https://linux.die.net/man/8/iptables">iptables man page</a></li>
+<li><a href="http://www.iptables.info/en/iptables-contents.html">iptables.info</a>
+(which is GREAT, it explains all kinds of stuff like &ldquo;what does
+MASQUERADE even mean&rdquo; that is not explained in the iptables man page)</li>
+</ul>
+
+<h3 id="how-to-view-what-iptables-stuff-you-have-set-up">how to view what iptables stuff you have set up</h3>
+
+<p>iptables has a bunch of er, &ldquo;tables&rdquo; in it. These are places you can put
+iptables rules. They&rsquo;re used at different times during packet
+processing. There&rsquo;s a  <a href="http://www.iptables.info/files/tables_traverse.jpg">diagram here</a>, from this <a href="http://www.iptables.info/en/structure-of-iptables.html">&ldquo;traversing of tables and chains&rdquo;</a> page.</p>
+
+<p>The first surprising thing I learned about iptables is that to look at
+all the iptables rules you have to run 4 commands</p>
+
+<pre><code>sudo iptables -L # there's an implicit `-t filter` here,
+                 # this just lists the filter table
+sudo iptables -L -t nat
+sudo iptables -L -t mangle
+sudo iptables -L -t raw
+</code></pre>
+
+<p>This isn&rsquo;t super fun, I find it annoying to have to run 4 commands to
+see all the iptables rules on my computer. I started running  <code>sudo
+iptables-save</code> which generates a dump of all the iptables rules I have.
+I like being able to see everything by running one command!</p>
+
+<pre><code>$ sudo iptables-save
+*nat
+:PREROUTING ACCEPT [1664:324261]
+:INPUT ACCEPT [1629:320166]
+:OUTPUT ACCEPT [36545:10406977]
+:POSTROUTING ACCEPT [34390:10034797]
+:DOCKER - [0:0]
+-A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+-A OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER
+-A POSTROUTING -s 172.17.0.0/16 ! -o docker0 -j MASQUERADE
+-A DOCKER -i docker0 -j RETURN
+COMMIT
+# Completed on Wed Jun  7 21:25:14 2017
+# Generated by iptables-save v1.6.0 on Wed Jun  7 21:25:14 2017
+*filter
+:INPUT ACCEPT [2078627:2180604942]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [1617291:254682158]
+:DOCKER - [0:0]
+:DOCKER-ISOLATION - [0:0]
+-A FORWARD -j DOCKER-ISOLATION
+-A FORWARD -o docker0 -j DOCKER
+-A FORWARD -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j
+ACCEPT
+-A FORWARD -i docker0 ! -o docker0 -j ACCEPT
+-A FORWARD -i docker0 -o docker0 -j ACCEPT
+-A DOCKER-ISOLATION -j RETURN
+COMMIT
+</code></pre>
+
+<p>You can see on my laptop right now that I have a bunch of stuff in the
+<code>filter</code> table and some more stuff in the <code>nat</code> table. And that it&rsquo;s all
+generated by Docker.</p>
+
+<p>Okay, now that we&rsquo;re able to look at iptables rules, how do we read
+them? And how do we write our own?!</p>
+
+<h3 id="the-nat-filter-tables">the nat &amp; filter tables</h3>
+
+<p>The only tables I&rsquo;ve seen Kubernetes use so far are the <code>nat</code> and
+<code>filter</code> tables. The <code>filter</code> table mostly makes sense to me &ndash; you can
+set it up as a firewall to drop some packets, and read the man page to
+understand the syntax. In the example above there are a bunch of things
+in the FORWARD chain that apply to forwarded packets. I&rsquo;m not sure how
+the idea of a &ldquo;forwarded packet&rdquo; applies to Docker yet (I think <a href="https://docs.docker.com/engine/userguide/networking/default_network/container-communication/#communication-between-containers">this documentation page &ldquo;Understand container communication&rdquo;</a> is relevant), but I&rsquo;ll leave
+it there for now.</p>
+
+<p>But the nat table!! I have learned a few things about that! I&rsquo;m going to break down a
+specific nat table rule that I found in the Kubernetes source code
+because it took me a while to understand what it was doing. Here it is:</p>
+
+<pre><code>/usr/sbin/iptables -w -t nat -A POSTROUTING -o eth0 -j MASQUERADE ! -d ${CONTAINER_SUBNET}
+</code></pre>
+
+<p>The first  time (and possibly second &amp; third times) I saw this my eyes
+kind of glazed over. I googled <code>iptables masquerade</code> like 5 times and
+was like &ldquo;why doesn&rsquo;t the iptables man page even say the word masquerade
+at all?!?&ldquo;.</p>
+
+<p>But it actually turned out to be important to know what this meant, so,
+now I know!! Let&rsquo;s break down the easy options first</p>
+
+<ul>
+<li><code>-w</code>: this takes out an exclusive lock so that it can&rsquo;t run
+concurrently with other iptables executions. Makes sense.</li>
+<li><code>-A</code>: just means &ldquo;add a rule&rdquo;</li>
+<li><code>POSTROUTING</code> is the name of a chain, it&rsquo;s basically the last step in
+iptables processing</li>
+<li><code>-o eth0</code>: means &ldquo;the output interface is eth0&rdquo; &ndash; so the packet is going out
+of the computer (and not for example being bridged to a Docker network
+interface)</li>
+</ul>
+
+<p>Those aren&rsquo;t so bad! Now let&rsquo;s deal with the complicated part &ndash; <code>-j MASQUERADE ! -d $CONTAINER_SUBNET</code></p>
+
+<p><code>-j MASQUERADE</code> means &ldquo;execute the MASQUERADE rule on this packet&rdquo;. But
+what is the MASQUERADE rule?</p>
+
+<h3 id="snat-masquerade">SNAT &amp; MASQUERADE</h3>
+
+<p>The problem this is trying to solve is &ndash; packets in Kubernetes that are
+sent from pods have pod IP addresses on them (which are different from
+the &ldquo;real&rdquo; IP address on the host). This is fine, but if you send a
+packet to a computer outside of your cluster, they won&rsquo;t know what that
+IP address means or how to route traffic back to it.</p>
+
+<p>This is a lot like the problem you have when you&rsquo;re on a home network
+(your IP is 192.168.x.x), and you want to talk to hosts in the outside
+world. They don&rsquo;t know what 192.168.x.x means!</p>
+
+<p>The iptables.info documentation for <a href="http://www.iptables.info/en/iptables-targets-and-jumps.html#SNATTARGET">SNAT</a> says:</p>
+
+<blockquote>
+<p>This is what we want, for example, when several hosts have to share an
+Internet connection. We can then turn on ip forwarding in the kernel,
+and write an SNAT rule which will translate all packets going out from
+our local network to the source IP of our own Internet connection.
+Without doing this, the outside world would not know where to send
+reply packets, since our local networks mostly use the IANA specified
+IP addresses which are allocated for LAN networks. If we forwarded
+these packets as is, no one on the Internet would know that they were
+actually from us. The SNAT target does all the translation needed to
+do this kind of work, letting all packets leaving our LAN look as if
+they came from a single host, which would be our firewall.</p>
+</blockquote>
+
+<p>This sounds perfect! We need to set up a SNAT iptables rule! Except with
+SNAT you need to specify <em>which</em> IP address you want to rewrite the
+source IP address to. So <code>MASQUERADE</code> lets you just rewrite packets to the
+host&rsquo;s IP address.</p>
+
+<p>iptables.info actually explains what
+<a href="http://www.iptables.info/en/iptables-targets-and-jumps.html#MASQUERADETARGET">MASQUERADE</a>
+means, unlike the iptables man page. With this reference, it&rsquo;s much
+easier to understand iptables incantations! Yay!</p>
+
+<h3 id="having-the-right-iptables-rules-is-important">having the right iptables rules is important</h3>
+
+<p>iptables is kind of frustrating because if you don&rsquo;t have the right
+rules you can end up in situations like &ldquo;oh well, no networking works at
+all, oops&rdquo;. And I don&rsquo;t know any iptables debugging tools (though if you
+do, I&rsquo;d like to know!) so so far I just stare at the rules until I
+understand them.</p>
+
+<h3 id="that-s-all">that&rsquo;s all</h3>
+
+<p>I am a little less intimidated by iptables than I was last week so
+that&rsquo;s good!</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[A few things I&#39;ve learned about Kubernetes]]></title>
+    <link href="https://jvns.ca/blog/2017/06/04/learning-about-kubernetes/"/>
+    <updated>2017-06-04T22:35:21+00:00</updated>
+    <id>https://jvns.ca/blog/2017/06/04/learning-about-kubernetes/</id>
+    <content type="html"><![CDATA[
+
+<p>I&rsquo;ve been learning about <a href="https://kubernetes.io/">Kubernetes</a> at work recently. I only started
+seriously thinking about it maybe 6 months ago &ndash; my partner Kamal has
+been excited about Kubernetes for a few years (him: &ldquo;julia! you can run
+programs without worrying what computers they run on! it is so cool!&ldquo;,
+me: &ldquo;I don&rsquo;t get it, how is that even possible&rdquo;), but I understand it a
+lot better now.</p>
+
+<p>This isn&rsquo;t a comprehensive explanation or anything, it&rsquo;s some things
+I learned along the way that have helped me understand what&rsquo;s going on.</p>
+
+<p>These days I am actually setting up a cluster instead of just reading
+about it on the internet and being like &ldquo;what is that??&rdquo; so I am learning
+much faster :)</p>
+
+<p>I&rsquo;m not going to try to explain what Kubernetes is. I liked Kelsey
+Hightower&rsquo;s introductory talk at Strange Loop called <a href="https://www.youtube.com/watch?v=pozC9rBvAIs">&ldquo;Managing Containers at Scale with CoreOS and Kubernetes&rdquo;</a>, and
+Kelsey has given TONS of great Kubernetes talks over the years if you want an intro.</p>
+
+<p>Basically Kubernetes is a distributed system that runs programs
+(well, containers) on computers. You tell it what to run, and it
+schedules it onto your machines.</p>
+
+<h3 id="a-couple-sketches">a couple sketches</h3>
+
+<p>I drew a couple of &ldquo;scenes from kubernetes&rdquo; sketches today trying to
+explain very briefly things like &ldquo;what happens when you add a new
+node?&ldquo;. Click for a bigger version.</p>
+
+<div align="center">
+<a href="https://drawings.jvns.ca/drawings/scenes-from-kubernetes-page1.svg">
+<img src="https://drawings.jvns.ca/drawings/scenes-from-kubernetes-page1.png" width=250px>
+</a>
+<a href="https://drawings.jvns.ca/drawings/scenes-from-kubernetes-page2.svg">
+<img src="https://drawings.jvns.ca/drawings/scenes-from-kubernetes-page2.png" width=250px>
+</a>
+</div>
+
+<h3 id="kubernetes-from-the-ground-up">Kubernetes from the ground up</h3>
+
+<p>One of first thing that helped me understand what was going on with
+Kubernetes was Kamal&rsquo;s &ldquo;Kubernetes from the ground up&rdquo; series</p>
+
+<p>He basically walks you through how all the Kubernetes components work
+with each other one at a time &ndash; &ldquo;look, you can run the kubelet by
+itself! And if you have a kubelet, you can add the API server and just
+run those two things by themselves! Okay, awesome, now let&rsquo;s add the
+scheduler!&rdquo; I found it a lot easier to understand when presented like
+this. Here&rsquo;s the 3 post series:</p>
+
+<ul>
+<li>Part 1: <a href="http://kamalmarhubi.com/blog/2015/08/27/what-even-is-a-kubelet/">the kubelet</a></li>
+<li>Part 2: <a href="http://kamalmarhubi.com/blog/2015/09/06/kubernetes-from-the-ground-up-the-api-server/">the API server</a></li>
+<li>Part 3: <a href="http://kamalmarhubi.com/blog/2015/11/17/kubernetes-from-the-ground-up-the-scheduler/">the scheduler</a></li>
+</ul>
+
+<p>Basically these posts taught me that:</p>
+
+<ul>
+<li>the &ldquo;kubelet&rdquo; is in charge of running containers on nodes</li>
+<li>If you tell the API server to run a container on a node, it will tell the kubelet to get it done (indirectly)</li>
+<li>the scheduler translates &ldquo;run a container&rdquo; to &ldquo;run a container on node
+X&rdquo;</li>
+</ul>
+
+<p>but you should read them in detail if you want to understand how these
+components interact. Kubernetes stuff changes pretty quickly, but
+I think the basic architecture like &ldquo;how does the API server interact
+with the kubelet&rdquo; hasn&rsquo;t changed that much and it&rsquo;s a good place to
+start.</p>
+
+<h3 id="etcd-kubernetes-brain">etcd: Kubernetes&rsquo; brain</h3>
+
+<p>The next thing that really helped me understand how Kubernetes works is
+understanding the role of etcd a little better.</p>
+
+<p>Every component in Kubernetes (the API server, the scheduler, the
+kubelet, the controller manager, whatever) is stateless. All of the
+state is stored in a key-value store called etcd, and communication
+between components often happens via etcd.</p>
+
+<p>For example! Let&rsquo;s say you want to run a container on Machine X. You do not
+ask the kubelet on that Machine X to run a container. That is not the
+Kubernetes way! Instead, this happens:</p>
+
+<ol>
+<li>you write into etcd, &ldquo;This pod should run on Machine X&rdquo;.
+(technically you never write to etcd directly, you do that through
+the API server, but we&rsquo;ll get there later)</li>
+<li>the kublet on Machine X looks at etcd and thinks, &ldquo;omg!! it says that pod should be running and I&rsquo;m not running it! I will start right now!!&rdquo;</li>
+</ol>
+
+<p>Similarly, if you want to put a container <strong>somewhere</strong> but you don&rsquo;t
+care where:</p>
+
+<ol>
+<li>you write into etcd &ldquo;this pod should run somewhere&rdquo;</li>
+<li>the scheduler looks at that and thinks &ldquo;omg! there is an unscheduled
+pod! This must be fixed!&ldquo;. It assigns the pod a machine (Machine Y) to run on</li>
+<li>like before, the kubelet on Machine Y sees that and thinks &ldquo;omg! that is scheduled to run on my machine! Better do it now!!&rdquo;</li>
+</ol>
+
+<p>When I understood that basically everything in Kubernetes works by
+watching etcd for stuff it has to do, doing it, and then writing the new
+state back into etcd, Kubernetes made a lot more sense to me.</p>
+
+<h3 id="the-api-server-is-responsible-for-putting-stuff-into-etcd">The API server is responsible for putting stuff into etcd</h3>
+
+<p>Understanding etcd also helped me understand the role of the API server
+better! The API server has a pretty straightforward set of
+responsibilities:</p>
+
+<ol>
+<li>you tell it stuff to put in etcd</li>
+<li>if what you said makes no sense (doesn&rsquo;t match the right schema),
+it refuses</li>
+<li>otherwise it does it</li>
+</ol>
+
+<p>That&rsquo;s not too hard to understand!</p>
+
+<p>It also manages authentication (&ldquo;who is allowed to put what stuff into
+etcd?&ldquo;) which is a pretty big deal but I&rsquo;m not going to go into that
+here. This <a href="https://Kubernetes.io/docs/admin/authentication/">page on Kubernetes
+authentication</a> is
+pretty useful, though it&rsquo;s kind of like &ldquo;HERE ARE 9 DIFFERENT
+AUTHENTICATION STRATEGIES YOU COULD USE&rdquo;. As far as I can tell the
+normal way is X509 client certs.</p>
+
+<h3 id="the-controller-manager-does-a-bunch-of-stuff">the controller manager does a bunch of stuff</h3>
+
+<p>We talked about how the scheduler takes &ldquo;here&rsquo;s a pod that should run
+somewhere&rdquo; and translates that into &ldquo;this pod should run on Machine X&rdquo;.</p>
+
+<p>There are a bunch more translations like this that have to happen:</p>
+
+<ul>
+<li>Kubernetes daemonsets say &ldquo;run this on every machine&rdquo;. There&rsquo;s a &ldquo;daemonset
+controller&rdquo; that, when it sees a daemonset in etcd, will create a pod on every
+machine with that pod configuration</li>
+<li>You can create a replica set &ldquo;run 5 of these&rdquo;. The &ldquo;replica set
+controller&rdquo; will, when it sees a replica set in etcd, create 5 pods that the scheduler will
+then schedule.</li>
+</ul>
+
+<p>The controller manager basically bundles a bunch of different
+programs with different jobs together.</p>
+
+<h3 id="something-isn-t-working-figure-out-which-controller-is-responsible-and-look-at-its-logs">something isn&rsquo;t working? figure out which controller is responsible and look at its logs</h3>
+
+<p>Today one of my pods wasn&rsquo;t getting scheduled. I thought about it for a
+minute, thought &ldquo;hmm, the scheduler is in charge of scheduling pods&rdquo;,
+and went to look at the scheduler&rsquo;s logs. It turned out that I&rsquo;d
+reconfigured the scheduler wrong so it wasn&rsquo;t starting anymore!</p>
+
+<p>The more I use k8s, the easier it is to figure out which component might
+be responsible when I have a problem!</p>
+
+<h3 id="kubernetes-components-can-run-inside-of-kubernetes">Kubernetes components can run inside of Kubernetes</h3>
+
+<p>One thing that kind of blew my mind was that &ndash; relatively core
+Kubernetes components (like the DNS system, and the overlay networking
+system) can run inside of Kubernetes! &ldquo;hey, Kubernetes, please start up
+DNS!&rdquo;</p>
+
+<p>This is basically because in order to run programs inside Kubernetes,
+you only need 5 things running:</p>
+
+<ul>
+<li>the scheduler</li>
+<li>the API server</li>
+<li>etcd</li>
+<li>kubelets on every node (to actually execute containers)</li>
+<li>the controller manager (because to set up daemonsets you need the
+controller manager)</li>
+</ul>
+
+<p>Once you have those 5 things, you can schedule containers to run on
+nodes! So if you want to run another Kubernetes component (like your
+overlay networking, or the DNS server, or anything else), you can just
+ask the API server (via <code>kubectl apply -f your-configuration-file.yaml</code>)
+to schedule it for you and it&rsquo;ll run it!</p>
+
+<p>There&rsquo;s also
+<a href="https://github.com/Kubernetes-incubator/bootkube">bootkube</a> where you
+run <em>all</em> Kubernetes components inside Kubernetes (even the API server)
+but that&rsquo;s not 100% production ready today. Running stuff like the DNS
+server inside Kubernetes seems pretty normal.</p>
+
+<h3 id="kubernetes-networking-not-impossible-to-understand">Kubernetes networking: not impossible to understand</h3>
+
+<p><a href="https://Kubernetes.io/docs/concepts/cluster-administration/networking/">this page</a>
+does a pretty good job of explaining the Kubernetes networking model
+&ldquo;every container gets an IP&rdquo; but understanding how to actually make that
+happen is not trivial!</p>
+
+<p>When I started learning about Kubernetes networking I was very
+confused about how you give every container an IP address. In retrospect I think
+this was because I didn&rsquo;t understand some of the fundamental networking
+concepts involved yet (to understand what an &ldquo;overlay network&rdquo; is and
+how it works you actually need to understand a bunch of things about
+computer networking!)</p>
+
+<p>Now I feel mostly able to set up a container networking system
+and like I know enough concepts to debug problems I run into! I wrote
+<a href="https://jvns.ca/blog/2016/12/22/container-networking/">a container networking overview</a> where I
+tried to summarize some of what I&rsquo;ve learned.</p>
+
+<p>This summary of how Sophie debugged a kube-dns problem (<a href="http://blog.sophaskins.net/blog/misadventures-with-kube-dns/">misadventures with kube-dns</a>) is a good example
+of how understanding fundamental networking concepts can help you debug
+problems.</p>
+
+<h3 id="understanding-networking-really-helps">understanding networking really helps</h3>
+
+<p>Here are some things that I know about now that I didn&rsquo;t understand very
+well, say, 2
+years ago. Understanding networking concepts really helps me debug issues in
+my Kubernetes cluster &ndash; if I had to debug networking issues in a
+Kubernetes cluster without understanding a lot of the networking
+fundamentals, I think I would just be googling error messages and trying
+random things to fix them and it
+would be miserable.</p>
+
+<ul>
+<li>overlay networks (I wrote <a href="https://jvns.ca/blog/2016/12/22/container-networking/">a container networking overview </a> about this last year)</li>
+<li>network namespaces (understanding namespaces in general is really
+helpful for working with containers)</li>
+<li>DNS (because Kubernetes has a DNS server)</li>
+<li>route tables, how to run <code>ip route list</code> and <code>ip link list</code></li>
+<li>network interfaces</li>
+<li>encapsulation (vxlan / UDP)</li>
+<li>basics about how to use iptables &amp; read iptables configuration</li>
+<li>TLS, server certs, client certs, certificate authorities</li>
+</ul>
+
+<h3 id="the-kubernetes-source-seems-easy-enough-to-read">the Kubernetes source seems easy enough to read</h3>
+
+<p>The Kubernetes source code is all in Go which is great. The project
+moves pretty fast so stuff isn&rsquo;t always documented (and you end up
+reading github issues sometimes to understand the current state of things),
+but in general I find Go code eays to read and it&rsquo;s reassuring to know
+that I&rsquo;m working with something written in a language I can
+understand.</p>
+
+<h3 id="the-kubernetes-slack-group-is-great">the Kubernetes slack group is great</h3>
+
+<p>There&rsquo;s a slack organization you can join by going to
+<a href="http://slack.kubernetes.io">http://slack.kubernetes.io</a>. I usually try to figure things out on my own
+instead of going there, but people there have been super super helpful
+when I have asked questions.</p>
+]]></content>
+  </entry>
+  
+</feed>

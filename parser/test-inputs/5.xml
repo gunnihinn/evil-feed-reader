@@ -1,0 +1,719 @@
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0"><channel><description>lessons learned from a life wasted</description><title>programming is terrible</title><generator>Tumblr (3.0; @programmingisterrible)</generator><link>http://programmingisterrible.com/</link><item><title>How do you cut a monolith in half?</title><description>&lt;p&gt;It depends.&lt;/p&gt;
+
+&lt;p&gt;The problem with distributed systems, is that no matter what the question is, the answer is inevitably ‘It Depends’.&lt;/p&gt;
+
+&lt;p&gt;When you cut a larger service apart, where you cut depends on latency, resources, and access to state, but it also depends on error handling, availably and recovery processes. It depends, but you probably don’t want to depend on a message broker.&lt;/p&gt;
+
+&lt;p&gt;Using a message broker to distribute work is like a cross between a load balancer with a database, with the disadvantages of both and the advantages of neither.&lt;/p&gt;
+
+&lt;p&gt;Message brokers, or persistent queues accessed by publish-subscribe, are a popular way to pull components apart over a network. They’re popular because they often have a low setup cost, and provide easy service discovery, but they can come at a high operational cost, depending where you put them in your systems.&lt;/p&gt;
+
+&lt;p&gt;In practice, a message broker is a service that transforms network errors and machine failures into filled disks. Then you add more disks. The advantage of publish-subscribe is that it isolates components from each other, but the problem is usually gluing them together.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;For short-lived tasks, you want a load balancer&lt;/h1&gt;
+
+&lt;p&gt;For short-lived tasks, publish-subscribe is a convenient way to build a system quickly, but you inevitably end up implementing a new protocol atop. You have publish-subscribe, but you really want request-response. If you want something computed, you’ll probably want to know the result.&lt;/p&gt;
+
+&lt;p&gt;Starting with publish-subscribe makes work assignment easy: jobs get added to the queue, workers take turns to remove them. Unfortunately, it makes finding out what happened quite hard, and you’ll need to add another queue to send a result back.&lt;/p&gt;
+
+&lt;p&gt;Once you can handle success, it is time to handle the errors. The first step is often adding code to retry the request a few times. After you DDoS your system, you put a call to sleep(). After you slowly DDoS your system, each retry waits twice as long as the previous.&lt;/p&gt;
+
+&lt;p&gt;(Aside: Accidental synchronisation is still a problem, as waiting to retry doesn’t prevent a lot of things happening at once.)&lt;/p&gt;
+
+&lt;p&gt;As workers fail to keep up, clients give up and retry work, but the earlier request is still waiting to be processed. The solution is to move some of the queue back to clients, asking them to hold onto work until work has been accepted: back-pressure, or acknowledgements.&lt;/p&gt;
+
+&lt;p&gt;Although the components interact via publish-subscribe, we’ve created a request-response protocol atop. Now the message broker is really only doing two useful things: service discovery, and load balancing. It is also doing two not-so-useful thing: enqueuing requests, and persisting them.&lt;/p&gt;
+
+&lt;p&gt;For short-lived tasks, the persistence is unnecessary: the client sticks around for as long as the work needs to be done, and handles recovery. The queuing isn’t that necessary either.&lt;/p&gt;
+
+&lt;p&gt;Queues inevitably run in two states: full, or empty. If your queue is running full, you haven’t pushed enough work to the edges, and if it is running empty, it’s working as a slow load balancer.&lt;/p&gt;
+
+&lt;p&gt;A mostly empty queue is still first-come-first-served, serving as point of contention for requests. A broker often does nothing but wait for workers to poll for new messages. If your queue is meant to run empty, why wait to forward on a request.&lt;/p&gt;
+
+&lt;p&gt;(Aside: Something like random load balancing will work, but join-idle-queue is well worth your time investigating)&lt;/p&gt;
+
+&lt;p&gt;For distributing short-lived tasks, you can use a message broker, but you’ll be building a load balancer, along with an ad-hoc RPC system, with extra latency.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;For long-lived tasks, you’ll need a database&lt;/h1&gt;
+
+&lt;p&gt;A load balancer with service discovery won’t help you with long running tasks, or work that outlives the client, or manage throughput.  You’ll want persistence, but not in your message broker.  For long-lived tasks, you’ll want a database instead.&lt;/p&gt;
+
+&lt;p&gt;Although the persistence and queueing were obstacles for short-lived tasks, the disadvantages are less obvious for long-lived tasks, but similar things can go wrong.&lt;/p&gt;
+
+&lt;p&gt;If you care about the result of a task, you’ll want to store that it is needed somewhere other than in the persistent queue. If the task is run but fails midway, something will have to take responsibility for it, and the broker will have forgotten. This is why you want a database.&lt;/p&gt;
+
+&lt;p&gt;Duplicates in a queue often cause more headaches, as long-lived tasks have more opportunities to overlap. Although we’re using the broker to distribute work, we’re also using it implicitly as a mutex. To stop work from overlapping, you implement a lock atop. After it breaks a couple of times, you replace it with leases, adding timeouts.&lt;/p&gt;
+
+&lt;p&gt;(Note: This is not why you want a database, using transactions for long running tasks is suffering. Long running processes are best modelled as state machines.)&lt;/p&gt;
+
+&lt;p&gt;When the database becomes the primary source of truth, you can handle a broker going offline, or a broker losing the contents of a queue, by backfilling from the database. As a result, you don’t need to directly enqueue work with the broker, but mark it as required in the database, and wait for something else to handle it.&lt;/p&gt;
+
+&lt;p&gt;Assuming that something else isn’t a human who has been paged.&lt;/p&gt;
+
+&lt;p&gt;A message pump can scan the database periodically and send work requests to the broker. Enqueuing work in batches can be an effective way of making an expensive database call survivable. The pump responsible for enqueuing the work can also track if it has completed, and so handle recovery or retries too.&lt;/p&gt;
+
+&lt;p&gt;Backlog is still a problem, so you’ll want to use back-pressure to keep the queue fairly empty, and only fill from the database when needed.  Although a broker can handle temporary overload, back-pressure should mean it never has to.&lt;/p&gt;
+
+&lt;p&gt;At this point the message broker is really providing two things: service discovery, and work assignment, but really you need a scheduler. A scheduler is what scans a database, works out which jobs need to run, and often where to run them too. A scheduler is what takes responsibility for handling errors.&lt;/p&gt;
+
+&lt;p&gt;(Aside: Writing a scheduler is hard. It is much easier to have 1000 while loops waiting for the right time, than one while loop waiting for which of the 1000 is first. A scheduler can track when it last ran something, but the work can’t rely on that being the last time it ran. Idempotency isn’t just your friend, it is your saviour.)&lt;/p&gt;
+
+&lt;p&gt;You can use a message broker for long-lived tasks, but you’ll be building a lock manager, a database, and a scheduler, along with yet another home-brew request-response system.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Publish-Subscribe is about isolating components&lt;/h1&gt;
+
+&lt;p&gt;The problem with running tasks with publish-subscribe is that you really want request-response. The problem with using queues to assign work is that you don’t want to wait for a worker to ask.&lt;/p&gt;
+
+&lt;p&gt;The problem with relying on a persistent queue for recovery, is that recovery must get handled elsewhere, and the problem with brokers is nothing else makes service discovery so trivial.&lt;/p&gt;
+
+&lt;p&gt;Message brokers can be misused, but it isn’t to say they have no use.  Brokers work well when you need to cross system boundaries.&lt;/p&gt;
+
+&lt;p&gt;Although you want to keep queues empty between components, it is convenient to have a buffer at the edges of your system, to hide some failures from external clients.  When you handle external faults at the edges, you free the insides from handling them. The inside of your system can focus on handling internal problems, of which there are many.&lt;/p&gt;
+
+&lt;p&gt;A broker can be used to buffer work at the edges, but it can also be used as an optimisation, to kick off work a little earlier than planned. A broker can pass on a notification that data has been changed, and the system can fetch data through another API.&lt;/p&gt;
+
+&lt;p&gt;(Aside: If you use a broker to speed up a process, the system will grow to rely on it for performance. People use caches to speed up database calls, but there are many systems that simply do not work fast enough until the cache is warmed up, filled with data. Although you are not relying on the message broker for reliability, relying on it for performance is just as treacherous.)&lt;/p&gt;
+
+&lt;p&gt;Sometimes you want a load balancer, sometimes you’ll need a database, but sometimes a message broker will be a good fit.&lt;/p&gt;
+
+&lt;p&gt;Although persistence can’t handle many errors, it is convenient if you need to restart with new code or settings, without data loss. Sometimes the error handling offered is just right.&lt;/p&gt;
+
+&lt;p&gt;Although a persistent queue offers some protection against failure, it can’t take responsibility for when things go wrong halfway through a task. To be able to recover from failure you have to stop hiding it, you must add acknowledgements, back-pressure, error handling, to get back to a working system.&lt;/p&gt;
+
+&lt;p&gt;A persistent message queue is not bad in itself, but relying on it for recovery, and by extension, correct behaviour, is fraught with peril.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Systems grow by pushing responsibilities to the edges&lt;/h1&gt;
+
+&lt;p&gt;Performance isn’t easy either.  You don’t want queues, or persistence in the central or underlying layers of your system. You want them at the edges.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;It’s slow&lt;/em&gt; is the hardest problem to debug, and often the reason is that something is stuck in a queue. For long and short-lived tasks, we used back-pressure to keep the queue empty, to reduce latency.&lt;/p&gt;
+
+&lt;p&gt;When you have several queues between you and the worker, it becomes even more important to keep the queue out of the centre of the network. We’ve spent decades on tcp congestion control to avoid it.&lt;/p&gt;
+
+&lt;p&gt;If you’re curious, the history of tcp congestion makes for interesting reading. Although the ends of a tcp connection were responsible for failure and retries, the routers were responsible for congestion: drop things when there is too much.&lt;/p&gt;
+
+&lt;p&gt;The problem is that it worked until the network was saturated, and similar to backlog in queues, when it broke, errors cascaded. The solution was similar: back-pressure. Similar to sleeping twice as long on errors, tcp sends half as many packets, before gradually increasing the amount as things improve.&lt;/p&gt;
+
+&lt;p&gt;Back-pressure is about pushing work to the edges, letting the ends of the conversation find stability, rather than trying to optimise all of the links in-between in isolation. Congestion control is about using back-pressure to keep the queues in-between as empty as possible, to keep latency down, and to increase throughput by avoiding the need to drop packets.&lt;/p&gt;
+
+&lt;p&gt;Pushing work to the edges is how your system scales.  We have spent a lot of time and a considerable amount of money on IP-Multicast, but nothing has been as effective as BitTorrent. Instead of relying on smart routers to work out how to broadcast, we rely on smart clients to talk to each other.&lt;/p&gt;
+
+&lt;p&gt;Pushing recovery to the outer layers is how your system handles failure. In the earlier examples, we needed to get the client, or the scheduler to handle the lifecycle of a task, as it outlived the time on the queue.&lt;/p&gt;
+
+&lt;p&gt;Error recovery in the lower layers of a system is an optimisation, and you can’t push work to the centre of a network and scale. This is the end-to-end principle, and it is one of the most important ideas in system design.&lt;/p&gt;
+
+&lt;p&gt;The end-to-end principle is why you can restart your home router, when it crashes, without it having to replay all of the websites you wanted to visit before letting you ask for a new page. The browser (and your computer) is responsible for recovery, not the computers in between.&lt;/p&gt;
+
+&lt;p&gt;This isn’t a new idea, and Erlang/OTP owes a lot to it. OTP organises a running program into a supervision tree. Each process will often have one process above it, restarting it on failure, and above that, another supervisor to do the same.&lt;/p&gt;
+
+&lt;p&gt;(Aside: Pipelines aren’t incompatible with process supervision, one way is for each part to spawn the program that reads its output. A failure down the chain can propagate back up to be handled correctly.)&lt;/p&gt;
+
+&lt;p&gt;Although each program will handle some errors, the top levels of the supervision tree handle larger faults with restarts. Similarly, it’s nice if your webpage can recover from a fault, but inevitably someone will have to hit refresh.&lt;/p&gt;
+
+&lt;p&gt;The end-to-end principle is realising that no matter how many exceptions you handle deep down inside your program, some will leak out, and something at the outer layer has to take responsibility.&lt;/p&gt;
+
+&lt;p&gt;Although sometimes taking responsibility is writing things to an audit log, and message brokers are pretty good at that.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Aside: But what about replicated logs?&lt;/h1&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;“How do I subscribe to the topic on the message broker?”&lt;/p&gt;
+  
+  &lt;p&gt;“It’s not a message broker, it’s a replicated log”&lt;/p&gt;
+  
+  &lt;p&gt;“Ok, How do I subscribe to the replicated log”&lt;/p&gt;
+  
+  &lt;p&gt;&lt;em&gt;From ‘I believe I did, Bob’, jrecursive&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Although a replicated log is often confused with a message broker, they aren’t immune from handling failure. Although it’s good the components are isolated from each other, they still have to be integrated into the system at large.  Both offer a one way stream for sharing, both offer publish-subscribe like interfaces, but the intent is wildly different.&lt;/p&gt;
+
+&lt;p&gt;A replicated log is often about auditing, or recovery: having a central point of truth for decisions. Sometimes a replicated log is about building a pipeline with fan-in (aggregating data), or fan-out (broadcasting data), but always building a system where data flows in one direction.&lt;/p&gt;
+
+&lt;p&gt;The easiest way to see the difference between a replicated log and a message broker is to ask an engineer to draw a diagram of how the pieces connect.&lt;/p&gt;
+
+&lt;p&gt;If the diagram looks like a one-way system, it’s a replicated log. If almost every component talks to it, it’s a message broker. If you can draw a flow-chart, it’s a replicated log. If you take all the arrows away and you’re left with a venn diagram of ‘things that talk to each other’, it’s a message broker.&lt;/p&gt;
+
+&lt;p&gt;Be warned: A distributed system is something you can draw on a whiteboard pretty quickly, but it’ll take hours to explain how all the pieces interact.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;You cut a monolith with a protocol&lt;/h1&gt;
+
+&lt;p&gt;How you cut a monolith is often more about how you are cutting up responsibility within a team, than cutting it into components.  It really does depend, and often more on the social aspects than the technical ones, but you are still responsible for the protocol you create.&lt;/p&gt;
+
+&lt;p&gt;Distributed systems are messy because of how the pieces interact over time, rather than which pieces are interacting.  The complexity of a distributed system does not come from having hundreds of machines, but hundreds of ways for them to interact. A protocol must take into account performance, safety, stability, availability, and most importantly, error handling.&lt;/p&gt;
+
+&lt;p&gt;When we talk about distributed systems, we are talking about power structures: how resources are allocated, how work is divided, how control is shared, or how order is kept across systems ostensibly built out of well meaning but faulty components.&lt;/p&gt;
+
+&lt;p&gt;A protocol is the rules and expectations of participants in a system, and how they are beholden to each other. A protocol defines who takes responsibility for failure.&lt;/p&gt;
+
+&lt;p&gt;The problem with message brokers, and queues, is that no-one does.&lt;/p&gt;
+
+&lt;p&gt;Using a message broker is not the end of the world, nor a sign of poor engineering. Using a message broker is a tradeoff. Use them freely knowing they work well on the edges of your system as buffers. Use them wisely knowing that the buck has to stop somewhere else. Use them cheekily to get something working.&lt;/p&gt;
+
+&lt;p&gt;I say don’t rely on a message broker, but I can’t point to easy off-the-shelf answers. HTTP and DNS are remarkable protocols, but I still have no good answers for service discovery.&lt;/p&gt;
+
+&lt;p&gt;Lots of software regularly gets pushed into service way outside of its designed capabilities, and brokers are no exception. Although the bad habits around brokers and the relative ease of getting a prototype up and running lead to nasty effects at scale, you don’t need to build everything at once.&lt;/p&gt;
+
+&lt;p&gt;The complexity of a system lies in its protocol not its topology, and a protocol is what you create when you cut your monolith into pieces. If modularity is about building software, protocol is about how we break it apart.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;The main task of the engineering analyst is not merely to obtain “solutions” but is rather to understand the dynamic behaviour of the system in such a way that the secrets of the mechanism are revealed, and that if it is built it will have no surprises left for [them]. Other than exhaustive physical experimentations, this is the only sound basis for engineering design, and disregard of this cardinal principle has not infrequently lead to disaster.&lt;/p&gt;
+  
+  &lt;p&gt;&lt;em&gt;From “Analysis of Nonlinear Control Systems” by Dustan Graham and Duane McRuer, p 436&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Protocol is the reason why ‘it depends’, and the reason why you shouldn’t depend on a message broker: You can use a message broker to glue systems together, but never use one to cut systems apart.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/162346490883</link><guid>http://programmingisterrible.com/post/162346490883</guid><pubDate>Wed, 28 Jun 2017 06:33:17 +0100</pubDate></item><item><title>I like this talk a lot: what modularity is, what we use it for,...</title><description>&lt;iframe width="400" height="225"  id="youtube_iframe" src="https://www.youtube.com/embed/LfOVyNQK5io?feature=oembed&amp;enablejsapi=1&amp;origin=http://safe.txmblr.com&amp;wmode=opaque" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;&lt;br/&gt;&lt;br/&gt;&lt;p&gt;I like this talk a lot: what modularity is, what we use it for, how modularity happens in systems, and how we can use modularity to manage change.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/150486782003</link><guid>http://programmingisterrible.com/post/150486782003</guid><pubDate>Fri, 16 Sep 2016 11:43:57 +0100</pubDate></item><item><title>RIP, Mathie.</title><description>&lt;p&gt;Last night I found out i&amp;rsquo;d &lt;a href="https://www.justgiving.com/fundraising/Laura-Elliott19"&gt;lost a friend&lt;/a&gt;, and if you&amp;rsquo;ll be patient with my words, I&amp;rsquo;d like to reflect a little.&lt;/p&gt;
+
+&lt;p&gt;Mathie was one of the older, weirder, geeks I met. I&amp;rsquo;d escaped my home town in the edge of nowhere, and it was my first time having a peer group of adults.&lt;/p&gt;
+
+&lt;p&gt;He&amp;rsquo;d helped everywhere. With the student run shell server, with the local IRC server everyone collected on, a known and friendly face on the circuit&lt;/p&gt;
+
+&lt;p&gt;Mathie was one of the many people behind Scottish Ruby Conference, responsible for bringing a lot of interesting people into Edinburgh, and into my life.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Why wasn&amp;rsquo;t this talk given at Scottish Ruby Conference&lt;/p&gt;
+  
+  &lt;p&gt;I fucked up&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;In front of everyone assembled at the fringe track, a collection of talks that didn&amp;rsquo;t quite make it, mathie answered honestly. It&amp;rsquo;s kinda how i&amp;rsquo;ll remember him: a bit of a fuckup.&lt;/p&gt;
+
+&lt;p&gt;A fuckup who, changed my life for the better.&lt;/p&gt;
+
+&lt;p&gt;Thanks mathie, I hope to pass on some of your kindness.&lt;/p&gt;
+
+&lt;p&gt;RIP, You fucking idiot.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/149316275123</link><guid>http://programmingisterrible.com/post/149316275123</guid><pubDate>Mon, 22 Aug 2016 12:12:27 +0100</pubDate></item><item><title>PapersWeLove London: End-to-End Arguments In System Design</title><description>&lt;p&gt;This week I gave a short talk on a paper I love: &lt;a href="http://web.mit.edu/Saltzer/www/publications/endtoend/endtoend.pdf"&gt;End-to-End Arguments in System Design&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;The talk was recorded and uploaded (but not captioned), and you can watch it here: &lt;a href="https://skillsmatter.com/skillscasts/8200-end-to-end-arguments-in-system-design-by-saltzer-reed-and-clark"&gt;https://skillsmatter.com/skillscasts/8200-end-to-end-arguments-in-system-design-by-saltzer-reed-and-clark&lt;/a&gt;&lt;/p&gt;</description><link>http://programmingisterrible.com/post/144659440878</link><guid>http://programmingisterrible.com/post/144659440878</guid><pubDate>Fri, 20 May 2016 18:22:29 +0100</pubDate></item><item><title>A million things to do with a computer!</title><description>&lt;p&gt;I gave a talk at &lt;a href="http://bangbangcon.com"&gt;!!con&lt;/a&gt; last weekend, about my favourite programming language scratch:&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;Back in 1971, Cynthia Solomon and Seymour Papert wrote “Twenty things to do with a computer”, about their experiences of teaching children to use Logo and their ideas for the future.&lt;/p&gt;
+  
+  &lt;p&gt;They were wrong: There’s a lot more than twenty. Logo’s successor, Scratch, has over thirteen million things that children and adults alike have built. Scratch is radically approachable in a way that puts every other language to shame.&lt;/p&gt;
+  
+  &lt;p&gt;This talk is about the history, present, and future of Scratch: why Scratch is about ‘coding to learn’, and not about ‘learning to code’.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;I had a incredible time at !!con. The live captioning was fantastic (&lt;a href="https://www.crowdsupply.com/open-steno-project/steno-hero"&gt;and they&amp;rsquo;re crowdfunding a game to teach steno too&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;The livestreams are up (but no captions), and &lt;a href="https://www.youtube.com/watch?v=C3ox1zQcV_I#t=3h29m32s"&gt;my talk is 3h29m32s in on day 2&lt;/a&gt;.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/144144276173</link><guid>http://programmingisterrible.com/post/144144276173</guid><pubDate>Tue, 10 May 2016 13:07:26 +0100</pubDate></item><item><title>Addendum: Write code that is easy to delete, not easy to extend.</title><description>&lt;p&gt;I found two translations by accident. I can’t tell if they are perfect translations but I am thankful nonetheless.&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;&lt;a href="https://habrahabr.ru/company/payonline/blog/277629/"&gt;Russian&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="http://blog.yongfengzhang.com/cn/blog/write-code-that-is-easy-to-delete-not-easy-to/"&gt;Chinese&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;(Many people mentioned &lt;a href="http://www.sandimetz.com/blog/2016/1/20/the-wrong-abstraction"&gt;The Wrong Abstraction&lt;/a&gt;, and it is worth mentioning here too.)&lt;/p&gt;</description><link>http://programmingisterrible.com/post/140636464108</link><guid>http://programmingisterrible.com/post/140636464108</guid><pubDate>Mon, 07 Mar 2016 17:25:32 +0000</pubDate></item><item><title>Write code that is easy to delete, not easy to extend.</title><description>&lt;blockquote&gt;
+  &lt;p&gt;“Every line of code is written without reason, maintained out of weakness, and deleted by chance” &lt;em&gt;Jean-Paul Sartre’s Programming in ANSI C.&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Every line of code written comes at a price: maintenance. To avoid paying for a lot of code, we build reusable software. The problem with code re-use is that it gets in the way of changing your mind later on.&lt;/p&gt;
+
+&lt;p&gt;The more consumers of an API you have, the more code you must rewrite to introduce changes. Similarly, the more you rely on an third-party api, the more you suffer when it changes. Managing how the code fits together, or which parts depend on others, is a significant problem in large scale systems, and it gets harder as your project grows older.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;My point today is that, if we wish to count lines of code, we should not regard them as “lines produced” but as “lines spent” &lt;em&gt;EWD 1036&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;If we see ‘lines of code’ as ‘lines spent’, then when we delete lines of code, we are lowering the cost of maintenance. Instead of building re-usable software, we should try to build disposable software.&lt;/p&gt;
+
+&lt;p&gt;I don’t need to tell you that deleting code is more fun than writing it.&lt;/p&gt;
+
+&lt;p&gt;To write code that’s easy to delete: repeat yourself to avoid creating dependencies, but don’t repeat yourself to manage them. Layer your code too: build simple-to-use APIs out of simpler-to-implement but clumsy-to-use parts. Split your code: isolate the hard-to-write and the likely-to-change parts from the rest of the code, and each other. Don’t hard code every choice, and maybe allow changing a few at runtime. Don’t try to do all of these things at the same time, and maybe don’t write so much code in the first place.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Step 0: Don’t write code&lt;/h1&gt;
+
+&lt;p&gt;The number of lines of code doesn’t tell us much on its own, but the magnitude does 50, 500 5,000, 10,000, 25,000, etc. A million line monolith is going to be more annoying than a ten thousand line one and significantly more time, money, and effort to replace.&lt;/p&gt;
+
+&lt;p&gt;Although the more code you have the harder it is to get rid of, saving one line of code saves absolutely nothing on its own.&lt;/p&gt;
+
+&lt;p&gt;Even so, the easiest code to delete is the code you avoided writing in the first place.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Step 1: Copy-paste code&lt;/h1&gt;
+
+&lt;p&gt;Building reusable code is something that’s easier to do in hindsight with a couple of examples of use in the code base, than foresight of ones you might want later. On the plus side, you’re probably re-using a lot of code already by just using the file-system, why worry that much? A little redundancy is healthy.&lt;/p&gt;
+
+&lt;p&gt;It’s good to copy-paste code a couple of times, rather than making a library function, just to get a handle on how it will be used. Once you make something a shared API, you make it harder to change.&lt;/p&gt;
+
+&lt;p&gt;The code that calls your function will rely on both the intentional and the unintentional behaviours of the implementation behind it. The programmers using your function will not rely on what you document, but what they observe.&lt;/p&gt;
+
+&lt;p&gt;It’s simpler to delete the code inside a function than it is to delete a function.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Step 2: Don’t copy paste code&lt;/h1&gt;
+
+&lt;p&gt;When you’ve copy and pasted something enough times, maybe it’s time to pull it up to a function. This is the “save me from my standard library” stuff: the “open a config file and give me a hash table”, “delete this directory”. This includes functions without any state, or functions with a little bit of global knowledge like environment variables. The stuff that ends up in a file called “util”.&lt;/p&gt;
+
+&lt;p&gt;Aside: Make a &lt;code&gt;util&lt;/code&gt; directory and keep different utilities in different files. A single &lt;code&gt;util&lt;/code&gt; file will always grow until it is too big and yet too hard to split apart. Using a single &lt;code&gt;util&lt;/code&gt; file is unhygienic.&lt;/p&gt;
+
+&lt;p&gt;The less specific the code is to your application or project, the easier they are to re-use and the less likely to change or be deleted. Library code like logging, or third party APIs,  file handles, or processes. Other good examples of code you’re not going to delete are lists, hash tables, and other collections. Not because they often have very simple interfaces, but because they don’t grow in scope over time.&lt;/p&gt;
+
+&lt;p&gt;Instead of making code easy-to-delete, we are trying to keep the hard-to-delete parts as far away as possible from the easy-to-delete parts.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Step 3: Write more boilerplate&lt;/h1&gt;
+
+&lt;p&gt;Despite writing libraries to avoid copy pasting, we often end up writing a lot more code through copy paste to use them, but we give it a different name: boilerplate. Boiler plate is a lot like copy-pasting, but you change some of the code in a different place each time, rather than the same bit over and over.&lt;/p&gt;
+
+&lt;p&gt;Like with copy paste, we are duplicating parts of code to avoid introducing dependencies, gain flexibility, and pay for it in verbosity.&lt;/p&gt;
+
+&lt;p&gt;Libraries that require boilerplate are often stuff like network protocols, wire formats, or parsing kits, stuff where it’s hard to interweave policy (what a program should do), and protocol (what a program can do) together without limiting the options. This code is hard to delete: it’s often a requirement for talking to another computer or handling different files, and the last thing we want to do is litter it with business logic.&lt;/p&gt;
+
+&lt;p&gt;This is not an exercise in code reuse: we’re trying keep the parts that change frequently, away from the parts that are relatively static. Minimising the dependencies or responsibilities of library code, even if we have to write boilerplate to use it.&lt;/p&gt;
+
+&lt;p&gt;You are writing more lines of code, but you are writing those lines of code in the easy-to-delete parts.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Step 4: Don’t write boilerplate&lt;/h1&gt;
+
+&lt;p&gt;Boilerplate works best when libraries are expected to cater to all tastes, but sometimes there is just too much duplication. It’s time to wrap your flexible library with one that has opinions on policy, workflow, and state. Building simple-to-use APIs is about turning your boilerplate into a library.&lt;/p&gt;
+
+&lt;p&gt;This isn’t as uncommon as you might think: One of the most popular and beloved python http clients, &lt;code&gt;requests&lt;/code&gt;, is a successful example of providing a simpler interface, powered by a more verbose-to-use library &lt;code&gt;urllib3&lt;/code&gt; underneath. &lt;code&gt;requests&lt;/code&gt; caters to common workflows when using http, and hides many practical details from the user. Meanwhile, &lt;code&gt;urllib3&lt;/code&gt; does the pipelining, connection management, and does not hide anything from the user.&lt;/p&gt;
+
+&lt;p&gt;It is not so much that we are hiding detail when we wrap one library in another, but we are separating concerns: &lt;code&gt;requests&lt;/code&gt; is about popular http adventures, &lt;code&gt;urllib3&lt;/code&gt; is about giving you the tools to choose your own adventure.&lt;/p&gt;
+
+&lt;p&gt;I’m not advocating you go out and create a &lt;code&gt;/protocol/&lt;/code&gt; and a &lt;code&gt;/policy/&lt;/code&gt; directory, but you do want to try and keep your &lt;code&gt;util&lt;/code&gt; directory free of business logic, and build simpler-to-use libraries on top of simpler-to-implement ones. You don’t have to finish writing one library to start writing another atop.&lt;/p&gt;
+
+&lt;p&gt;It’s often good to wrap third party libraries too, even if they aren’t protocol-esque. You can build a library that suits your code, rather than lock in your choice across the project. Building a pleasant to use API and building an extensible API are often at odds with each other.&lt;/p&gt;
+
+&lt;p&gt;This split of concerns allows us to make some users happy without making things impossible for other users.  Layering is easiest when you start with a good API, but writing a good API on top of a bad one is unpleasantly hard.  Good APIs are designed with empathy for the programmers who will use it, and layering is realising we can’t please everyone at once.&lt;/p&gt;
+
+&lt;p&gt;Layering is less about writing code we can delete later, but making the hard to delete code pleasant to use (without contaminating it with business logic).&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Step 5: Write a big lump of code&lt;/h1&gt;
+
+&lt;p&gt;You’ve copy-pasted, you’ve refactored, you’ve layered, you’ve composed, but the code still has to do something at the end of the day. Sometimes it’s best just to give up and write a substantial amount of trashy code to hold the rest together.&lt;/p&gt;
+
+&lt;p&gt;Business logic is code characterised by a never ending series of edge cases and quick and dirty hacks. This is fine. I am ok with this. Other styles like ‘game code’, or ‘founder code’ are the same thing: cutting corners to save a considerable amount of time.&lt;/p&gt;
+
+&lt;p&gt;The reason? Sometimes it’s easier to delete one big mistake than try to delete 18 smaller interleaved mistakes. A lot of programming is exploratory, and it’s quicker to get it wrong a few times and iterate than think to get it right first time.&lt;/p&gt;
+
+&lt;p&gt;This is especially true of more fun or creative endeavours. If you’re writing your first game: don’t write an engine. Similarly, don’t write a web framework before writing an application. Go and write a mess the first time. Unless you’re psychic you won’t know how to split it up.&lt;/p&gt;
+
+&lt;p&gt;Monorepos are a similar tradeoff: You won’t know how to split up your code in advance, and frankly one large mistake is easier to deploy than 20 tightly coupled ones.&lt;/p&gt;
+
+&lt;p&gt;When you know what code is going to be abandoned soon, deleted, or easily replaced, you can cut a lot more corners. Especially if you make one-off client sites, event web pages. Anything where you have a template and stamp out copies, or where you fill in the gaps left by a framework.&lt;/p&gt;
+
+&lt;p&gt;I’m not suggesting you write the same ball of mud ten times over, perfecting your mistakes. To quote Perlis: “Everything should be built top-down, except the first time”. You should be trying to make new mistakes each time, take new risks, and slowly build up through iteration.&lt;/p&gt;
+
+&lt;p&gt;Becoming a professional software developer is accumulating a back-catalogue of regrets and mistakes. You learn nothing from success. It is not that you know what good code looks like, but the scars of bad code are fresh in your mind.&lt;/p&gt;
+
+&lt;p&gt;Projects either fail or become legacy code eventually anyway. Failure happens more than success. It’s quicker to write ten big balls of mud and see where it gets you than try to polish a single turd.&lt;/p&gt;
+
+&lt;p&gt;It’s easier to delete all of the code than to delete it piecewise.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Step 6: Break your code into pieces&lt;/h1&gt;
+
+&lt;p&gt;Big balls of mud are the easiest to build but the most expensive to maintain. What feels like a simple change ends up touching almost every part of the code base in an ad-hoc fashion. What was easy to delete as a whole is now impossible to delete piecewise.&lt;/p&gt;
+
+&lt;p&gt;In the same we have layered our code to separate responsibilities, from platform specific to domain specific, we need to find a means to tease apart the logic atop.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;[Start] with a list of difficult design decisions or design decisions which are likely to change. Each module is then designed to hide such a decision from the others. &lt;em&gt;D. Parnas&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Instead of breaking code into parts with common functionality,  we break code apart by what it does not share with the rest. We isolate the most frustrating parts to write, maintain, or delete away from each other.&lt;/p&gt;
+
+&lt;p&gt;We are not building modules around being able to re-use them, but being able to change them.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, some problems are more intertwined and hard to separate than others. Although the single responsibility principle suggests that ‘each module should only handle one hard problem’, it is more important that ‘each hard problem is only handled by one module’&lt;/p&gt;
+
+&lt;p&gt;When a module does two things, it is usually because changing one part requires changing the other. It is often easier to have one awful component with a simple interface, than two components requiring a careful co-ordination between them.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;I shall not today attempt further to define the kinds of material I understand to be embraced within that shorthand description [”loose coupling”], and perhaps I could never succeed in intelligibly doing so. But I know it when I see it, and the code base involved in this case is not that. &lt;em&gt;SCOTUS Justice Stewart&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;A system where you can delete parts without rewriting others is often called loosely coupled, but it’s a lot easier to explain what one looks like rather than how to build it in the first place.&lt;/p&gt;
+
+&lt;p&gt;Even hardcoding a variable &lt;em&gt;once&lt;/em&gt; can be loose coupling, or using a command line flag over a variable. Loose coupling is about being able to change your mind without changing too much code.&lt;/p&gt;
+
+&lt;p&gt;For example, Microsoft Windows has internal and external APIs for this very purpose. The external APIs are tied to the lifecycle of desktop programs, and the internal API is tied to the underlying kernel. Hiding these APIs away gives Microsoft flexibility without breaking too much software in the process.&lt;/p&gt;
+
+&lt;p&gt;HTTP has examples of loose coupling too: Putting a cache in front of your HTTP server. Moving your images to a CDN and just changing the links to them. Neither breaks the browser.&lt;/p&gt;
+
+&lt;p&gt;HTTP’s error codes are another example of loose coupling: common problems across web servers have unique codes. When you get a 400 error, doing it again will get the same result. A 500 may change. As a result, HTTP clients can handle many errors on the programmers behalf.&lt;/p&gt;
+
+&lt;p&gt;How your software handles failure must be taken into account when decomposing it into smaller pieces. Doing so is easier said than done.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;I have decided, reluctantly to use &lt;span class="latex"&gt;L&lt;sup&gt;a&lt;/sup&gt;T&lt;sub&gt;e&lt;/sub&gt;X&lt;/span&gt;. &lt;em&gt;Making reliable distributed systems in the presence of software errors. Armstrong, 2003&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Erlang/OTP is relatively unique in how it chooses to handle failure: supervision trees. Roughly, each process in an Erlang system is started by and watched by a supervisor. When a process encounters a problem, it exits. When a process exits, it is restarted by the supervisor.&lt;/p&gt;
+
+&lt;p&gt;(These supervisors are started by a bootstrap process, and when a supervisor encounters a fault, it is restarted by the bootstrap process)&lt;/p&gt;
+
+&lt;p&gt;The key idea is that it is quicker to fail-fast and restart than it is to handle errors. Error handling like this may seem counter-intuitive, gaining reliability by giving up when errors happen, but turning things off-and-on again has a knack for suppressing transient faults.&lt;/p&gt;
+
+&lt;p&gt;Error handling, and recovery are best done at the outer layers of your code base. This is known as the end-to-end principle. The end-to-end principle argues that it is easier to handle failure at the far ends of a connection than anywhere in the middle. If you have any handling inside, you still have to do the final top level check. If every layer atop must handle errors, so why bother handling them on the inside?&lt;/p&gt;
+
+&lt;p&gt;Error handling is one of the many ways in which a system can be tightly bound together. There are many other examples of tight coupling, but it is a little unfair to single one out as being badly designed. Except for IMAP.&lt;/p&gt;
+
+&lt;p&gt;In IMAP almost every each operation is a snowflake, with unique options and handling. Error handling is painful: errors can come halfway through the result of another operation.&lt;/p&gt;
+
+&lt;p&gt;Instead of UUIDs, IMAP generates unique tokens to identify each message. These can change halfway through the result of an operation too. Many operations are not atomic. It took more than 25 years to get a way to move email from one folder to another that reliably works. There is a special UTF-7 encoding, and a unique base64 encoding too.&lt;/p&gt;
+
+&lt;p&gt;I am not making any of this up.&lt;/p&gt;
+
+&lt;p&gt;By comparison, both file systems and databases make much better examples of remote storage. With a file system, you have a fixed set of operations, but a multitude of objects you can operate on.&lt;/p&gt;
+
+&lt;p&gt;Although SQL may seem like a much broader interface than a filesystem, it follows the same pattern. A number of operations on sets, and a multitude of rows to operate on. Although you can’t always swap out one database for another, it is easier to find something that works with SQL over any homebrew query language.&lt;/p&gt;
+
+&lt;p&gt;Other examples of loose coupling are other systems with middleware, or filters and pipelines. For example, Twitter’s Finagle uses a common API for services, and this allows generic timeout handling, retry mechanisms, and authentication checks to be added effortlessly to client and server code.&lt;/p&gt;
+
+&lt;p&gt;(I’m sure if I didn’t mention the UNIX pipeline here someone would complain at me)&lt;/p&gt;
+
+&lt;p&gt;First we layered our code, but now some of those layers share an interface: a common set of behaviours and operations with a variety of implementations. Good examples of loose coupling are often examples of uniform interfaces.&lt;/p&gt;
+
+&lt;p&gt;A healthy code base doesn’t have to be perfectly modular. The modular bit makes it way more fun to write code, in the same way that Lego bricks are fun because they all fit together. A healthy code base has some verbosity, some redundancy, and just enough distance between the moving parts so you won’t trap your hands inside.&lt;/p&gt;
+
+&lt;p&gt;Code that is loosely coupled isn’t necessarily easy-to-delete, but it is much easier to replace, and much easier to change too.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Step 7: Keep writing code&lt;/h1&gt;
+
+&lt;p&gt;Being able to write new code without dealing with old code makes it far easier to experiment with new ideas. It isn’t so much that you should write microservices and not monoliths, but your system should be capable of supporting one or two experiments atop while you work out what you’re doing.&lt;/p&gt;
+
+&lt;p&gt;Feature flags are one way to change your mind later. Although feature flags are seen as ways to experiment with features, they allow you to deploy changes without re-deploying your software.&lt;/p&gt;
+
+&lt;p&gt;Google Chrome is a spectacular example of the benefits they bring. They found that the hardest part of keeping a regular release cycle, was the time it took to merge long lived feature branches in.&lt;/p&gt;
+
+&lt;p&gt;By being able to turn the new code on-and-off without recompiling, larger changes could be broken down into smaller merges without impacting existing code. With new features appearing earlier in the same code base, it made it more obvious when long running feature developement would impact other parts of the code.&lt;/p&gt;
+
+&lt;p&gt;A feature flag isn’t just a command line switch, it’s a way of decoupling feature releases from merging branches, and decoupling feature releases from deploying code. Being able to change your mind at runtime becomes increasingly important when it can take hours, days, or weeks to roll out new software. Ask any SRE: Any system that can wake you up at night is one worth being able to control at runtime.&lt;/p&gt;
+
+&lt;p&gt;It isn’t so much that you’re iterating, but you have a feedback loop. It is not so much you are building modules to re-use, but isolating components for change. Handling change is not just developing new features but getting rid of old ones too. Writing extensible code is hoping that in three months time, you got everything right. Writing code you can delete is working on the opposite assumption.&lt;/p&gt;
+
+&lt;p&gt;The strategies i’ve talked about — layering, isolation, common interfaces, composition — are not about writing good software, but how to build software that can change over time.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;The management question, therefore, is not whether to build a pilot system and throw it away. You will do that. […] Hence plan to throw one away; you will, anyhow. &lt;em&gt;Fred Brooks&lt;/em&gt;&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;You don’t need to throw it all away but you will need to delete some of it. Good code isn’t about getting it right the first time. Good code is just legacy code that doesn’t get in the way.&lt;/p&gt;
+
+&lt;p&gt;Good code is easy to delete.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;hr&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Acknowledgments&lt;/h1&gt;
+
+&lt;p&gt;Thank you to all of my proof readers for your time, patience, and effort.&lt;/p&gt;
+
+&lt;h1&gt;Further Reading&lt;/h1&gt;
+
+&lt;h2&gt;Layering/Decomposition&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href="https://www.cs.umd.edu/class/spring2003/cmsc838p/Design/criteria.pdf"&gt;On the Criteria To Be Used in Decomposing Systems into Modules&lt;/a&gt;, D.L. Parnas.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="https://www.youtube.com/watch?v=aAb7hSCtvGw"&gt;How To Design A Good API and Why it Matters&lt;/a&gt;, J. Bloch.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://www4.in.tum.de/~blanchet/api-design.pdf"&gt;The Little Manual of
+API Design&lt;/a&gt;, J. Blanchette.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="https://www.youtube.com/watch?v=uqIx4VRIuwM"&gt;Python for Humans&lt;/a&gt;, K. Reitz.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h1&gt;Common Interfaces&lt;/h1&gt;
+
+&lt;p&gt;&lt;a href="https://www.rand.org/content/dam/rand/pubs/notes/2009/N3017.pdf"&gt;The Design of the MH Mail System&lt;/a&gt;, a Rand technical report.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://www.vitanuova.com/inferno/papers/styx.pdf"&gt;The Styx Architecture for Distributed Systems&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://monkey.org/~marius/funsrv.pdf"&gt;Your Server as a Function&lt;/a&gt;, M. Eriksen.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h2&gt;Feedback loops/Operations lifecycle&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href="http://www.slideshare.net/Jolicloud/chrome-release-cycle"&gt;Chrome Release Cycle&lt;/a&gt;, A. Laforge.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://www.hpl.hp.com/techreports/tandem/TR-85.7.pdf"&gt;Why Do Computers Stop and What Can Be Done About It?&lt;/a&gt;, J. Gray.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://web.mit.edu/2.75/resources/random/How%20Complex%20Systems%20Fail.pdf"&gt;How Complex Systems Fail&lt;/a&gt;, R. I. Cook.&lt;/p&gt;
+
+&lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+
+&lt;h2&gt;The technical is social before it is technical.&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href="http://www.systemsguild.com/pdfs/DeMarcoNov2011.pdf"&gt;All Late Projects Are the Same&lt;/a&gt;, &lt;a href="http://www.computer.org/cms/Computer.org/ComputingNow/homepage/mostread/MostRead-SW-SoftwareEngineeringAnIdeaWhoseTimeHasCome.pdf"&gt;Software Engineering: An Idea Whose Time Has Come and Gone?&lt;/a&gt;, T. DeMarco.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://www.cs.yale.edu/homes/perlis-alan/quotes.html"&gt;Epigrams in Programming&lt;/a&gt;, A. Perlis.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://www.melconway.com/Home/Conways_Law.html"&gt;How Do Committees Invent?&lt;/a&gt;, M.E. Conway.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="http://www.jofreeman.com/joreen/tyranny.htm"&gt;The Tyranny of Structurelessness&lt;/a&gt;, J. Freeman&lt;/p&gt;</description><link>http://programmingisterrible.com/post/139222674273</link><guid>http://programmingisterrible.com/post/139222674273</guid><pubDate>Sat, 13 Feb 2016 09:52:23 +0000</pubDate></item><item><title>This is short, and packed with the voice of experience.</title><description>&lt;iframe width="400" height="225"  id="youtube_iframe" src="https://www.youtube.com/embed/p0jGmgIrf_M?feature=oembed&amp;enablejsapi=1&amp;origin=http://safe.txmblr.com&amp;wmode=opaque" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;&lt;br/&gt;&lt;br/&gt;&lt;p&gt;This is short, and packed with the voice of experience.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/137848667118</link><guid>http://programmingisterrible.com/post/137848667118</guid><pubDate>Sat, 23 Jan 2016 01:50:46 +0000</pubDate></item><item><title>I got my talk transcribed, and now it has subtitles in english.</title><description>&lt;iframe width="400" height="225"  id="youtube_iframe" src="https://www.youtube.com/embed/csyL9EC0S0c?feature=oembed&amp;enablejsapi=1&amp;origin=http://safe.txmblr.com&amp;wmode=opaque" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;&lt;br/&gt;&lt;br/&gt;&lt;p&gt;I got my talk transcribed, and now it has subtitles in english.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/118990527288</link><guid>http://programmingisterrible.com/post/118990527288</guid><pubDate>Fri, 15 May 2015 02:33:57 +0100</pubDate></item><item><title>Nothing is more indicative of a bullshit job than the interview</title><description>&lt;p&gt;Technical interviews, as they stand, are at best &lt;a href="https://modelviewculture.com/pieces/technical-interviews-are-bullshit"&gt;a proxy for finding people exactly like the interviewer&lt;/a&gt; and at worst &lt;a href="https://modelviewculture.com/pieces/manufacturing-the-talent-shortage"&gt;part of the systematic discrimination plaguing tech&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;We have very little idea about what makes good code, so it should come as no surprise that we have little-to-no idea how to find people who are good at coding, along with the dozens of complementary skills. Tech interviews boil down to finding “people like us” and a quick glance amongst any startups team page should confirm this.&lt;/p&gt;
+
+&lt;p&gt;Along with finding “cultural fits”, there is nothing more terrifyingly common than an interviewer trying to trick you, in order to show how clever they are. Interviewers love algorithmic puzzles, even though they are not indicative of the work at hand.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Aside: The &lt;a href="http://en.wikipedia.org/wiki/Wason_selection_task"&gt;Wason selection task&lt;/a&gt; is one simple way to demonstrate that the framing of a problem determines the ability of people to solve it.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;In one interview I had, the lazy interviewer forgot the problem he’d googled five minutes before the interview, stumbled through it, struggling to remember the tricky parts I was meant to guess.&lt;/p&gt;
+
+&lt;p&gt;Other asinine things I have been asked in interviews include guessing “how much teflon is there in the world” (and they didn’t like it very much when I challenged them on the relevance of the question). I’ve also been sent a dodgy, pirated, 300 page pdf of interview techniques to prepare for a Google interview.&lt;/p&gt;
+
+&lt;p&gt;Despite being asked to reverse a linked list in almost every interview i&amp;rsquo;ve had, I have only ever used linked lists for two things: a) computer science exams, and b) interviews by people who passed the former.&lt;/p&gt;
+
+&lt;p&gt;Sometimes algorithms are indicative of the work at hand — natural language parsing, numerical methods — and sometimes a simple algorithm is used as a filter to check you can actually implement a simple, specified problem.&lt;/p&gt;
+
+&lt;p&gt;However, asking questions which require a trick to solve correctly only serves to filter out candidates who have heard of the trick before.&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Most developer jobs require applicants to come into an office conference room and answer puzzle-style programming questions on a whiteboard.&lt;/p&gt;
+
+&lt;p&gt;There are entire books full of strategies for whiteboard interviews. They list the types of questions you’ll get &amp;amp; give sample solutions.&lt;/p&gt;
+
+&lt;p&gt;These books are for developers, &amp;amp; they exist because whiteboarding is a skill completely separate from actual software development.&lt;/p&gt;
+
+&lt;p&gt;I mentor students at several coding boot camps. Every single school teaches &amp;ldquo;whiteboard skills&amp;rdquo; as a distinct unit.&lt;/p&gt;
+
+&lt;p&gt;They teach it separately because whiteboarding is a skill completely separate from actual software development&lt;/p&gt;
+
+&lt;em&gt;From &lt;a href="https://twitter.com/sarahmei/status/578719857857970176"&gt;@sarahmei&amp;rsquo;s excellent series of tweets&lt;/a&gt;&lt;/em&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;The amount of bullshit questions you are asked in the interview is directly proportionate to the bullshit in the job. Places with interesting puzzles to solve can and will rely on your intrinsic motivation to put up with their dysfunctional and toxic environments.&lt;/p&gt;
+
+&lt;p&gt;I really wish Liz Rush’s amazing “&lt;a href="http://lizmrush.com/on-interviewing/"&gt;On Interviewing as a Junior Dev&lt;/a&gt;” was around when I was starting out—It took me forever to realise that interviews are as much about you judging the company, as they are about the company judging you.&lt;/p&gt;
+
+&lt;p&gt;I know being able to pick your job is a privilege few have, and I’ve fallen into a number of toxic jobs to keep a roof over my head and food on my plate, but maybe I wouldn&amp;rsquo;t have started a job with the naïve belief that the interesting work would save me from burning out.&lt;/p&gt;
+
+&lt;p&gt;In the end, you shouldn&amp;rsquo;t look for jobs where just the technical problems are interesting, but also for ones where the people are friendly—the work you do is more likely to change than the culture you work in.&lt;/p&gt;
+
+&lt;p&gt;Don’t forget: the correct answer to “How do you reverse a linked list” is “Thanks for your time but I’ll see myself out”.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/116698171738</link><guid>http://programmingisterrible.com/post/116698171738</guid><pubDate>Sat, 18 Apr 2015 04:55:20 +0100</pubDate></item><item><title>What Your Open Source Culture Really Says, Part One</title><description>&lt;a href="https://modelviewculture.com/pieces/what-your-open-source-culture-really-says-part-one"&gt;What Your Open Source Culture Really Says, Part One&lt;/a&gt;: &lt;p&gt;“What Your Open Source Culture Really Says”, a handy translation guide for the myriad of bullshit that is the world of open source — in particular the corporate exploitation of unpaid work.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/116678132013</link><guid>http://programmingisterrible.com/post/116678132013</guid><pubDate>Sat, 18 Apr 2015 00:04:44 +0100</pubDate></item><item><title>How to burn your audience on twitter.</title><description>&lt;p&gt;Twitter is not great at many things, but it worked well enough for me until now. As much as I enjoy having a public persona on twitter, I primarily use it for arranging my social life. That was until I hit newsy combinator and techcrunch — my mentions filled up with people shouting so loudly, I couldn&amp;rsquo;t hear my friends anymore.&lt;/p&gt;
+
+&lt;p&gt;As a short term fix, I forced everyone who followed me to unfollow me (the block &amp;amp; unblock trick), using the &lt;a href="https://github.com/sferik/t"&gt;command line client “t”&lt;/a&gt;, and locked my account. Let&amp;rsquo;s look at what it did to the graph:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="http://68.media.tumblr.com/e5bf25e4f6186be6742839854e745e21/tumblr_nmx6xvM8Ms1s29fbuo1_540.png" alt="A graph that slowly increases and then collapses"/&gt;&lt;/p&gt;
+
+&lt;p&gt;In lieu of a public persona, i&amp;rsquo;ve set up a public account &lt;a href="http://twitter.com/tef_ebooks"&gt;@tef_ebooks&lt;/a&gt;, which reposts all my tweets that aren&amp;rsquo;t replies. I doubt i’ll regain the 3696 people I bumped overnight (sorry!), but I’d rather inconvenience strangers than friends. Twitter didn’t really leave me with a better option.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/116589898878</link><guid>http://programmingisterrible.com/post/116589898878</guid><pubDate>Thu, 16 Apr 2015 23:15:43 +0100</pubDate></item><item><title>(╯°□°)╯︵ ┻━┻</title><description>&lt;a href="http://tableflip.club/"&gt;(╯°□°)╯︵ ┻━┻&lt;/a&gt;: &lt;blockquote&gt;Women are leaving your tech company because you don’t deserve to keep us around. […] Fuck that, we’re done. It’s not us, it’s you.&lt;/blockquote&gt;</description><link>http://programmingisterrible.com/post/116342157158</link><guid>http://programmingisterrible.com/post/116342157158</guid><pubDate>Tue, 14 Apr 2015 02:02:50 +0100</pubDate></item><item><title>How not to advertise for a job in London</title><description>&lt;p&gt;Step 1. Don&amp;rsquo;t discriminate on age, gender. These are illegal in the UK. Be careful about the working time directives too.&lt;/p&gt;
+
+&lt;p&gt;Step 2. Don&amp;rsquo;t ask for people with twenty years of coding experience, under thirty, who are willing to work until 2am, who are loyal and obdient to the job but desire to start one themselves. Good luck unicorn hunting for what can only be described as a toxic job.&lt;/p&gt;
+
+&lt;p&gt;Step 3. Asking for “social media excerpts” is &lt;a href="http://www.theguardian.com/money/blog/2012/mar/30/what-can-ask-job-interview"&gt;creepy as heck&lt;/a&gt;, and also likely in breach of data protection laws as well as privacy rights.&lt;/p&gt;
+
+&lt;p&gt;Example: &lt;a href="https://drive.google.com/file/d/0B9peOS-dpvJ2WWtlYndJN1hCck0/view"&gt;https://drive.google.com/file/d/0B9peOS-dpvJ2WWtlYndJN1hCck0/view&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Bonus Step: When called on your dodgy business practices and general tone, admit to it. On the other hand, the author of the above example seems quite happy about it.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="https://twitter.com/xiangyu_wu/status/576023814372458496"&gt;https://twitter.com/xiangyu_wu/status/576023814372458496&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;Edited to add: Approximately 24 hours later a change of heart occurs.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="https://twitter.com/xiangyu_wu/status/576322988943007744"&gt;https://twitter.com/xiangyu_wu/status/576322988943007744&lt;/a&gt;&lt;/p&gt;</description><link>http://programmingisterrible.com/post/113428268598</link><guid>http://programmingisterrible.com/post/113428268598</guid><pubDate>Thu, 12 Mar 2015 14:27:03 +0000</pubDate></item><item><title>San Francisco for Londoners</title><description>&lt;p&gt;&lt;em&gt;Below is what I&amp;rsquo;ve passed onto a few friends who have asked about getting around San Francisco. repeated here in the hope it may be useful.&lt;/em&gt;&lt;/p&gt;
+
+&lt;h1&gt;The basics:&lt;/h1&gt;
+
+&lt;ul&gt;&lt;li&gt;Get a clipper card&lt;/li&gt;
+&lt;li&gt;Wear sensible shoes, because it&amp;rsquo;s hilly as fuck. Also, because the floor is lava.&lt;/li&gt;
+&lt;li&gt;One Beer, One Dollar Tip.&lt;/li&gt;
+&lt;/ul&gt;&lt;h1&gt;Getting around and finding your way.&lt;/h1&gt;
+
+&lt;p&gt;No-one uses street numbers, because the streets are ridiculously long, the numbers don&amp;rsquo;t match up on parallel streets, and everyone uses the address of the nearest cross-street. So you&amp;rsquo;ll hear &amp;ldquo;Folsom and 12th&amp;rdquo; and not &amp;ldquo;1582 Folsom&amp;rdquo;. &lt;em&gt;Learn the cross street of your accomodation&lt;/em&gt;.&lt;/p&gt;
+
+&lt;p&gt;SF is mostly based on the grid system, with the notable exception of market (Dividing the centre into South of Market (soma) + North of Market), but many of the roads are so long that they curve.&lt;/p&gt;
+
+&lt;p&gt;It is very, very unlikely that you will go into sunset, presidio, noe valley, as the further you get away from market, the more suburban things get.&lt;/p&gt;
+
+&lt;h2&gt;Walking&lt;/h2&gt;
+
+&lt;p&gt;There are a fuck ton of hills. No matter which way you walk, you will be going uphill and downhill, and uphill again.&lt;/p&gt;
+
+&lt;p&gt;Traffic intersections work differently to the UK&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;&lt;p&gt;Unsignalled crossroads work like zebra crossings. Cars will generally yield to pedestrians&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;Signalled crossroads work very differently, you get to cross when the traffic is going in the same direction as you, 
+Crossings alternate between left-right traffic and north-south traffic.
+Cars can turn right through a red light, and not every crossroad has pedestrian signalling either.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;You will eternally be confused by things being on the wrong side of the road.&lt;/p&gt;
+
+&lt;h1&gt;Public transport.&lt;/h1&gt;
+
+&lt;p&gt;If you plan to get on busses or trams, get a clipper card. It&amp;rsquo;s very similar to oyster.&lt;/p&gt;
+
+&lt;p&gt;There is MUNI and Bart. Bart is really only useful for getting to oakland and SFO airport, Muni is limited to SF.&lt;/p&gt;
+
+&lt;p&gt;MUNI is a $2.25 flat fare. You only have to touch in, not touch out. &lt;em&gt;You have to step down to open the rear bus doors.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;MUNI runs on its own idea of time. It will always be late. It will always be slow. It will often be smelly. The K and the T line are currently the same line.&lt;/p&gt;
+
+&lt;p&gt;Bus stops don&amp;rsquo;t always have signposts, signage, or timetables. Often bus stops are just poles with a small yellow strip indicating which routes stop there.&lt;/p&gt;
+
+&lt;p&gt;There is also the cable-cars, and the vintage F route if you want to travel on vintage trams and cars. If you want to go on the cable cars, get a day pass. Expect to queue for them (americans call this a line), and always try and stand on the edges - it&amp;rsquo;s way more fun.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;Always look down before you sit down&lt;/em&gt;&lt;/p&gt;
+
+&lt;h2&gt;Taxis.&lt;/h2&gt;
+
+&lt;p&gt;Taxis have their roof light on when they are working, so you have no idea if you can hail them or not. There is a smaller, impossible to see light to know if you can hail them.&lt;/p&gt;
+
+&lt;p&gt;Taxis are cheap, and Uber/Lyft is ubiquitous. The ridesharing apps are usually much faster and quicker.&lt;/p&gt;
+
+&lt;h1&gt;Food &amp;amp; Drink&lt;/h1&gt;
+
+&lt;p&gt;US Coke tastes different. Mexican Coke tastes like it does in the UK.&lt;/p&gt;
+
+&lt;p&gt;SF is excellent for Pho, Burritos, but terrible for curry.&lt;/p&gt;
+
+&lt;p&gt;Get a burrito in the mission (between 14-24th). Preferably during the day.&lt;/p&gt;
+
+&lt;p&gt;Tip is normally between 15 and 20%. Tips is how people pay for healthcare, and to earn a living wage. Tip generously.&lt;/p&gt;
+
+&lt;h2&gt;Beer, Bars, Dive Bars&lt;/h2&gt;
+
+&lt;p&gt;There is no weights and measures act. Spirits are free-pour.&lt;/p&gt;
+
+&lt;p&gt;Pretty much every beer is hopped to fuck. Pints are smaller than in the UK, but craft beers generally are stronger on average between 6-12%. &lt;em&gt;There is self-serve water at every bar. Use it.&lt;/em&gt; It is really, really, really easy to get drunk. It&amp;rsquo;s quite common to see people far more drunk than you would do in the UK.&lt;/p&gt;
+
+&lt;p&gt;The difference between a bar and a dive bar, is that you &lt;em&gt;really&lt;/em&gt; don&amp;rsquo;t want to use the toilets in a dive bar. Some of the best bars, and usually all the dive bars are cash only.&lt;/p&gt;
+
+&lt;p&gt;Always Tip: &lt;em&gt;Rule is one beer, one dollar.&lt;/em&gt; You will usually be given change with enough to tip, but having dollars spare will help.&lt;/p&gt;
+
+&lt;h2&gt;Brunch&lt;/h2&gt;
+
+&lt;p&gt;Do yourself a favour, and get brunch with bottomless mimosas. Brunch is a religious thing in SF, and bars will pack out more on a saturday afternoon than a friday night.&lt;/p&gt;
+
+&lt;p&gt;Brunch is its own section because I have never encountered a place that takes brunch so seriously.&lt;/p&gt;
+
+&lt;h1&gt;Smoking&lt;/h1&gt;
+
+&lt;p&gt;Cigarettes are cheap as fuck. No-one smokes rollups. You can&amp;rsquo;t smoke indoors. You must smoke outside, often by the kerb (or curb, as the americans call it), or at least 15 feet away from the exit. They are more anal about cigarette smoke than they are about weed.&lt;/p&gt;
+
+&lt;p&gt;Much of SF smells of weed, and people will happily try and sell you it on the street. Bear in mind, medicinal marijuana is state legal here, but not federal legal. It is still a crime, and unless you are carrying a medicinal card, you are taking a bit of a risk, especially as a foreigner.&lt;/p&gt;
+
+&lt;p&gt;The weed is incredibly strong, far stronger than it is in the UK and Europe. If you end up smoking in SF I guarantee you it will be too much. The same goes for brownies.&lt;/p&gt;
+
+&lt;h1&gt;Gentrification, Poverty, and Crime.&lt;/h1&gt;
+
+&lt;p&gt;&lt;em&gt;If you&amp;rsquo;re not sure about an area, ask someone.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Like London, watch your stuff. Unlike London, SF is a bizzaro world of poverty and wealth. Imagine the compressing the inequalities of london down to a tiny city, and then ramp it up. You can walk one block along and everything changes. There are microclimates of wealth and poverty.&lt;/p&gt;
+
+&lt;p&gt;For example, Valencia is gentrified as fuck and the next block over, Mission, is slowly being gentrified, but still rough around mid-market, and between 16th and 24th. The latter is where the best burritos are. In six months this will have changed, so ask a local.&lt;/p&gt;
+
+&lt;p&gt;Similarly to London, poverty ridden areas tend to have higher crime rates. Tenderloin is where all the crack and meth generally are. You may encounter more dodgyness under the freeway, because it&amp;rsquo;s dry and sheltered from the occasional rainfall. There are countless people on the streets who are there because there isn&amp;rsquo;t really any healthcare or support for mental health issues. There is even an underclass of people who sort out the recycling and rubbish, and it&amp;rsquo;s common to see people collecting cans and bottles so they can redeem them for pennies.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;The inequality will shock you and continue to shock you&lt;/em&gt;. &lt;em&gt;Even if you&amp;rsquo;re used to London.&lt;/em&gt; People who have lived in SF for a while become numb to it, often taking the poverty as a point of pride for the city. &amp;ldquo;At least they won&amp;rsquo;t die out on the streets. Unlike other cities, we&amp;rsquo;re much less heavy handed about using police to clear them out of the city&amp;rdquo;. The californian liberalism is more of a passive agressive &amp;ldquo;fuck you, got mine&amp;rdquo;.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/112612689998</link><guid>http://programmingisterrible.com/post/112612689998</guid><pubDate>Tue, 03 Mar 2015 16:50:53 +0000</pubDate></item><item><title>Stop Blowhard Syndrome</title><description>&lt;a href="http://xuhulk.tumblr.com/post/110549967516/stop-blowhard-syndrome"&gt;Stop Blowhard Syndrome&lt;/a&gt;: &lt;p&gt;&lt;a href="http://xuhulk.tumblr.com/post/110549967516/stop-blowhard-syndrome" class="tumblr_blog"&gt;xuhulk&lt;/a&gt;:&lt;/p&gt;
+
+&lt;blockquote&gt;&lt;p&gt;Expressing a reasonable amount of doubt and concern about a situation that is slightly outside my comfort zone is &lt;em&gt;normal, responsible behavior&lt;/em&gt;. Understanding my limits and being willing to acknowledge them is, in fact, one of my strengths. I don’t think it should be pathologized alongside the very real problem of “impostor syndrome”.&lt;/p&gt;
+
+&lt;p&gt;In fact, it is the opposite behavior—the belief that you can do anything, including things you are blatantly not qualified for or straight up lying about—&lt;em&gt;should&lt;/em&gt; be pathologized. It has many names (Dunning-Krueger, illusory superiority), but I suggest we call it &lt;strong&gt;blowhard syndrome&lt;/strong&gt; as a neat parallel.&lt;/p&gt;&lt;/blockquote&gt;</description><link>http://programmingisterrible.com/post/110922879293</link><guid>http://programmingisterrible.com/post/110922879293</guid><pubDate>Fri, 13 Feb 2015 20:50:26 +0000</pubDate></item><item><title>modules + network = microservices</title><description>&lt;h1&gt;Introduction&lt;/h1&gt;
+
+&lt;p&gt;Microservices are a recent trend in software architecture, but the ideas behind are as old as the dawn of time (1 Jan 1970).  To understand microservices, we need to understanding why we decompose software into services, and in turn, why we decompose services into modules.&lt;/p&gt;
+
+&lt;p&gt;The tradeoffs involved building modular software apply in both the large and the small, but we must not confuse the goal for the methods. We use modularity to reduce complexity, but often end up enabling it.&lt;/p&gt;
+
+&lt;h1&gt;Modules&lt;/h1&gt;
+
+&lt;p&gt;To save time i’ll skip straight to quoting Parnas’ “On the Criteria To Be Used in Decomposing Systems into Modules”–&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;We propose instead that one begins with a list of difficult design decisions or design decisions which are likely to change. Each module is then designed to hide such a decision from the others.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Parnas argues that the point of modularity is not one of reuse, but one of concealment, or abstraction: hiding assumptions from the rest of the program. Another way to look at this is how easily an implementation could be grown, deleted, rewritten, or swapped with a different system altogether, without changing the rest of the system.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, decomposition is genuinely hard: breaking your code into pieces does not always mean that the assumptions end up in different parts: it’s very easy to build a system out of modules that tightly depend on each other. Learning how to decompose software is a hard thing to do, and you will have to make a lot of mistakes before you start to get it right.&lt;/p&gt;
+
+&lt;p&gt;It is a tradeoff: a module brings extra overhead, and can be harder to understand where it fits into the larger system, but can bring simplicity and easier maintenance too.&lt;/p&gt;
+
+&lt;h1&gt;Distributed systems&lt;/h1&gt;
+
+&lt;p&gt;Decomposition, like many things in life, gets harder when you have more computers involved. You must decide how to split up the code, and also decide how to split it across the computers involved.  Like with bits of a game world spread across a litany of global variables, spreading bits of state across a network is a similar world of pain and suffering.&lt;/p&gt;
+
+&lt;p&gt;Splitting things across a network means that the system will have to tolerate latency, and partial failure, and it is impossible to tell a slow component from a broken one. Keeping data in sync across a network while tolerating failure is an incredibly hard engineering problem known as consensus.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;In my experience, all distributed consensus algorithms are either:&lt;/p&gt;
+  
+  &lt;p&gt;1: Paxos,&lt;/p&gt;
+  
+  &lt;p&gt;2: Paxos with extra unnecessary cruft, or&lt;/p&gt;
+  
+  &lt;p&gt;3: broken. - Mike Burrows&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Although consensus can be avoided, the underlying problems cannot. Decomposing a system (into parts that run on different machines) is neither straightforward or easy, but far more treacherous. There are many techniques to make it easier, like statelessness, idempotence, and process supervision, and many others worth discovering too — but one technique stands out above all: uniformity.&lt;/p&gt;
+
+&lt;p&gt;It’s easier to handle talking to a bunch of machines if they can be expected to behave in a similar manner. Having a common interface was one of the major design principles behind Plan 9, which connected the operating system together through the filesystem.&lt;/p&gt;
+
+&lt;p&gt;Another distributed operating system, Amoeba, was built as a microkernel glued together from services using a common rpc mechanism. Once an interface for a service had been defined, client stubs would be generated to use the service.&lt;/p&gt;
+
+&lt;p&gt;Erlang is yet another platform for distributed systems, but unlike the former, uses asynchronous procedure calls to communicate—the code is forced to handle the possibility of latency, but can now achieve parallelism and other forms of concurrency.  Similarly, twitter’s finagle library uses futures to achieve the same end: a uniform approach to connecting services together asynchronously.&lt;/p&gt;
+
+&lt;p&gt;Exposing the asynchronous nature of a network call can seem counterintuitive to Parnas’ advice on decomposition: surely the network is hard and likely to change and therefore worth hiding? Almost. The nature of the network protocol involved, and the particular machine involved are worth hiding, but hiding that the network is unreliable does not let code deal with it effectively.&lt;/p&gt;
+
+&lt;p&gt;A common interface, sync or async,  allows easier interoperability between components of a distributed system, as well as being able to reuse code, code generation tools, and many other tools involved in deploying, monitoring, and debugging systems. Like with modules, the existence of a common interface does not guarantee a loosely coupled system, but it can be a step in the right direction.&lt;/p&gt;
+
+&lt;h1&gt;Services&lt;/h1&gt;
+
+&lt;p&gt;Once you have a distributed system built from modules, you almost have one built from services—your large program has been broken into smaller communicating parts. Even the most simple web app is often broken into a database, a file store, and a http server.&lt;/p&gt;
+
+&lt;p&gt;The real difference between a module within a distributed system and a service, is that a service runs separately and independently of the system that is using it. Like with a good module, a good service handles a hard or changing problem, and like any module, a service comes with maintenance costs.&lt;/p&gt;
+
+&lt;p&gt;Running one service is a burden, keeping more of them running is a full time job. Each new service must be configured to be able to find, authenticate and communicate with each other. Although splitting a system up allows the possibility of partial failure, it’s often just another thing that can go wrong.&lt;/p&gt;
+
+&lt;p&gt;Successfully deploying a system built from multiple services is both its own reward and punishment.&lt;/p&gt;
+
+&lt;p&gt;On the other hand, a service done well can allow extensive reuse, reimplementation, and better failure handling, but the real reasons for services are often social. There are two services because there are two teams building it.&lt;/p&gt;
+
+&lt;h1&gt;Microservices&lt;/h1&gt;
+
+&lt;p&gt;One good example for microservices is prototypes. A new feature can be developed alongside an existing system, without disrupting or changing the older code. Prototypes can often turn into bad examples of microservices too — the service is abandoned, or no-one knows how to run it any more — but prototypes can always be merged back in.&lt;/p&gt;
+
+&lt;p&gt;Really, It is more important to build a system that admits microservices, than it is to built out of them entirely.  Once you admit something is running across the network, it isn’t much of a stretch to admit it running on a different service entirely. Without a common framework or ecosystem for microservices, the maintenance burden will outweigh many potential benefits.&lt;/p&gt;
+
+&lt;p&gt;A well engineered distributed system will likely have some elements of loose coupling, uniformity, and modularity, all essential for making microservices successful. The real question is not “should I write my system as microservices”, but “What sort of modules should I break my system into” and “what benefit is there from running it as a distinct service”.&lt;/p&gt;
+
+&lt;h1&gt;Conclusion&lt;/h1&gt;
+
+&lt;p&gt;Decomposition, be it into modules or services is a hard task, and often far easier in hindsight. There is no obviously right or wrong answer, but a series of tradeoffs that either work for or against you, which can change over time too.&lt;/p&gt;
+
+&lt;p&gt;Over time your problem will change and your software will have to follow, allowing loose coupling, and by extension, microservices gives your software more opportunities to grow, but it is up to you to work out if it is worth doing.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/110292532528</link><guid>http://programmingisterrible.com/post/110292532528</guid><pubDate>Sat, 07 Feb 2015 00:17:38 +0000</pubDate></item><item><title>Reasons to be cheerful</title><description>&lt;p&gt;It&amp;rsquo;s no secret that I am not very fond of myself. I struggle with my identity and where I sit in the world, and can&amp;rsquo;t help but describe myself as a terrible person.&lt;/p&gt;
+
+&lt;p&gt;Last night was no exception, I cried myself to sleep, reliving the pain of loved ones passed, unable to watch the brutal conditions that I saw inflicted on others. I pushed myself, life pushed back, I snapped. &lt;/p&gt;
+
+&lt;p&gt;I swept up the pieces and withdrew to people I trust.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;ve spent my life around queers, punks, misfits, and fuck-ups, always feeling like the straightest guy in the room. Despite spending years with people just like me I felt like an impostor.&lt;/p&gt;
+
+&lt;p&gt;It didn&amp;rsquo;t matter how many boys I&amp;rsquo;ve kissed (many), or how much I rejected the social norms of masculinity. I thought I was straight and hated myself for it. I was wrong.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m queer.&lt;/p&gt;
+
+&lt;p&gt;It wasn&amp;rsquo;t so much coming out—my friends told me my sexuality, rather than the other way around. Nothing will change in how my friends see me: they never thought I was that straight at all. &lt;/p&gt;
+
+&lt;p&gt;Admitting I&amp;rsquo;m queer doesn&amp;rsquo;t change who I am, but admitting I&amp;rsquo;m queer has changed how I see myself.&lt;/p&gt;
+
+&lt;p&gt;It&amp;rsquo;s been in front of me all this time.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m not straight. I&amp;rsquo;m not gay. I&amp;rsquo;m not bisexual.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m queer.&lt;/p&gt;</description><link>http://programmingisterrible.com/post/105827902593</link><guid>http://programmingisterrible.com/post/105827902593</guid><pubDate>Mon, 22 Dec 2014 02:06:00 +0000</pubDate></item><item><title>"The technology industry sees itself as in rebellion against corporate America: not corrupt, not..."</title><description>““The technology industry sees itself as in rebellion against corporate America: not corrupt, not buttoned-up, not empty. In fact, a tech company can be as corrupt, soulless, and empty as any corporation, but being unprofessional helps us maintain the belief that we are somehow different from Wall Street.””&lt;br/&gt;&lt;br/&gt; - &lt;em&gt;&lt;a href="https://modelviewculture.com/pieces/interview-with-shanley-kane-editor-model-view-culture"&gt;Interview with Shanley Kane, Editor, Model View Culture&lt;/a&gt;&lt;/em&gt;</description><link>http://programmingisterrible.com/post/105558735993</link><guid>http://programmingisterrible.com/post/105558735993</guid><pubDate>Thu, 18 Dec 2014 23:18:09 +0000</pubDate></item><item><title>"I was embarrassed to be in public with him while he made several sexist remarks about the other..."</title><description>“I was embarrassed to be in public with him while he made several sexist remarks about the other candidate, but I wasn’t sure enough of myself at the time to walk out or call him out, which I deeply regret. Interestingly, male mentors and hiring managers have all said that I should have played it cool and finished the interview (which I did), whereas senior developers I’ve told this story to have told me they would have walked out.”&lt;br/&gt;&lt;br/&gt; - &lt;em&gt;&lt;a href="http://lizmrush.com/on-interviewing/"&gt;On Interviewing as a Junior Dev&lt;/a&gt;&lt;/em&gt;</description><link>http://programmingisterrible.com/post/105558661163</link><guid>http://programmingisterrible.com/post/105558661163</guid><pubDate>Thu, 18 Dec 2014 23:17:08 +0000</pubDate></item></channel></rss>

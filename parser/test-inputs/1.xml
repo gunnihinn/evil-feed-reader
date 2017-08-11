@@ -1,0 +1,1058 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>Embedded in Academia</title>
+	<atom:link href="https://blog.regehr.org/feed" rel="self" type="application/rss+xml" />
+	<link>https://blog.regehr.org</link>
+	<description>John Regehr, Professor of Computer Science, University of Utah, USA</description>
+	<lastBuildDate>Sun, 23 Jul 2017 04:40:10 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>hourly</sy:updatePeriod>
+	<sy:updateFrequency>1</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=4.8.1</generator>
+	<item>
+		<title>Undefined Behavior in 2017</title>
+		<link>https://blog.regehr.org/archives/1520</link>
+		<comments>https://blog.regehr.org/archives/1520#comments</comments>
+		<pubDate>Wed, 05 Jul 2017 05:58:27 +0000</pubDate>
+		<dc:creator><![CDATA[regehr]]></dc:creator>
+				<category><![CDATA[Compilers]]></category>
+		<category><![CDATA[Computer Science]]></category>
+		<category><![CDATA[Software Correctness]]></category>
+
+		<guid isPermaLink="false">http://blog.regehr.org/?p=1520</guid>
+		<description><![CDATA[This post is jointly authored by Pascal Cuoq and John Regehr. Recently we&#8217;ve heard a few people imply that problems stemming from undefined behaviors (UB) in C and C++ are largely solved due to ubiquitous availability of dynamic checking tools such as ASan, UBSan, MSan, and TSan. We are here to state the obvious &#8212; &#8230; <p class="link-more"><a href="https://blog.regehr.org/archives/1520" class="more-link">Continue reading<span class="screen-reader-text"> "Undefined Behavior in 2017"</span></a></p>]]></description>
+				<content:encoded><![CDATA[<style type="text/css">
+pre { overflow: none; white-space: pre; }
+</style>
+<p><i>This post is jointly authored by Pascal Cuoq and John Regehr.</i></p>
+<p>Recently we&#8217;ve heard a few people imply that problems stemming from undefined behaviors (UB) in C and C++ are largely solved due to ubiquitous availability of dynamic checking tools such as ASan, UBSan, MSan, and TSan. We are here to state the obvious &#8212; that, despite the many excellent advances in tooling over the last few years, UB-related problems are far from solved &#8212; and to look at the current situation in detail.</p>
+<p>Valgrind and most of the sanitizers are intended for debugging: emitting friendly diagnostics regarding undefined behaviors that are executed during testing. Tools like this are exceptionally useful and they have helped us progress from a world where almost every nontrivial C and C++ program executed a continuous stream of UB to a world where quite a few important programs seem to be largely UB-free in their most common configurations and use cases.</p>
+<p>The problem with dynamic debugging tools is that they don&#8217;t do anything to help us to cope with the worst UBs: the ones that we didn&#8217;t know how to trigger during testing, but that someone else has figured out how to trigger in deployed software &#8212; while exploiting it. The problem reduces to doing good testing, which is hard. Tools like afl-fuzz are great but they barely begin to scratch the surface of large programs that process highly structured inputs.</p>
+<p>One way to sidestep problems in testing is to use static UB-detection tools. These are steadily improving, but sound and precise static analysis is not necessarily any easier than achieving good test coverage. Of course the two techniques are attacking the same problem &#8212; identifying feasible paths in software &#8212; from opposite sides. This problem has always been extremely hard and probably always will be. We&#8217;ve written a lot elsewhere about finding UBs via static analysis; in this piece our focus is on dynamic tools.</p>
+<p>The other way to work around problems in testing is to use UB mitigation tools: these turn UB into defined behavior in production C and C++, effectively gaining some of the benefits of a safe programming language. The challenge is in engineering mitigation tools that:</p>
+<ul>
+<li>don&#8217;t break our code in any corner cases,
+<li>have very low overhead,
+<li>don&#8217;t add effective attack surfaces, for example by requiring programs to be linked against a non-hardened runtime library,
+<li>raise the bar for determined attackers (in contrast, debugging tools can afford to use heuristics that aren&#8217;t resistant to adversaries),
+<li>compose with each other (in contrast, some debugging tools such as ASan and TSan are not compatible, necessitating two runs of the test suite for any project that wants to use both).
+</ul>
+<p>Before looking at some individual kinds of UB, let&#8217;s review the our goals here. These apply to every C and C++ compiler.</p>
+<p><b>Goal 1: Every UB (yes, all ~200 of them, we&#8217;ll give the list towards the end of this post) must either be documented as having some defined behavior, be diagnosed with a fatal compiler error, or else &#8212; as a last resort &#8212; have a sanitizer that detects that UB at runtime.</b> This should not be controversial, it&#8217;s sort of a minimal requirement for developing C and C++ in the modern world where network packets and compiler optimizations are effectively hostile.</p>
+<p><b>Goal 2: Every UB must either be documented as having some defined behavior, be diagnosed with a fatal compiler error, or else have an optional mitigation mechanism that meets the requirements above.</b> This is more difficult; it necessitates, for example, production-grade memory safety. We like to think that this can be achieved in many execution environments. OS kernels and other maximally performance-critical code will need to resort to more difficult technologies such as formal methods.</p>
+<p>The rest of this piece will look at the current situation for various classes of undefined behaviors. We&#8217;ll start with the big ones.</p>
+<h2>Spatial Memory Safety Violations</h2>
+<p><b>Background:</b> Accessing out-of-bounds storage and even creating pointers to that storage are UB in C and C++. The <a href="../extra_files/IWorm-paper.pdf">1988 Morris Worm</a> gave us an early hint of what the next N years would be like. So far we know that N >= 29, and probably N will end up being about 75.</p>
+<p><b>Debugging:</b> Valgrind and ASan are both excellent debugging tools. For many use cases ASan is the better choice because it has much less overhead. Both tools retain the representation of addresses as 32- or 64-bit values, and reserve forbidden red zones around valid blocks. This is a robust and compatible approach: it interoperates seamlessly with non-instrumented binary libraries and also supports existing code that relies on pointers being convertible to integers.</p>
+<p>Valgrind, working from executable code, cannot insert red zones between stack variables because stack layout is implicitly hard-coded in the offsets of instructions that access the stack, and it would be an impossibly ambitious project to remap stack addresses on the fly. As a result, Valgrind has only limited support for detecting errors in manipulating storage on the stack. ASan works during compilation and inserts red zones around stack variables. Stack variables are small and numerous, so address space and locality considerations prevent the use of very large red zones. With default settings, the addresses of two adjacent local int variables x and y end up separated by 16 bytes. In other words, the verifications done by ASan and Valgrind are only for one memory layout, and the memory layout for which the verifications are done is different from the memory layout of the uninstrumented execution.</p>
+<p>A minor weakness of ASan and Valgrind is that they can miss undefined behaviors that get optimized away before the instrumentation has a chance to run, <a href="https://godbolt.org/g/1c6xK6">as in this example</a>.</p>
+<p><b>Mitigation:</b> We&#8217;ve long had partial mitigation mechanisms for memory unsafety, including ASLR, stack canaries, hardened allocators, and NX. More recently, <a href="https://clang.llvm.org/docs/ControlFlowIntegrity.html">production-grade CFI</a> (control flow integrity) has become available. Another interesting recent development is <a href="https://www.qualcomm.com/documents/whitepaper-pointer-authentication-armv83">pointer authentication in ARMv8.3</a>. <a href="https://people.eecs.berkeley.edu/~dawnsong/papers/Oakland13-SoK-CR.pdf">This paper</a> has a good overview of memory safety mitigations.</p>
+<p>A serious drawback of ASan as a mitigation tool is illustrated here:</p>
+<pre>
+$ cat asan-defeat.c
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;string.h&gt;
+
+char a[128];
+char b[128];
+
+int main(int argc, char *argv[]) {
+  strcpy(a + atoi(argv[1]), "owned.");
+  printf("%s\n", b);
+  return 0;
+}
+$ clang-4.0 -O asan-defeat.c
+$ ./a.out 128
+owned.
+$ clang-4.0 -O -fsanitize=address -fno-common asan-defeat.c
+$ ./a.out 160
+owned.
+$ 
+</pre>
+<p>In other words, ASan simply forces an attacker to compute a different offset in order to corrupt a target memory region. (Thanks to Yury Gribov for pointing out that we should be using the -fno-common flag to ASan.)</p>
+<p>To mitigate this kind of undefined behavior, real bounds checking must be performed, as opposed to only verifying that each memory access lands in some valid region. Memory safety is the gold standard here. Although there is much academic work on memory safety, some showing apparently reasonable overheads and good compatibility with existing software, it has not yet seen widespread adoption. <a href="https://www.microsoft.com/en-us/research/project/checked-c/">Checked C</a> is a very cool project to keep an eye on in this space.</p>
+<p><b>Summary:</b> Debugging tools for this class of error are very good. Good mitigations are available but this class of bug can only be reliably stopped by full memory/type safety.</p>
+<h2>Temporal Memory Safety Violations</h2>
+<p><b>Background:</b> A &#8220;temporal memory safety violation&#8221; is any use of a memory location after its lifetime has ended. This includes addresses of automatic variables outliving these variables; use-after-free, where a dangling pointer is accessed for reading or writing; and, double free, which can be just as harmful in practice, since free() modifies metadata that is usually adjacent to the block being freed. If the block has already been freed, these writes can fall on memory used for any other purpose and, in principle, can have as much consequence as any other invalid write.</p>
+<p><b>Debugging:</b> ASan is designed to detect use-after-free bugs, which often lead to hard-to-reproduce, erratic behavior. It does so by placing freed memory blocks in a quarantine, preventing their immediate reuse. For some programs and inputs, this can increase memory consumption and decrease locality. The user can configure the size of the quarantine in order to trade false positives for resource usage.</p>
+<p>ASan can also detect addresses of automatic variables surviving the scope of these variables. The  idea is to turn automatic variables into heap-allocated blocks, that the compiler automatically allocates when execution enters the block, and frees (while retaining them in a quarantine) when execution leaves the block. This option is turned off by default, because it makes programs even more memory-hungry.</p>
+<p>The temporal memory safety violation in the program below causes it to behave differently at the default optimization level and at -O2. ASan can detect a problem in the program below with no optimization, but only if the option detect_stack_use_after_return is set, and only if the program was not compiled with optimization.</p>
+<pre>
+$ cat temporal.c
+#include &lt;stdio.h&gt;
+
+int *G;
+
+int f(void) {
+  int l = 1;
+  int res = *G;
+  G = &l;
+  return res;
+}
+
+int main(void) {
+  int x = 2;
+  G = &x;
+  f();
+  printf("%d\n", f());
+}
+$ clang -Wall -fsanitize=address temporal.c
+$ ./a.out 
+1
+$ ASAN_OPTIONS=detect_stack_use_after_return=1 ./a.out 
+=================================================================
+==5425==ERROR: AddressSanitizer: stack-use-after-return ...
+READ of size 4 at 0x0001035b6060 thread T0
+^C
+$ clang -Wall -fsanitize=address -O2 temporal.c
+$ ./a.out 
+32767
+$ ASAN_OPTIONS=detect_stack_use_after_return=1 ./a.out 
+32767
+$ clang -v
+Apple LLVM version 8.0.0 (clang-800.0.42.1)
+...
+</pre>
+<p>In some other examples, the sanitizer&#8217;s failure to detect UB that has been &#8220;optimized out&#8221; can be argued to be harmless, since the optimized-out UB has no consequence. This is not the case here! The program is meaningless in any case, but the unoptimized program behaves deterministically and works as if the variable x had been declared static, whereas the optimized program, in which ASan does not detect any foul play, does not behave deterministically and reveals an internal state that is not supposed to be seen:</p>
+<pre>
+$ clang -Wall -O2 temporal.c
+$ ./a.out 
+1620344886
+$ ./a.out 
+1734516790
+$ ./a.out 
+1777709110
+</pre>
+<p><b>Mitigation:</b> As discussed above, ASan is not intended for hardening, but various hardened allocators are available; they use the same quarantining strategy to render use-after-free bugs unexploitable.</p>
+<p><b>Summary:</b> Use ASan (together with &#8220;ASAN_OPTIONS=detect_stack_use_after_return=1&#8221; for the test cases that are small enough to allow it). Vary optimization levels in case some compilations catch errors that others don&#8217;t.</p>
+<h2>Integer Overflow</h2>
+<p><b>Background:</b> Integers cannot underflow, but they can overflow in both directions. Signed integer overflow is UB; this includes INT_MIN / -1, INT_MIN % -1, negating INT_MIN, shift with negative exponent, left-shifting a one past the sign bit, and (sometimes) left-shifting a one into the sign bit. Division by zero and shift by >= bitwidth are UB in both the signed and unsigned flavors. <a href="http://www.cs.utah.edu/~regehr/papers/tosem15.pdf">Read more here</a>.</p>
+<p><b>Debugging:</b> LLVM&#8217;s UBSan is very good for debugging integer-related undefined behaviors. Because UBSan works near the source level, it is highly reliable. There are some quirks relating to compile-time math; for example, <a href="https://godbolt.org/g/BFHKg9">this program traps as C++11 but not as C11</a>; we believe this follows the standards but haven&#8217;t looked into it closely. GCC has its own version of UBSan but it <a href="https://godbolt.org/g/2spSWN">isn&#8217;t 100% trustworthy</a>; here it looks like constants are being folded before the instrumentation pass gets to run.</p>
+<p><b>Mitigation:</b> UBSan in trapping mode (on hitting UB, process aborts w/o printing a diagnostic) can be used for mitigation. It is usually reasonably efficient and it doesn&#8217;t add attack surface. <a href="https://android-developers.googleblog.com/2016/05/hardening-media-stack.html">Parts of Android use UBSan to mitigate integer overflows</a> (including unsigned overflows, which of course are not undefined). Although integer overflows are generic logic errors, in C and C++ they are particularly harmful because they often lead to memory safety violations. In a memory-safe language they tend to do much less damage.</p>
+<p><b>Summary:</b> Integer undefined behaviors are not very difficult to catch; UBSan is the only debugging tool you&#8217;re likely to ever need. An issue with mitigating integer UBs is the overhead. For example, they cause SPEC CPU 2006 to run about 30% slower. There is plenty of room for improvement, both in eliminating overflow checks that cannot fire and in making the remaining checks less obstructive to the loop optimizers. Someone with resources should push on this.</p>
+<h2>Strict Aliasing Violations</h2>
+<p><b>Background:</b> The &#8220;strict aliasing rules&#8221; in the C and C++ standards allow the compiler to assume that if two pointers refer to different types, they cannot point to the same storage. This enables nice optimizations but risks breaking programs that take a flexible view of types (roughly 100% of large C and C++ programs take a flexible view of types somewhere). For a thorough overview see <a href="http://trust-in-soft.com/wp-content/uploads/2017/01/vmcai.pdf">Sections 1-3 of this paper</a>.</p>
+<p><b>Debugging:</b> The state of the art in debugging tools for strict aliasing violations is weak. Compilers warn about some easy cases, but these warnings are extremely fragile. <a href="https://github.com/stephenrkell/libcrunch">libcrunch</a> warns that a pointer is being converted to a type &#8220;pointer to thing&#8221; when the pointed object is not, in fact, a &#8220;thing.&#8221; This allows polymorphism though void pointers, but catches misuses of pointer conversions that are also strict aliasing violations. With respect to the C standard and C compilers&#8217; interpretation of what it allows them to optimize in their type-based alias analyses, however, libcrunch is neither sound (it does not detect some violations that happen during the instrumented execution) nor complete (it warns about pointer conversions that smell bad but do not violate the standard).  </p>
+<p><b>Mitigation:</b> This is easy: pass the compiler a flag (-fno-strict-aliasing) that disables optimizations based on strict aliasing. The result is a C/C++ compiler that has an old-school memory model where more or less arbitrary casts between pointer types can be performed, with the resulting code behaving as expected. Of the big three compilers, it is only LLVM and GCC that are affected, MSVC doesn&#8217;t implement this class of optimization in the first place.</p>
+<p><b>Summary:</b> Correctness-sensitive code bases need significant auditing: it is always suspicious and dangerous to cast a pointer to any type other than a char *. Alternatively, just turn off strict-aliasing-based optimizations using a flag and make sure that nobody ever builds the code without using this flag.</p>
+<h2>Alignment Violations</h2>
+<p><b>Background:</b> RISC-style processors have tended to disallow memory accesses where the address is not a multiple of the size of the object being accessed. On the other hand, C and C++ programs that use unaligned pointers are undefined regardless of the target architecture. Historically we have been complacent about this, first because x86/x64 support unaligned accesses and second because compilers have so far not done much to exploit this UB.</p>
+<p>Even so, here is an <a href="https://pzemtsov.github.io/2016/11/06/bug-story-alignment-on-x86.html">excellent blog post</a> explaining how the compiler can break code that does unaligned accesses when targeting x64. The code in the post violates strict aliasing in addition to violating the alignment rules, but the crash (we verified it under GCC 7.1.0 on OS X) occurs even when the <tt>-fno-strict-aliasing</tt> flag is passed to the compiler.</p>
+<p><b>Debugging:</b> UBSan can detect misaligned memory accesses.</p>
+<p><b>Mitigation:</b> None known.</p>
+<p><b>Summary:</b> Use UBSan.</p>
+<h2>Loops that Neither Perform I/O nor Terminate</h2>
+<p><b>Background:</b> A loop in C or C++ code that neither performs I/O nor terminates is undefined and can be terminated arbitrarily by the compiler. See <a href="https://blog.regehr.org/archives/140">this post</a> and <a href="http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1528.htm">this note</a>.</p>
+<p><b>Debugging:</b> No tools exist.</p>
+<p><b>Mitigation:</b> None, besides avoiding heavily-optimizing compilers.</p>
+<p><b>Summary:</b> This UB is probably not a problem in practice (even if it is moderately displeasing to some of us).</p>
+<h2>Data Races</h2>
+<p><b>Background:</b> A data race occurs when a piece of memory is accessed by more than one thread, at least one of the accesses is a store, and the accesses are not synchronized using a mechanism such as a lock. Data races are UB in modern flavors of C and C++ (they do not have a semantics in older versions since those standards do not address multithreaded code).</p>
+<p><b>Debugging:</b> <a href="https://clang.llvm.org/docs/ThreadSanitizer.html">TSan</a> is an excellent dynamic data race detector. Other similar tools exist, such as the Helgrind plugin for Valgrind, but we have not used these lately. The use of dynamic race detectors is complicated by the fact that races can be very difficult to trigger, and worse this difficulty depends on variables such as the number of cores, the thread scheduling algorithm, whatever else is going on on the test machine, and on the moon&#8217;s phase.</p>
+<p><b>Mitigation:</b> Don&#8217;t create threads.</p>
+<p><b>Summary:</b> This particular UB is probably a good idea: it clearly communicates the idea that developers should not count on racy code doing anything in particular, but should rather use atomics (that cannot race by definition) if they don&#8217;t enjoy locking.</p>
+<h2>Unsequenced Modifications</h2>
+<p><b>Background:</b> In C, &#8220;sequence points&#8221; constrain how early or late a side-effecting expression such as x++ can take effect. C++ has a different but more-or-less-equivalent formulation of these rules. In either language, unsequenced modifications of the same value, or an unsequenced modification and use of the same value, results in UB.</p>
+<p><b>Debugging:</b> Some compilers emit warnings for obvious violations of the sequencing rules:</p>
+<pre>
+$ cat unsequenced2.c
+int a;
+
+int foo(void) {
+  return a++ - a++;
+}
+$ clang -c unsequenced2.c
+unsequenced2.c:4:11: warning: multiple unsequenced modifications to 'a' [-Wunsequenced]
+  return a++ - a++;
+          ^     ~~
+1 warning generated.
+$ gcc-7 -c unsequenced2.c -Wall
+unsequenced2.c: In function 'foo':
+unsequenced2.c:4:11: warning: operation on 'a' may be undefined [-Wsequence-point]
+   return a++ - a++;
+          ~^~
+</pre>
+<p>However, a bit of indirection defeats these warnings:</p>
+<pre>
+$ cat unsequenced.c
+#include &lt;stdio.h&gt;
+
+int main(void) {
+  int z = 0, *p = &z;
+  *p += z++;
+  printf("%d\n", z);
+  return 0;
+}
+$ gcc-4.8 -Wall unsequenced.c ; ./a.out
+0
+$ gcc-7 -Wall unsequenced.c ; ./a.out
+1
+$ clang -Wall unsequenced.c ; ./a.out
+1
+</pre>
+<p><b>Mitigation:</b> None known, though it would be almost trivial to define the order in which side effects take place. The Java Language Definition provides an example of how to do this. We have a hard time believing that this kind of constraint would meaningfully handicap any modern optimizing compiler. If the standards committees can&#8217;t find it within their hearts to make this happen, the compiler implementors should do it anyway. Ideally, all major compilers would make the same choice.</p>
+<p><b>Summary:</b> With a bit of practice, it is not too difficult to spot the potential for unsequenced accesses during code reviews. We should be wary of any overly-complex expression that has many side effects. This leaves us without a good story for legacy code, but hey it has worked until now, so perhaps there&#8217;s no problem.  But really, this should be fixed in the compilers.</p>
+<p>A non-UB relative of unsequenced is &#8220;indeterminately sequenced&#8221; where operations may happen in an order chosen by the compiler. An example is the order of the first two function calls while evaluating f(a(), b()). This order should be specified too. Left-to-right would work. Again, there will be no performance loss in non-insane circumstances.</p>
+<h2>TIS Interpreter</h2>
+<p>We now change gears and take a look at the approach taken by <a href="http://trust-in-soft.com/tis-interpreter/">TIS Interpreter</a>, a debugging tool that looks for undefined behavior in C programs as it executes them line by line. TIS Interpreter runs programs much more slowly than the LLVM-based sanitizers, and even much more slowly than Valgrind. However, TIS Interpreter can usefully be compared to these sanitizers: it works from the source code, leaves the problem of coverage to test suites and fuzzing tools, and identifies problems along the execution paths that it has been provided inputs for.</p>
+<p>A fundamental difference between TIS Interpreter and any single sanitizer is that TIS Interpreter&#8217;s goal is, along the execution paths it explores, to be exhaustive: to find all the problems that ASan, MSan, and UBSan are designed to find some of (give or take a couple of minor exceptions that we would be delighted to discuss at great length if provoked). For example, TIS Interpreter identifies unsequenced changes to overlapping memory zones within an expression, such as (*p)++ + (*q)++ when the pointers p and q alias. The problem of the unspecified order of function calls in a same expression, that TIS Interpreter orders without warning when a different order could produce a different result, is a known limitation that will eventually be fixed.</p>
+<p>TIS Interpreter&#8217;s approach to detecting memory safety errors differs sharply from ASan&#8217;s and Valgrind&#8217;s in that it doesn&#8217;t find errors for a specific heap layout, but rather treats as an error any construct that could lead the execution to behave differently depending on memory layout choices. In other words, TIS Interpreter has a symbolic view of addresses, as opposed to the concrete view taken by Valgrind and ASan. This design choice eliminates the &#8220;only the instrumented version of the program is safe, and the instrumented version behaves differently from the deployed version&#8221; problem. The occasional C program is written to behave differently depending on the memory layout (for instance if addresses are fed to hash functions or used to provide a total ordering between allocated values). TIS Analyzer warns that these programs are doing this (which is always good to know); sometimes, tweaks make it possible to analyze them in TIS Interpreter anyway, but the resulting guarantees will be weaker.</p>
+<p>It is sometimes useful, for debugging purposes, to see the first UB that occurs in an execution. Consider a loop in which MSan warns that uninitialized memory is being used, and in which ASan warns about an out-of-bounds read. Is the out-of-bounds read caused by the incorporation of uninitialized memory in the computation of the index, or is the use of uninitialized memory caused by the index being computed wrongly? One cannot use both ASan and MSan at the same time, so this is a mystery that developers need to solve for themselves. The value of looking for all undefined behaviors at the same time is in this case the confidence that the first undefined behavior seen is not a symptom of a previous undefined behavior. Another advantage is <a href="https://trust-in-soft.com/an-old-quirky-libksba-bug/">finding undefined behavior that one was not looking for</a>.</p>
+<p>Detection of strict aliasing violations in TIS Interpreter is being worked on, following as much as possible the C standard and the interpretation of C compiler designers (which can be observed in each compiler&#8217;s translation of well-chosen examples).</p>
+<h2>But What About the Rest of the Undefined Behaviors?</h2>
+<p>Let&#8217;s take a quick look at the contents of <a href="http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1548.pdf#page=571">Appendix J.2: a non-normative, non-exhaustive list of undefined behaviors in C</a>. Keep in mind that no equivalent list has ever been created for C++, as far as we know.</p>
+<p>First, we&#8217;ll list the UBs that we&#8217;ve discussed explicitly in this post:</p>
+<ul>
+<li>The execution of a program contains a data race (5.1.2.4).
+<li>An object is referred to outside of its lifetime (6.2.4).
+<li>The value of a pointer to an object whose lifetime has ended is used (6.2.4).
+<li>The value of an object with automatic storage duration is used while it is indeterminate (6.2.4, 6.7.9, 6.8).
+<li>Conversion to or from an integer type produces a value outside the range that can be represented (6.3.1.4).
+<li>An lvalue does not designate an object when evaluated (6.3.2.1).
+<li>Conversion between two pointer types produces a result that is incorrectly aligned (6.3.2.3).
+<li>A side effect on a scalar object is unsequenced relative to either a different side effect on the same scalar object or a value computation using the value of the same scalar object (6.5).
+<li>An exceptional condition occurs during the evaluation of an expression (6.5).
+<li>An object has its stored value accessed other than by an lvalue of an allowable type (6.5).
+<li>The operand of the unary * operator has an invalid value (6.5.3.2).
+<li>The value of the second operand of the / or % operator is zero (6.5.5).
+<li>Addition or subtraction of a pointer into, or just beyond, an array object and an integer type produces a result that does not point into, or just beyond, the same array object (6.5.6).
+<li>Addition or subtraction of a pointer into, or just beyond, an array object and an integer type produces a result that points just beyond the array object and is used as the operand of a unary * operator that is evaluated (6.5.6).
+<li>Pointers that do not point into, or just beyond, the same array object are subtracted (6.5.6).
+<li>An array subscript is out of range, even if an object is apparently accessible with the given subscript (as in the lvalue expression a[1][7] given the declaration int a[4][5]) (6.5.6).
+<li>The result of subtracting two pointers is not representable in an object of type ptrdiff_t (6.5.6).
+<li>An expression is shifted by a negative number or by an amount greater than or equal to the width of the promoted expression (6.5.7).
+<li>An expression having signed promoted type is left-shifted and either the value of the expression is negative or the result of shifting would be not be representable in the promoted type (6.5.7).
+<li>Pointers that do not point to the same aggregate or union (nor just beyond the same array object) are compared using relational operators (6.5.8).
+<li>An object is assigned to an inexactly overlapping object or to an exactly overlapping object with incompatible type (6.5.16.1).
+</ul>
+<p>And second, those that we have not addressed:</p>
+<ul>
+<li>A ‘‘shall&#8221; or ‘‘shall not&#8221; requirement that appears outside of a constraint is violated (clause 4).
+<li>A nonempty source file does not end in a new-line character which is not immediately preceded by a backslash character or ends in a partial preprocessing token or comment (5.1.1.2).
+<li>Token concatenation produces a character sequence matching the syntax of a universal character name (5.1.1.2).
+<li>A program in a hosted environment does not define a function named main using one of the specified forms (5.1.2.2.1).
+<li>A character not in the basic source character set is encountered in a source file, except in an identifier, a character constant, a string literal, a header name, a comment, or a preprocessing token that is never converted to a token (5.2.1).
+<li>An identifier, comment, string literal, character constant, or header name contains an invalid multibyte character or does not begin and end in the initial shift state (5.2.1.2).
+<li>The same identifier has both internal and external linkage in the same translation unit (6.2.2).
+<li>A trap representation is read by an lvalue expression that does not have character type (6.2.6.1).
+<li>A trap representation is produced by a side effect that modifies any part of the object using an lvalue expression that does not have character type (6.2.6.1).
+<li>The operands to certain operators are such that they could produce a negative zero result, but the implementation does not support negative zeros (6.2.6.2).
+<li>Two declarations of the same object or function specify types that are not compatible (6.2.7).
+<li>A program requires the formation of a composite type from a variable length array type whose size is specified by an expression that is not evaluated (6.2.7).
+<li>Demotion of one real floating type to another produces a value outside the range that can be represented (6.3.1.5).
+<li>A non-array lvalue with an incomplete type is used in a context that requires the value of the designated object (6.3.2.1).
+<li>An lvalue designating an object of automatic storage duration that could have been declared with the register storage class is used in a context that requires the value of the designated object, but the object is uninitialized. (6.3.2.1).
+<li>An lvalue having array type is converted to a pointer to the initial element of the array, and the array object has register storage class (6.3.2.1).
+<li>An attempt is made to use the value of a void expression, or an implicit or explicit conversion (except to void) is applied to a void expression (6.3.2.2).
+<li>Conversion of a pointer to an integer type produces a value outside the range that can be represented (6.3.2.3).
+<li>A pointer is used to call a function whose type is not compatible with the referenced type (6.3.2.3).
+<li>An unmatched &#8216; or &#8221; character is encountered on a logical source line during tokenization (6.4).
+<li>A reserved keyword token is used in translation phase 7 or 8 for some purpose other than as a keyword (6.4.1).
+<li>A universal character name in an identifier does not designate a character whose encoding falls into one of the specified ranges (6.4.2.1).
+<li>The initial character of an identifier is a universal character name designating a digit (6.4.2.1).
+<li>Two identifiers differ only in nonsignificant characters (6.4.2.1).
+<li>The identifier __func__ is explicitly declared (6.4.2.2).
+<li>The program attempts to modify a string literal (6.4.5).
+<li>The characters &#8216;, \, &#8220;, //, or /* occur in the sequence between the < and > delimiters, or the characters &#8216;, \, //, or /* occur in the sequence between the &#8221; delimiters, in a header name preprocessing token (6.4.7).
+<li>For a call to a function without a function prototype in scope, the number of ∗ arguments does not equal the number of parameters (6.5.2.2).
+<li>For call to a function without a function prototype in scope where the function is defined with a function prototype, either the prototype ends with an ellipsis or the types of the arguments after promotion are not compatible with the types of the parameters (6.5.2.2).
+<li>For a call to a function without a function prototype in scope where the function is not defined with a function prototype, the types of the arguments after promotion are not compatible with those of the parameters after promotion (with certain exceptions) (6.5.2.2).
+<li>A function is defined with a type that is not compatible with the type (of the expression) pointed to by the expression that denotes the called function (6.5.2.2).
+<li>A member of an atomic structure or union is accessed (6.5.2.3).
+<li>A pointer is converted to other than an integer or pointer type (6.5.4).
+<li>An expression that is required to be an integer constant expression does not have an integer type; has operands that are not integer constants, enumeration constants, character constants, sizeof expressions whose results are integer constants, or immediately-cast floating constants; or contains casts (outside operands to sizeof operators) other than conversions of arithmetic types to integer types (6.6).
+<li>A constant expression in an initializer is not, or does not evaluate to, one of the following: an arithmetic constant expression, a null pointer constant, an address constant, or an address constant for a complete object type plus or minus an integer constant expression (6.6).
+<li>An arithmetic constant expression does not have arithmetic type; has operands that are not integer constants, floating constants, enumeration constants, character constants, or sizeof expressions; or contains casts (outside operands to size operators) other than conversions of arithmetic types to arithmetic types (6.6).
+<li>The value of an object is accessed by an array-subscript [], member-access . or −>, address &#038;, or indirection * operator or a pointer cast in creating an address constant (6.6).
+<li>An identifier for an object is declared with no linkage and the type of the object is incomplete after its declarator, or after its init-declarator if it has an initializer (6.7).
+<li>A function is declared at block scope with an explicit storage-class specifier other than extern (6.7.1).
+<li>A structure or union is defined as containing no named members, no anonymous structures, and no anonymous unions (6.7.2.1).
+<li>An attempt is made to access, or generate a pointer to just past, a flexible array member of a structure when the referenced object provides no elements for that array (6.7.2.1).
+<li>When the complete type is needed, an incomplete structure or union type is not completed in the same scope by another declaration of the tag that defines the content (6.7.2.3).
+<li>An attempt is made to modify an object defined with a const-qualified type through use of an lvalue with non-const-qualified type (6.7.3).
+<li>An attempt is made to refer to an object defined with a volatile-qualified type through use of an lvalue with non-volatile-qualified type (6.7.3).
+<li>The specification of a function type includes any type qualifiers (6.7.3).
+<li>Two qualified types that are required to be compatible do not have the identically qualified version of a compatible type (6.7.3).
+<li>An object which has been modified is accessed through a restrict-qualified pointer to a const-qualified type, or through a restrict-qualified pointer and another pointer that are not both based on the same object (6.7.3.1).
+<li>A restrict-qualified pointer is assigned a value based on another restricted pointer whose associated block neither began execution before the block associated with this pointer, nor ended before the assignment (6.7.3.1).
+<li>A function with external linkage is declared with an inline function specifier, but is not also defined in the same translation unit (6.7.4).
+<li>A function declared with a _Noreturn function specifier returns to its caller (6.7.4).
+<li>The definition of an object has an alignment specifier and another declaration of that object has a different alignment specifier (6.7.5).
+<li>Declarations of an object in different translation units have different alignment specifiers (6.7.5).
+<li>Two pointer types that are required to be compatible are not identically qualified, or are not pointers to compatible types (6.7.6.1).
+<li>The size expression in an array declaration is not a constant expression and evaluates at program execution time to a nonpositive value (6.7.6.2).
+<li>In a context requiring two array types to be compatible, they do not have compatible element types, or their size specifiers evaluate to unequal values (6.7.6.2).
+<li>A declaration of an array parameter includes the keyword static within the [ and ] and the corresponding argument does not provide access to the first element of an array with at least the specified number of elements (6.7.6.3).
+<li>A storage-class specifier or type qualifier modifies the keyword void as a function parameter type list (6.7.6.3).
+<li>In a context requiring two function types to be compatible, they do not have compatible return types, or their parameters disagree in use of the ellipsis terminator or the number and type of parameters (after default argument promotion, when there is no parameter type list or when one type is specified by a function definition with an identifier list) (6.7.6.3).
+<li>The value of an unnamed member of a structure or union is used (6.7.9).
+<li>The initializer for a scalar is neither a single expression nor a single expression enclosed in braces (6.7.9).
+<li>The initializer for a structure or union object that has automatic storage duration is neither an initializer list nor a single expression that has compatible structure or union type (6.7.9).
+<li>The initializer for an aggregate or union, other than an array initialized by a string literal, is not a brace-enclosed list of initializers for its elements or members (6.7.9).
+<li>An identifier with external linkage is used, but in the program there does not exist exactly one external definition for the identifier, or the identifier is not used and there exist multiple external definitions for the identifier (6.9).
+<li>A function definition includes an identifier list, but the types of the parameters are not declared in a following declaration list (6.9.1).
+<li>An adjusted parameter type in a function definition is not a complete object type (6.9.1).
+<li>A function that accepts a variable number of arguments is defined without a parameter type list that ends with the ellipsis notation (6.9.1).
+<li>The } that terminates a function is reached, and the value of the function call is used by the caller (6.9.1).
+<li>An identifier for an object with internal linkage and an incomplete type is declared with a tentative definition (6.9.2).
+<li>The token defined is generated during the expansion of a #if or #elif preprocessing directive, or the use of the defined unary operator does not match one of the two specified forms prior to macro replacement (6.10.1).
+<li>The #include preprocessing directive that results after expansion does not match one of the two header name forms (6.10.2).
+<li>The character sequence in an #include preprocessing directive does not start with a letter (6.10.2).
+<li>There are sequences of preprocessing tokens within the list of macro arguments that would otherwise act as preprocessing directives (6.10.3).
+<li>The result of the preprocessing operator # is not a valid character string literal (6.10.3.2).
+<li>The result of the preprocessing operator ## is not a valid preprocessing token (6.10.3.3).
+<li>The #line preprocessing directive that results after expansion does not match one of the two well-defined forms, or its digit sequence specifies zero or a number greater than 2147483647 (6.10.4).
+<li>A non-STDC #pragma preprocessing directive that is documented as causing translation failure or some other form of undefined behavior is encountered (6.10.6).
+<li>A #pragma STDC preprocessing directive does not match one of the well-defined forms (6.10.6).
+<li>The name of a predefined macro, or the identifier defined, is the subject of a #define or #undef preprocessing directive (6.10.8).
+<li>An attempt is made to copy an object to an overlapping object by use of a library function, other than as explicitly allowed (e.g., memmove) (clause 7).
+<li>A file with the same name as one of the standard headers, not provided as part of the implementation, is placed in any of the standard places that are searched for included source files (7.1.2).
+<li>A header is included within an external declaration or definition (7.1.2).
+<li>A function, object, type, or macro that is specified as being declared or defined by some standard header is used before any header that declares or defines it is included (7.1.2).
+<li>A standard header is included while a macro is defined with the same name as a keyword (7.1.2).
+<li>The program attempts to declare a library function itself, rather than via a standard header, but the declaration does not have external linkage (7.1.2).
+<li>The program declares or defines a reserved identifier, other than as allowed by 7.1.4 (7.1.3).
+<li>The program removes the definition of a macro whose name begins with an underscore and either an uppercase letter or another underscore (7.1.3).
+<li>An argument to a library function has an invalid value or a type not expected by a function with variable number of arguments (7.1.4).
+<li>The pointer passed to a library function array parameter does not have a value such that all address computations and object accesses are valid (7.1.4).
+<li>The macro definition of assert is suppressed in order to access an actual function (7.2).
+<li>The argument to the assert macro does not have a scalar type (7.2).
+<li>The CX_LIMITED_RANGE, FENV_ACCESS, or FP_CONTRACT pragma is used in any context other than outside all external declarations or preceding all explicit declarations and statements inside a compound statement (7.3.4, 7.6.1, 7.12.2).
+<li>The value of an argument to a character handling function is neither equal to the value of EOF nor representable as an unsigned char (7.4).
+<li>A macro definition of errno is suppressed in order to access an actual object, or the program defines an identifier with the name errno (7.5).
+<li>Part of the program tests floating-point status flags, sets floating-point control modes, or runs under non-default mode settings, but was translated with the state for the FENV_ACCESS pragma ‘‘off&#8221; (7.6.1).
+<li>The exception-mask argument for one of the functions that provide access to the floating-point status flags has a nonzero value not obtained by bitwise OR of the floating-point exception macros (7.6.2).
+<li>The fesetexceptflag function is used to set floating-point status flags that were not specified in the call to the fegetexceptflag function that provided the value of the corresponding fexcept_t object (7.6.2.4).
+<li>The argument to fesetenv or feupdateenv is neither an object set by a call to fegetenv or feholdexcept, nor is it an environment macro (7.6.4.3, 7.6.4.4).
+<li>The value of the result of an integer arithmetic or conversion function cannot be represented (7.8.2.1, 7.8.2.2, 7.8.2.3, 7.8.2.4, 7.22.6.1, 7.22.6.2, 7.22.1).
+<li>The program modifies the string pointed to by the value returned by the setlocale function (7.11.1.1).
+<li>The program modifies the structure pointed to by the value returned by the localeconv function (7.11.2.1).
+<li>A macro definition of math_errhandling is suppressed or the program defines an identifier with the name math_errhandling (7.12).
+<li>An argument to a floating-point classification or comparison macro is not of real floating type (7.12.3, 7.12.14).
+<li>A macro definition of setjmp is suppressed in order to access an actual function, or the program defines an external identifier with the name setjmp (7.13).
+<li>An invocation of the setjmp macro occurs other than in an allowed context (7.13.2.1).
+<li>The longjmp function is invoked to restore a nonexistent environment (7.13.2.1).
+<li>After a longjmp, there is an attempt to access the value of an object of automatic storage duration that does not have volatile-qualified type, local to the function containing the invocation of the corresponding setjmp macro, that was changed between the setjmp invocation and longjmp call (7.13.2.1).
+<li>The program specifies an invalid pointer to a signal handler function (7.14.1.1).
+<li>A signal handler returns when the signal corresponded to a computational exception (7.14.1.1).
+<li>A signal occurs as the result of calling the abort or raise function, and the signal handler calls the raise function (7.14.1.1).
+<li>A signal occurs other than as the result of calling the abort or raise function, and the signal handler refers to an object with static or thread storage duration that is not a lock-free atomic object other than by assigning a value to an object declared as volatile sig_atomic_t, or calls any function in the standard library other than the abort function, the _Exit function, the quick_exit function, or the signal function (for the same signal number) (7.14.1.1).
+<li>The value of errno is referred to after a signal occurred other than as the result of calling the abort or raise function and the corresponding signal handler obtained a SIG_ERR return from a call to the signal function (7.14.1.1).
+<li>A signal is generated by an asynchronous signal handler (7.14.1.1).
+<li>A function with a variable number of arguments attempts to access its varying arguments other than through a properly declared and initialized va_list object, or before the va_start macro is invoked (7.16, 7.16.1.1, 7.16.1.4).
+<li>The macro va_arg is invoked using the parameter ap that was passed to a function that invoked the macro va_arg with the same parameter (7.16).
+<li>A macro definition of va_start, va_arg, va_copy, or va_end is suppressed in order to access an actual function, or the program defines an external identifier with the name va_copy or va_end (7.16.1).
+<li>The va_start or va_copy macro is invoked without a corresponding invocation of the va_end macro in the same function, or vice versa (7.16.1, 7.16.1.2, 7.16.1.3, 7.16.1.4).
+<li>The type parameter to the va_arg macro is not such that a pointer to an object of that type can be obtained simply by postfixing a * (7.16.1.1).
+<li>The va_arg macro is invoked when there is no actual next argument, or with a specified type that is not compatible with the promoted type of the actual next argument, with certain exceptions (7.16.1.1).
+<li>The va_copy or va_start macro is called to initialize a va_list that was previously initialized by either macro without an intervening invocation of the va_end macro for the same va_list (7.16.1.2, 7.16.1.4).
+<li>The parameter parmN of a va_start macro is declared with the register storage class, with a function or array type, or with a type that is not compatible with the type that results after application of the default argument promotions (7.16.1.4).
+<li>The member designator parameter of an offsetof macro is an invalid right operand of the . operator for the type parameter, or designates a bit-field (7.19).
+<li>The argument in an instance of one of the integer-constant macros is not a decimal, octal, or hexadecimal constant, or it has a value that exceeds the limits for the corresponding type (7.20.4).
+<li>A byte input/output function is applied to a wide-oriented stream, or a wide character input/output function is applied to a byte-oriented stream (7.21.2).
+<li>Use is made of any portion of a file beyond the most recent wide character written to a wide-oriented stream (7.21.2).
+<li>The value of a pointer to a FILE object is used after the associated file is closed (7.21.3).
+<li>The stream for the fflush function points to an input stream or to an update stream in which the most recent operation was input (7.21.5.2).
+<li>The string pointed to by the mode argument in a call to the fopen function does not exactly match one of the specified character sequences (7.21.5.3).
+<li>An output operation on an update stream is followed by an input operation without an intervening call to the fflush function or a file positioning function, or an input operation on an update stream is followed by an output operation with an intervening call to a file positioning function (7.21.5.3).
+<li>An attempt is made to use the contents of the array that was supplied in a call to the setvbuf function (7.21.5.6).
+<li>There are insufficient arguments for the format in a call to one of the formatted input/output functions, or an argument does not have an appropriate type (7.21.6.1, 7.21.6.2, 7.28.2.1, 7.28.2.2).
+<li>The format in a call to one of the formatted input/output functions or to the strftime or wcsftime function is not a valid multibyte character sequence that begins and ends in its initial shift state (7.21.6.1, 7.21.6.2, 7.26.3.5, 7.28.2.1, 7.28.2.2, 7.28.5.1).
+<li>In a call to one of the formatted output functions, a precision appears with a conversion specifier other than those described (7.21.6.1, 7.28.2.1).
+<li>A conversion specification for a formatted output function uses an asterisk to denote an argument-supplied field width or precision, but the corresponding argument is not provided (7.21.6.1, 7.28.2.1).
+<li>A conversion specification for a formatted output function uses a # or 0 flag with a conversion specifier other than those described (7.21.6.1, 7.28.2.1).
+<li>A conversion specification for one of the formatted input/output functions uses a length modifier with a conversion specifier other than those described (7.21.6.1, 7.21.6.2, 7.28.2.1, 7.28.2.2).
+<li>An s conversion specifier is encountered by one of the formatted output functions, and the argument is missing the null terminator (unless a precision is specified that does not require null termination) (7.21.6.1, 7.28.2.1).
+<li>An n conversion specification for one of the formatted input/output functions includes any flags, an assignment-suppressing character, a field width, or a precision (7.21.6.1, 7.21.6.2, 7.28.2.1, 7.28.2.2).
+<li>A % conversion specifier is encountered by one of the formatted input/output functions, but the complete conversion specification is not exactly %% (7.21.6.1, 7.21.6.2, 7.28.2.1, 7.28.2.2).
+<li>An inv alid conversion specification is found in the format for one of the formatted input/output functions, or the strftime or wcsftime function (7.21.6.1, 7.21.6.2, 7.26.3.5, 7.28.2.1, 7.28.2.2, 7.28.5.1).
+<li>The number of characters transmitted by a formatted output function is greater than INT_MAX (7.21.6.1, 7.21.6.3, 7.21.6.8, 7.21.6.10).
+<li>The result of a conversion by one of the formatted input functions cannot be represented in the corresponding object, or the receiving object does not have an appropriate type (7.21.6.2, 7.28.2.2).
+<li>A c, s, or [ conversion specifier is encountered by one of the formatted input functions, and the array pointed to by the corresponding argument is not large enough to accept the input sequence (and a null terminator if the conversion specifier is s or [) (7.21.6.2, 7.28.2.2).
+<li>A c, s, or [ conversion specifier with an l qualifier is encountered by one of the formatted input functions, but the input is not a valid multibyte character sequence that begins in the initial shift state (7.21.6.2, 7.28.2.2).
+<li>The input item for a %p conversion by one of the formatted input functions is not a value converted earlier during the same program execution (7.21.6.2, 7.28.2.2).
+<li>The vfprintf, vfscanf, vprintf, vscanf, vsnprintf, vsprintf, vsscanf, vfwprintf, vfwscanf, vswprintf, vswscanf, vwprintf, or vwscanf function is called with an improperly initialized va_list argument, or the argument is used (other than in an invocation of va_end) after the function returns (7.21.6.8, 7.21.6.9, 7.21.6.10, 7.21.6.11, 7.21.6.12, 7.21.6.13, 7.21.6.14, 7.28.2.5, 7.28.2.6, 7.28.2.7, 7.28.2.8, 7.28.2.9, 7.28.2.10).
+<li>The contents of the array supplied in a call to the fgets or fgetws function are used after a read error occurred (7.21.7.2, 7.28.3.2).
+<li>The file position indicator for a binary stream is used after a call to the ungetc function where its value was zero before the call (7.21.7.10).
+<li>The file position indicator for a stream is used after an error occurred during a call to the fread or fwrite function (7.21.8.1, 7.21.8.2).
+<li>A partial element read by a call to the fread function is used (7.21.8.1).
+<li>The fseek function is called for a text stream with a nonzero offset and either the offset was not returned by a previous successful call to the ftell function on a stream associated with the same file or whence is not SEEK_SET (7.21.9.2).
+<li>The fsetpos function is called to set a position that was not returned by a previous successful call to the fgetpos function on a stream associated with the same file (7.21.9.3).
+<li>A non-null pointer returned by a call to the calloc, malloc, or realloc function with a zero requested size is used to access an object (7.22.3).
+<li>The value of a pointer that refers to space deallocated by a call to the free or realloc function is used (7.22.3).
+<li>The alignment requested of the aligned_alloc function is not valid or not supported by the implementation, or the size requested is not an integral multiple of the alignment (7.22.3.1).
+<li>The pointer argument to the free or realloc function does not match a pointer earlier returned by a memory management function, or the space has been deallocated by a call to free or realloc (7.22.3.3, 7.22.3.5).
+<li>The value of the object allocated by the malloc function is used (7.22.3.4).
+<li>The value of any bytes in a new object allocated by the realloc function beyond the size of the old object are used (7.22.3.5).
+<li>The program calls the exit or quick_exit function more than once, or calls both functions (7.22.4.4, 7.22.4.7).
+<li>During the call to a function registered with the atexit or at_quick_exit function, a call is made to the longjmp function that would terminate the call to the registered function (7.22.4.4, 7.22.4.7).
+<li>The string set up by the getenv or strerror function is modified by the program (7.22.4.6, 7.23.6.2).
+<li>A command is executed through the system function in a way that is documented as causing termination or some other form of undefined behavior (7.22.4.8).
+<li>A searching or sorting utility function is called with an invalid pointer argument, even if the number of elements is zero (7.22.5).
+<li>The comparison function called by a searching or sorting utility function alters the contents of the array being searched or sorted, or returns ordering values inconsistently (7.22.5).
+<li>The array being searched by the bsearch function does not have its elements in proper order (7.22.5.1).
+<li>The current conversion state is used by a multibyte/wide character conversion function after changing the LC_CTYPE category (7.22.7).
+<li>A string or wide string utility function is instructed to access an array beyond the end of an object (7.23.1, 7.28.4).
+<li>A string or wide string utility function is called with an invalid pointer argument, even if the length is zero (7.23.1, 7.28.4).
+<li>The contents of the destination array are used after a call to the strxfrm, strftime, wcsxfrm, or wcsftime function in which the specified length was too small to hold the entire null-terminated result (7.23.4.5, 7.26.3.5, 7.28.4.4.4, 7.28.5.1).
+<li>The first argument in the very first call to the strtok or wcstok is a null pointer (7.23.5.8, 7.28.4.5.7).
+<li>The type of an argument to a type-generic macro is not compatible with the type of the corresponding parameter of the selected function (7.24).
+<li>A complex argument is supplied for a generic parameter of a type-generic macro that has no corresponding complex function (7.24).
+<li>At least one field of the broken-down time passed to asctime contains a value outside its normal range, or the calculated year exceeds four digits or is less than the year 1000 (7.26.3.1).
+<li>The argument corresponding to an s specifier without an l qualifier in a call to the fwprintf function does not point to a valid multibyte character sequence that begins in the initial shift state (7.28.2.11).
+<li>In a call to the wcstok function, the object pointed to by ptr does not have the value stored by the previous call for the same wide string (7.28.4.5.7).
+<li>An mbstate_t object is used inappropriately (7.28.6).
+<li>The value of an argument of type wint_t to a wide character classification or case mapping function is neither equal to the value of WEOF nor representable as a wchar_t (7.29.1).
+<li>The iswctype function is called using a different LC_CTYPE category from the one in effect for the call to the wctype function that returned the description (7.29.2.2.1).
+<li>The towctrans function is called using a different LC_CTYPE category from the one in effect for the call to the wctrans function that returned the description (7.29.3.2.1).
+</ul>
+<p>Most of these items are already detected, could be detected easily, or would be detected as a side effect of solving UBs that we discussed in detail. In other words, a few basic technologies, such as shadow memory and run-time type information, provide the infrastructure needed to detect a large fraction of the hard-to-detect UBs. Alas it is difficult to make shadow memory and run-time type information fast.</p>
+<h2>Summary</h2>
+<p>What is the modern C or C++ developer to do?</p>
+<ul>
+<li>Be comfortable with the &#8220;easy&#8221; UB tools &#8212; the ones that can usually be enabled just by adjusting a makefile, such as compiler warnings and ASan and UBSan. Use these early and often, and (crucially) act upon their findings.
+<li>Be familiar with the &#8220;hard&#8221; UB tools &#8212; those such as TIS Interpreter that typically require more effort to run &#8212; and use them when appropriate.
+<li>Invest in broad-based testing (track code coverage, use fuzzers, etc.) in order to get maximum benefit out of dynamic UB detection tools.
+<li>Perform UB-aware code reviews: build a culture where we collectively diagnose potentially dangerous patches and get them fixed before they land.
+<li>Be knowledgeable about what&#8217;s actually in the C and C++ standards since these are what compiler writers are going by. Avoid repeating tired maxims like &#8220;C is a portable assembly language&#8221; and &#8220;trust the programmer.&#8221;
+</ul>
+<p>Unfortunately, C and C++ are mostly taught the old way, as if programming in them isn&#8217;t like walking in a minefield. Nor have the books about C and C++ caught up with the current reality. These things must change.</p>
+<p>Good luck, everyone.</p>
+<p><i>We&#8217;d like to thank various people, especially @CopperheadOS on Twitter, for discussing these issues with us.</i></p>
+]]></content:encoded>
+			<wfw:commentRss>https://blog.regehr.org/archives/1520/feed</wfw:commentRss>
+		<slash:comments>40</slash:comments>
+		</item>
+		<item>
+		<title>The Zion Subway</title>
+		<link>https://blog.regehr.org/archives/1526</link>
+		<comments>https://blog.regehr.org/archives/1526#comments</comments>
+		<pubDate>Mon, 12 Jun 2017 05:03:21 +0000</pubDate>
+		<dc:creator><![CDATA[regehr]]></dc:creator>
+				<category><![CDATA[Outdoors]]></category>
+		<category><![CDATA[Utah]]></category>
+
+		<guid isPermaLink="false">http://blog.regehr.org/?p=1526</guid>
+		<description><![CDATA[When Josh, my older son&#8217;s best friend&#8217;s dad, suggested that we take our combined kids through the Left Fork of North Creek in Zion National Park (more commonly called The Subway), I wasn&#8217;t immediately excited. For one thing, it&#8217;s a somewhat technical canyon, and for another the permit that we got was for mid-May, towards &#8230; <p class="link-more"><a href="https://blog.regehr.org/archives/1526" class="more-link">Continue reading<span class="screen-reader-text"> "The Zion Subway"</span></a></p>]]></description>
+				<content:encoded><![CDATA[<p>When Josh, my older son&#8217;s best friend&#8217;s dad, suggested that we take our combined kids through the Left Fork of North Creek in Zion National Park (more commonly called The Subway), I wasn&#8217;t immediately excited. For one thing, it&#8217;s a somewhat technical canyon, and for another the permit that we got was for mid-May, towards the end of the spring runoff, when the canyon would contain plenty of deep, cold water.</p>
+<p>The first problem to be solved was figuring out a process where we could get our kids safely down multiple rappels in the canyon. We couldn&#8217;t just hire an experienced guide since Zion NP doesn&#8217;t allow that. We settled on spending a couple of sessions practicing rappelling with an instructor before leaving home, and then doing some more practicing in Zion before entering the canyon. I was ready to nix the trip if any of the kids seemed unsafe but they all did really well. We ended up with a process where Josh would rappel first, then the kids would rappel down with me backing them up with a belay, and then finally I&#8217;d rappel with Josh giving me a fireman&#8217;s belay. The rappels in this canyon are fairly short so we knew that a number of common failure modes (unable to communicate, rapping off the end of the rope, etc.) weren&#8217;t going to be an issue. Also the canyon is bolted so we wouldn&#8217;t have to worry about building anchors. We spent a lot of time making sure the kids wouldn&#8217;t get fingers/gloves/clothes pinched in their belay devices.</p>
+<p>The second problem was dealing with 40&deg;F / 4&deg;C water. We ended up renting drysuits for the three younger children and putting the rest of us in wetsuits; this worked well. I saw a bit of chattering teeth in the longer water sections but luckily we were in the deepest part of the canyon in the middle of the day and there were always patches of sun to warm up in.</p>
+<p>Here the kids and I are hanging out at the upper trailhead while Josh makes the car shuttle happen:</p>
+<p><a href="../extra_files/subway_2017/DSC03536.jpg"><img src="../extra_files/subway_2017/DSC03536.jpg"></a></p>
+<p>The upper part of the hike is a short section of alpine forest and then some gorgeous slickrock:</p>
+<p><a href="../extra_files/subway_2017/DSC03543.jpg"><img src="../extra_files/subway_2017/DSC03543.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03545.jpg"><img src="../extra_files/subway_2017/DSC03545.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03547.jpg"><img src="../extra_files/subway_2017/DSC03547.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03556.jpg"><img src="../extra_files/subway_2017/DSC03556.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03558.jpg"><img src="../extra_files/subway_2017/DSC03558.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03564.jpg"><img src="../extra_files/subway_2017/DSC03564.jpg"></a></p>
+<p>Finally we&#8217;re looking directly into the narrows, but still a couple hundred vertical feet above the canyon bottom:</p>
+<p><a href="../extra_files/subway_2017/DSC03565.jpg"><img src="../extra_files/subway_2017/DSC03565.jpg"></a></p>
+<p>A steep gully bypasses the cliffs:</p>
+<p><a href="../extra_files/subway_2017/DSC03570.jpg"><img src="../extra_files/subway_2017/DSC03570.jpg"></a></p>
+<p>And finally we&#8217;re in the canyon, getting suited up at the first sign of deep water:</p>
+<p><a href="../extra_files/subway_2017/DSC03581.jpg"><img src="../extra_files/subway_2017/DSC03581.jpg"></a></p>
+<p>Alas I have no rappel pictures since I was managing the process from above. The second rappel was challenging: it had an awkward start, running water, and finished in waist-deep water. Here Josh is coiling a rope at the bottom of the first, easy rappel, which was down the face of this boulder:</p>
+<p><a href="../extra_files/subway_2017/DSC03582.jpg"><img src="../extra_files/subway_2017/DSC03582.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03583.jpg"><img src="../extra_files/subway_2017/DSC03583.jpg"></a></p>
+<p>Since each person&#8217;s backpack had a drybag inside of it (with as much air trapped as possible), the backpacks could be used as flotation devices. Also, all of the kids are decent swimmers and the drysuits kept them pretty warm. They found the wet parts of this canyon to be tremendously fun:</p>
+<p><a href="../extra_files/subway_2017/DSC03589.jpg"><img src="../extra_files/subway_2017/DSC03589.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03591.jpg"><img src="../extra_files/subway_2017/DSC03591.jpg"></a></p>
+<p>Plenty of short, slippery downclimbs:</p>
+<p><a href="../extra_files/subway_2017/DSC03595.jpg"><img src="../extra_files/subway_2017/DSC03595.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03596.jpg"><img src="../extra_files/subway_2017/DSC03596.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03597.jpg"><img src="../extra_files/subway_2017/DSC03597.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03599.jpg"><img src="../extra_files/subway_2017/DSC03599.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03601.jpg"><img src="../extra_files/subway_2017/DSC03601.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03603.jpg"><img src="../extra_files/subway_2017/DSC03603.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03604.jpg"><img src="../extra_files/subway_2017/DSC03604.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03606.jpg"><img src="../extra_files/subway_2017/DSC03606.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03610.jpg"><img src="../extra_files/subway_2017/DSC03610.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03619.jpg"><img src="../extra_files/subway_2017/DSC03619.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03626.jpg"><img src="../extra_files/subway_2017/DSC03626.jpg"></a></p>
+<p>A little unnerving to watch the kids swimming off into the dark:</p>
+<p><a href="../extra_files/subway_2017/DSC03630.jpg"><img src="../extra_files/subway_2017/DSC03630.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03640.jpg"><img src="../extra_files/subway_2017/DSC03640.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03643.jpg"><img src="../extra_files/subway_2017/DSC03643.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03644.jpg"><img src="../extra_files/subway_2017/DSC03644.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03648.jpg"><img src="../extra_files/subway_2017/DSC03648.jpg"></a></p>
+<p>The scenery was really spectacular:</p>
+<p><a href="../extra_files/subway_2017/DSC03651.jpg"><img src="../extra_files/subway_2017/DSC03651.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03652.jpg"><img src="../extra_files/subway_2017/DSC03652.jpg"></a></p>
+<p>Finally we arrive at the actual &#8220;subway&#8221; section where the canyon bottom is rounded out:</p>
+<p><a href="../extra_files/subway_2017/DSC03657.jpg"><img src="../extra_files/subway_2017/DSC03657.jpg"></a></p>
+<p>Perhaps the most-photographed log in the world, not particularly photogenic here due to the harsh light, but <a href="http://deepfrogphoto.com/Brett-Pelletier-Photography/National-Parks-Gallery/Zion-National-Park-Gallery/slides/subway-north-pole-log.html">other people have done better</a>:</p>
+<p><a href="../extra_files/subway_2017/DSC03661.jpg"><img src="../extra_files/subway_2017/DSC03661.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03665.jpg"><img src="../extra_files/subway_2017/DSC03665.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03668.jpg"><img src="../extra_files/subway_2017/DSC03668.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03672.jpg"><img src="../extra_files/subway_2017/DSC03672.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03676.jpg"><img src="../extra_files/subway_2017/DSC03676.jpg"></a></p>
+<p>After this there&#8217;s a final technical obstacle, a 15 m rappel, and then a long and not particularly easy or fun walk out.</p>
+<p><a href="../extra_files/subway_2017/DSC03685.jpg"><img src="../extra_files/subway_2017/DSC03685.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03686.jpg"><img src="../extra_files/subway_2017/DSC03686.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03691.jpg"><img src="../extra_files/subway_2017/DSC03691.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03695.jpg"><img src="../extra_files/subway_2017/DSC03695.jpg"></a></p>
+<p><a href="../extra_files/subway_2017/DSC03698.jpg"><img src="../extra_files/subway_2017/DSC03698.jpg"></a></p>
+<p>Still smiling at the end, but tired after 10 hours on the move:</p>
+<p><a href="../extra_files/subway_2017/DSC03704.jpg"><img src="../extra_files/subway_2017/DSC03704.jpg"></a></p>
+]]></content:encoded>
+			<wfw:commentRss>https://blog.regehr.org/archives/1526/feed</wfw:commentRss>
+		<slash:comments>1</slash:comments>
+		</item>
+		<item>
+		<title>Pointer Overflow Checking is in LLVM</title>
+		<link>https://blog.regehr.org/archives/1518</link>
+		<comments>https://blog.regehr.org/archives/1518#comments</comments>
+		<pubDate>Fri, 02 Jun 2017 04:29:44 +0000</pubDate>
+		<dc:creator><![CDATA[regehr]]></dc:creator>
+				<category><![CDATA[Compilers]]></category>
+		<category><![CDATA[Computer Science]]></category>
+		<category><![CDATA[Software Correctness]]></category>
+
+		<guid isPermaLink="false">http://blog.regehr.org/?p=1518</guid>
+		<description><![CDATA[Production-grade memory safety for legacy C and C++ code has proven to be a frustratingly elusive goal: plenty of research solutions exist but none of them appear to be deployable as-is. So instead, we have a patchwork of partial solutions such as CFI, ASLR, stack canaries, hardened allocators, and NX. Today&#8217;s quick post is about &#8230; <p class="link-more"><a href="https://blog.regehr.org/archives/1518" class="more-link">Continue reading<span class="screen-reader-text"> "Pointer Overflow Checking is in LLVM"</span></a></p>]]></description>
+				<content:encoded><![CDATA[<style type="text/css">
+pre { overflow: none; white-space: pre; 
+   font-family: "courier new", courier, monospace;
+   font-size: 12px;</p>
+<p>}
+</style>
+<p>Production-grade memory safety for legacy C and C++ code has proven to be a frustratingly elusive goal: plenty of research solutions exist but none of them appear to be deployable as-is. So instead, we have a patchwork of partial solutions such as <a href="https://clang.llvm.org/docs/ControlFlowIntegrity.html">CFI</a>, <a href="https://en.wikipedia.org/wiki/Address_space_layout_randomization">ASLR</a>, stack canaries, hardened allocators, and <a href="https://en.wikipedia.org/wiki/NX_bit">NX</a>.</p>
+<p>Today&#8217;s quick post is about another piece of the puzzle that very recently landed in LLVM: pointer overflow checking. At the machine level a pointer overflow looks just like an unsigned integer overflow, but of course at the language level the overflowing operation is pointer arithmetic, not unsigned integer arithmetic. Keep in mind that in these languages, unsigned overflow is defined but signed overflow is undefined. Pointer overflow is a weak indicator of undefined behavior (UB): the stricter rule is that it is UB to create a pointer that lies more than one element outside of an allocated object. It is UB merely to create such a pointer, it does not need to be dereferenced. Also, it is still UB even if the overflowed pointer happens to refer to some other allocated object.</p>
+<p><a href="https://reviews.llvm.org/D33305">Here is the patch</a>, it was originally developed by Will Dietz (who is doing his PhD at UIUC under Vikram Adve) and then pushed into the tree by Vedant Kumar (a compiler hacker at Apple). In 2013, Will wrote a <a href="https://wdtz.org/catching-pointer-overflow-bugs.html">great blog post</a> about the patch. He showed lots of examples of pointer overflows in open source programs. Also see <a href="https://blog.regehr.org/archives/1395">an earlier post of mine</a>.</p>
+<p>To see pointer overflow checking in action you&#8217;ll need to build a very recent Clang/LLVM (r304461 or later) from source, and then you can try out this stupid little program:</p>
+<pre>
+$ cat pointer-overflow.c
+#include  &#60;stdio.h&#62;
+#include  &#60;stdint.h&#62;
+
+int main(void) {
+  for (int i, *p = &i; ; p += 1000)
+    printf("%p\n", p);
+}
+$ clang -O3 pointer-overflow.c -Wall -fsanitize=pointer-overflow -fsanitize-trap=pointer-overflow -m32
+$ ./a.out 0xff8623c4
+0xff863364
+0xff864304
+0xff8652a4
+...
+0xffffd804
+0xffffe7a4
+0xfffff744
+Illegal instruction
+$ 
+</pre>
+<p>Of course the result is much the same if the pointer is decremented in the loop, instead of incremented; it just takes longer to hit the overflow.</p>
+<p>The transformation implemented by the compiler here is pretty straightforward. Here&#8217;s IR for the uninstrumented program (I cleaned it up a bit):</p>
+<pre>
+define i32 @main() {
+entry:
+  %i = alloca i32, align 4
+  br label %for.cond
+
+for.cond:
+  %p.0 = phi i32* [ %i, %entry ], [ %add.ptr, %for.cond ]
+  %call = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str, i32 0, i32 0), i32* %p.0)
+  %add.ptr = getelementptr inbounds i32, i32* %p.0, i32 1000
+  br label %for.cond
+}
+</pre>
+<p>To instrument the program, the last two instructions are changed into these three instructions (and also a trap basic block is added, which simply calls the LLVM trap intrinsic):</p>
+<pre>
+  %1 = icmp ult i32* %p.0, inttoptr (i32 -4000 to i32*)
+  %add.ptr = getelementptr inbounds i32, i32* %p.0, i32 1000
+  br i1 %1, label %for.cond, label %trap
+</pre>
+<p>The icmp checks whether the not-yet-incremented pointer is below 0xfffff060, in which case it can be incremented without overflowing.</p>
+<p>Can pointer overflow checking by used as a mitigation in production code? This should be fine if you (as I did above) use the <tt>-fsanitize-trap=pointer-overflow</tt> flag to avoid dragging in any of the UBSan runtime library. But how efficient is it? I ran SPEC INT 2006 with and without pointer overflow checking. 400.perlbench actually contains pointer overflows so we&#8217;ll leave it out. Here are the raw scores <a href="../extra_files/spec-pointer-overflow-checking.pdf">with</a> and <a href="../extra_files/spec-no-pointer-overflow-checking.pdf">without</a> pointer overflow checking, and here are the increases in runtime due to pointer overflow checking, sorted from best to worst:</p>
+<table>
+<tr>
+<td>462.libquantum</td>
+<td>-1%</td>
+</tr>
+<tr>
+<td>429.mcf</td>
+<td>5%</td>
+</tr>
+<tr>
+<td>471.omnetpp</td>
+<td>5%</td>
+</tr>
+<tr>
+<td>403.gcc</td>
+<td>9%</td>
+</tr>
+<tr>
+<td>483.xalancbmk</td>
+<td>12%</td>
+</tr>
+<tr>
+<td>473.astar</td>
+<td>27%</td>
+</tr>
+<tr>
+<td>401.bzip2</td>
+<td>34%</td>
+</tr>
+<tr>
+<td>445.gobmk</td>
+<td>50%</td>
+</tr>
+<tr>
+<td>458.sjeng</td>
+<td>79%</td>
+</tr>
+<tr>
+<td>464.h264ref</td>
+<td>113%</td>
+</tr>
+<tr>
+<td>456.hmmer</td>
+<td>119%</td>
+</tr>
+</table>
+<p>Keep in mind that this implementation is totally untuned (the patch landed just today). No doubt these scores could be improved by teaching LLVM to eliminate unnecessary overflow checks and, when that doesn&#8217;t work, to hoist checks out of inner loops.</p>
+<p>Although, in the example above, I enabled pointer overflow checking using an explicit flag, these checks are now part of UBSan and <tt>-fsanitize=undefined</tt> will enable them.</p>
+]]></content:encoded>
+			<wfw:commentRss>https://blog.regehr.org/archives/1518/feed</wfw:commentRss>
+		<slash:comments>6</slash:comments>
+		</item>
+		<item>
+		<title>Compiler Optimizations are Awesome</title>
+		<link>https://blog.regehr.org/archives/1515</link>
+		<comments>https://blog.regehr.org/archives/1515#comments</comments>
+		<pubDate>Tue, 30 May 2017 21:08:18 +0000</pubDate>
+		<dc:creator><![CDATA[regehr]]></dc:creator>
+				<category><![CDATA[Compilers]]></category>
+		<category><![CDATA[Computer Science]]></category>
+
+		<guid isPermaLink="false">http://blog.regehr.org/?p=1515</guid>
+		<description><![CDATA[This piece, which I hadn&#8217;t gotten around to writing until now since I thought it was all pretty obvious, explains why Daniel J. Bernstein&#8217;s talk, The death of optimizing compilers (audio) is wrong, and in fact compiler optimizations are extremely wonderful and aren&#8217;t going anywhere. First, the thesis of the talk is that almost all &#8230; <p class="link-more"><a href="https://blog.regehr.org/archives/1515" class="more-link">Continue reading<span class="screen-reader-text"> "Compiler Optimizations are Awesome"</span></a></p>]]></description>
+				<content:encoded><![CDATA[<p>This piece, which I hadn&#8217;t gotten around to writing until now since I thought it was all pretty obvious, explains why Daniel J. Bernstein&#8217;s talk, <a href="https://cr.yp.to/talks/2015.04.16/slides-djb-20150416-a4.pdf">The death of optimizing compilers</a> (<a href="http://t.co/6lvxwxWoIR">audio</a>) is wrong, and in fact compiler optimizations are extremely wonderful and aren&#8217;t going anywhere. </p>
+<p>First, the thesis of the talk is that almost all code is either hot, and therefore worth optimizing by hand, or else cold, and therefore not worth optimizing at all (even with -O). Daniel Berlin, a compiler person at Google, <a href="https://news.ycombinator.com/item?id=9397169">has looked at the data and disagrees</a>. We can also refute Bernstein&#8217;s argument from first principles: the kind of people who can effectively hand-optimize code are expensive and not incredibly plentiful. If an optimizing compiler can speed up code by, for example, 50%, then suddenly we need to optimize a lot less code by hand. Furthermore, hand-optimized code has higher ongoing maintenance costs than does portable source code; we&#8217;d like to avoid it when there&#8217;s a better way to meet our performance goals.</p>
+<p>Second, size matters. Most of the computers in the world are embedded and many of these are storage-constrained. Compiler optimization reduces code size and this phenomenon is completely independent of the hot/cold issue. Without optimization we&#8217;d have to buy more expensive deeply-embedded processors that have more on-chip flash memory, and we&#8217;d also have to throw away many of those 16 GB phones that are cheap and plentiful and fairly useful today.</p>
+<p>Third, most future software isn&#8217;t written in C and C++ but rather in higher-level languages, which more or less by definition rely on the optimizer to destroy abstraction layers, do compile-time memory management, etc.</p>
+<p>Finally, I claim that the economics of compiler optimization are excellent. A lot of dollars are spent each year making code run faster, either by buying hardware resources or by paying programmers to write faster code. In contrast, there are probably a few thousand people actively doing compiler optimization work, and just about everyone benefits from this. If we can centralize on fewer compiler infrastructures, like GCC and LLVM and V8, then the economics get even better.</p>
+<p>In summary, of course there&#8217;s plenty of hot code that wants to be optimized by hand, and of course there&#8217;s plenty of cold code that sees little benefit due to optimizing compilers. But neither of these facts forms an argument against optimizing compilers, which are amazingly useful and will continue to be for the indefinite future.</p>
+]]></content:encoded>
+			<wfw:commentRss>https://blog.regehr.org/archives/1515/feed</wfw:commentRss>
+		<slash:comments>33</slash:comments>
+		</item>
+		<item>
+		<title>Translation Validation of Bounded Exhaustive Test Cases</title>
+		<link>https://blog.regehr.org/archives/1510</link>
+		<comments>https://blog.regehr.org/archives/1510#comments</comments>
+		<pubDate>Tue, 09 May 2017 16:04:34 +0000</pubDate>
+		<dc:creator><![CDATA[regehr]]></dc:creator>
+				<category><![CDATA[Compilers]]></category>
+		<category><![CDATA[Computer Science]]></category>
+		<category><![CDATA[Software Correctness]]></category>
+
+		<guid isPermaLink="false">http://blog.regehr.org/?p=1510</guid>
+		<description><![CDATA[This piece is jointly authored by Nuno Lopes and John Regehr. Compilers should be correct, but it is not straightforward to formally verify a production-quality compiler implementation. It is just too difficult to recover the high-level algorithms by looking at an enormous mess of arithmetic, loops, and memory side effects. One solution is to write &#8230; <p class="link-more"><a href="https://blog.regehr.org/archives/1510" class="more-link">Continue reading<span class="screen-reader-text"> "Translation Validation of Bounded Exhaustive Test Cases"</span></a></p>]]></description>
+				<content:encoded><![CDATA[<p><em>This piece is jointly authored by <a href="http://web.ist.utl.pt/nuno.lopes/">Nuno Lopes</a> and John Regehr.</em></p>
+<p>Compilers should be correct, but it is not straightforward to formally verify a production-quality compiler implementation. It is just too difficult to recover the high-level algorithms by looking at an enormous mess of arithmetic, loops, and memory side effects. One solution is to write a new compiler such as CompCert that is designed to be verified. Alternatively, we keep our large, low-level code base such as GCC or LLVM and settle for weaker forms of validation than formal verification. This piece is about a new way to do the second thing. Our focus is the middle-end optimizers, which seem to be the most difficult part of a compiler to get right. The target is LLVM.</p>
+<p>End-to-end compiler testing, supported by a random source code generator like Csmith, is great &#8212; but it only gets us so far. The expressiveness of the program generator is one limitation, but a more serious problem is the normalization that happens in the compiler frontend. The issue is that there are a lot of valid code patterns that Clang will never emit and that are therefore impossible to test by driving Clang. As a Clang user you may not happen to care about this, but as LLVM people we want the middle-end optimizations to be free of logic errors and also the non-Clang-emittable code is important in practice since there are lots of frontends out there besides Clang.</p>
+<p>The first step is to generate lots of LLVM IR. Rather than creating a relatively small number of large functions, as Csmith would do, <a href="https://github.com/regehr/opt-fuzz">this IR generator</a> generates lots of tiny functions: it uses bounded exhaustive test generation to create every LLVM function up to a certain size. A fun thing about this kind of generator is its choose() operator. In random mode, choose() returns a random number; in exhaustive mode, it uses fork() to explore all alternatives. While this isn’t the most efficient way to do search, leveraging the OS keeps the generator very simple. The most vexing thing about this design is allowing it to use multiple cores while stopping it from being a fork bomb. The current version doesn’t contain code that tries to do this.</p>
+<p>The next step is to run LLVM optimizations on the generated functions. One thing we want to try is the collection of passes that implements “-O2,” but it also makes sense to run some individual passes since it is possible for sequences of passes to miss bugs: early passes can destroy constructs that would trigger bugs in later ones, and the late passes can clean up problems introduced by earlier ones. In fact both of those things seem to happen quite often.</p>
+<p>We end up with lots of pairs of unoptimized and optimized LLVM functions. The obvious thing to do is run them with the same inputs and make sure that the outputs are the same, but that only works when the executions encounter no undefined behaviors. Solutions to the UB problem include:</p>
+<ol>
+<li>Generating UB-free code, as Csmith would. At the level of these tiny functions that would be a major handicap on the generator’s expressiveness and we definitely do not wish to do it.
+<li>Create an LLVM interpreter that detects UB instead of silently skipping over it. The rule is that the optimizer is allowed to preserve UB or remove it, but never to add it. In other words, the correctness criterion for any compiler transformation isn&#8217;t input/output equivalence but rather input/output refinement. Someone needs to write this interpreter, perhaps using <a href="http://llvm.org/docs/CommandGuide/lli.html">lli</a> as a starting point (though the last time we looked, the slow/simple interpreter mode of lli had suffered some bit rot).
+<li>Formally verify the refinement relation using <a href="http://www.cs.utah.edu/~regehr/papers/pldi15.pdf">Alive</a>. This is better than an interpreter because Alive verifies the optimization for all inputs to the function, but worse because Alive doesn&#8217;t support all of LLVM, but rather a loop-free subset.
+</ol>
+<p>It is option three that we chose. The Alive language isn&#8217;t LLVM but rather an LLVM-like DSL, but it is not too hard to automatically translate the supported subset of LLVM into Alive.</p>
+<p>In the configuration that we tested (2- and 4-bit integers, three instructions per function, including select but not including real control flow, floating point, memory, or vectors) about 44.8 million functions are generated and binned into 1000 files. We identified seven configurations of the LLVM optimizers that we wanted to test: -O2, <a href="http://llvm.org/docs/Passes.html#sccp-sparse-conditional-constant-propagation">SCCP</a>, <a href="http://llvm.org/docs/Passes.html#gvn-global-value-numbering">GVN</a>, <a href="http://lists.llvm.org/pipermail/llvm-dev/2016-December/108503.html">NewGVN</a>, <a href="http://llvm.org/docs/Passes.html#reassociate-reassociate-expressions">Reassociate</a>, InstSimplify, and <a href="http://llvm.org/docs/Passes.html#passes-instcombine">InstCombine</a>. Then, to make the testing happen we allocated 4000 CPU cores (in an Azure HPC cluster) to process in batch the 7000 combinations of file + optimization options. Each combination takes between one and two hours, depending on how many functions are transformed and how long Alive takes to verify the changes.</p>
+<p>If we could generate all LLVM functions and verify optimization of them, then we&#8217;d have done formal verification under another name. Of course, practically speaking, there&#8217;s a massive combinatorial explosion and we can only scratch the surface. Nevertheless, we found bugs. They fall into two categories: those that we reported and that were fixed, and those that cannot be fixed at this time.</p>
+<p>We found six fixable LLVM bugs. The most common problem was transformations wrongly preserving the nsw/nuw/exact attributes that enable undefined behaviors in some LLVM instructions. This occurred with InstCombine [<a href="https://bugs.llvm.org/show_bug.cgi?id=31633">1</a>], GVN [<a href="https://bugs.llvm.org/show_bug.cgi?id=23922">1</a>], and Reassociate [<a href="https://bugs.llvm.org/show_bug.cgi?id=23675">1</a>,<a href="https://bugs.llvm.org/show_bug.cgi?id=23926">2</a>]. InstSimplify generated code that produces the wrong output for some inputs [<a href="https://bugs.llvm.org/show_bug.cgi?id=32949">1</a>]. Finally, we triggered a crash in llc [<a href="https://bugs.llvm.org/show_bug.cgi?id=23664">1</a>].</p>
+<p>The unfixable bugs stem from problems with LLVM&#8217;s undefined behavior model. One way to fix these bugs is to delete the offending optimizations, but some of them are considered important. You might be tempted to instead fix them by tweaking the LLVM semantics in such a way that all of the optimizations currently performed by LLVM are valid. We believe this to be impossible: that there does not exist a useful and consistent semantics that can justify all of the observed optimizations.</p>
+<p>A common kind of unfixable bug is seen in the simplification logic that LLVM has for <a href="http://llvm.org/docs/LangRef.html#select-instruction">select</a>: it transforms “select %X, undef, %Y” into “%Y”. This is incorrect (more details in the post linked above) and, worse, has been shown to trigger end-to-end miscompilations [<a href="https://bugs.llvm.org/show_bug.cgi?id=31633">1</a>]. Another source of problems is the different semantics that different parts of LLVM assume for branches: these can also cause end-to-end miscompilations [<a href="https://bugs.llvm.org/show_bug.cgi?id=31632">1</a>,<a href="https://bugs.llvm.org/show_bug.cgi?id=31652">2</a>].</p>
+<p>In summary, this is a kind of compiler testing that should be done; it&#8217;s relatively easy and the resulting failing test cases are always small and understandable. If someone builds an UB-aware LLVM interpreter then no tricky formal-methods-based tools are required. This method could be easily extended to cover other compilers.</p>
+<p>There are some follow-on projects that would most likely provide a good return on investment. Our test cases will reveal many, many instances where an LLVM pass erases an UB flag that it could have preserved; these could be turned into patches. We can do differential testing of passes against their replacements (for example, NewGVN vs. GVN) to look for precision regressions. The set of instructions that we generate should be extended; for example, opt-fuzz already has some limited support for control flow.</p>
+<p>The code to run these tests is <a href="https://github.com/nunoplopes/alive/tree/newsema/tv">here</a>.</p>
+]]></content:encoded>
+			<wfw:commentRss>https://blog.regehr.org/archives/1510/feed</wfw:commentRss>
+		<slash:comments>11</slash:comments>
+		</item>
+		<item>
+		<title>Spring 2017</title>
+		<link>https://blog.regehr.org/archives/1498</link>
+		<pubDate>Tue, 25 Apr 2017 03:00:11 +0000</pubDate>
+		<dc:creator><![CDATA[regehr]]></dc:creator>
+				<category><![CDATA[Outdoors]]></category>
+		<category><![CDATA[Utah]]></category>
+
+		<guid isPermaLink="false">http://blog.regehr.org/?p=1498</guid>
+		<description><![CDATA[The hills above Salt Lake City are finally turning green. Earlier in the year my family took a short trip to southeast Utah but it rained so much one day that I didn&#8217;t think the dirt roads would be passable, so we visited Ratio, a land art installation near Green River UT. The next day &#8230; <p class="link-more"><a href="https://blog.regehr.org/archives/1498" class="more-link">Continue reading<span class="screen-reader-text"> "Spring 2017"</span></a></p>]]></description>
+				<content:encoded><![CDATA[<p>The hills above Salt Lake City are finally turning green.</p>
+<p><a href="../extra_files/spring_2017/DSC03533.jpg"><img src="../extra_files/spring_2017/DSC03533.jpg"></a></p>
+<p>Earlier in the year my family took a short trip to southeast Utah but it rained so much one day that I didn&#8217;t think the dirt roads would be passable, so we visited <a href="http://www.andrewrogers.org/land-art/usa/ratio-utah/">Ratio</a>, a land art installation near Green River UT.</p>
+<p><a href="../extra_files/spring_2017/DSC03305.jpg"><img src="../extra_files/spring_2017/DSC03305.jpg"></a></p>
+<p>The next day started out foggy and cold, here&#8217;s an unassuming stretch of Muddy Creek shortly before it joins the Fremont River to become the Dirty Devil.</p>
+<p><a href="../extra_files/spring_2017/DSC03320.jpg"><img src="../extra_files/spring_2017/DSC03320.jpg"></a></p>
+<p>Later it cleared up and we explored the San Rafael Desert. This track didn&#8217;t seem to have seen much traffic over the winter.</p>
+<p><a href="../extra_files/spring_2017/DSC03348.jpg"><img src="../extra_files/spring_2017/DSC03348.jpg"></a></p>
+<p>In a nearby canyon I found a grinding stone that someone had stashed between 700 and a few thousand years ago.</p>
+<p><a href="../extra_files/spring_2017/DSC03341.jpg"><img src="../extra_files/spring_2017/DSC03341.jpg"></a></p>
+<p>Later in spring it turned out my kids&#8217; school vacations were misaligned so instead of getting out into the desert as a family I took each kid individually on a short trip. Here we&#8217;re partway up a trail that was used in the first half of the 20th century to give sheep access to a remote mesa top.</p>
+<p><a href="../extra_files/spring_2017/DSC03368.jpg"><img src="../extra_files/spring_2017/DSC03368.jpg"></a></p>
+<p>The weather was imperfect but showy; here the Henry Mountains, the last part of the lower 48 to be mapped and explored, are getting stormed on. I feel like deserts are supposed to be dry but it seems like we get rained on on almost every trip.</p>
+<p><a href="../extra_files/spring_2017/DSC03385.jpg"><img src="../extra_files/spring_2017/DSC03385.jpg"></a></p>
+<p>Wind and grass.</p>
+<p><a href="../extra_files/spring_2017/DSC03402.jpg"><img src="../extra_files/spring_2017/DSC03402.jpg"></a></p>
+<p>North Caineville Mesa and Factory Butte.</p>
+<p><a href="../extra_files/spring_2017/DSC03404.jpg"><img src="../extra_files/spring_2017/DSC03404.jpg"></a></p>
+<p>Indian paintbrush.</p>
+<p><a href="../extra_files/spring_2017/DSC03407.jpg"><img src="../extra_files/spring_2017/DSC03407.jpg"></a></p>
+<p>This is the kind of photograph you only seem to get when you&#8217;re soaked from one rain storm and another is approaching. We had gotten the tent up during the first shower, so were mostly dry and happy. I accidentally grabbed a one-person tent for this trip so the ten year old and I had a pretty cozy night.</p>
+<p><a href="../extra_files/spring_2017/DSC03422.jpg"><img src="../extra_files/spring_2017/DSC03422.jpg"></a></p>
+<p>During his break, my older son and I explored some areas around Escalante, UT. This Anasazi granary under an arch is something I&#8217;d been wanting to see for a long time, but had previously been thwarted by logistical problems such as a long, rugged drive.</p>
+<p><a href="../extra_files/spring_2017/DSC03449.jpg"><img src="../extra_files/spring_2017/DSC03449.jpg"></a></p>
+<p>The masonry is in about as good condition as any I&#8217;ve seen, and notice the sticks at the top of the opening.</p>
+<p><a href="../extra_files/spring_2017/DSC03465.jpg"><img src="../extra_files/spring_2017/DSC03465.jpg"></a></p>
+<p>We also ran across some less well-preserved granaries.</p>
+<p><a href="../extra_files/spring_2017/DSC03436.jpg"><img src="../extra_files/spring_2017/DSC03436.jpg"></a></p>
+<p>I always wonder about the circumstances that lead to this kind of thing being abandoned, perhaps it broke inside an animal or when it hit the ground after a miss? Often you find broken arrowheads along with chippings indicating a site where people sat and worked, but this point was all by itself.</p>
+<p><a href="../extra_files/spring_2017/DSC03466.jpg"><img src="../extra_files/spring_2017/DSC03466.jpg"></a></p>
+<p>Afternoon light in Alvey Wash, a large canyon draining the Kaiparowits Plateau.</p>
+<p><a href="../extra_files/spring_2017/DSC03470.jpg"><img src="../extra_files/spring_2017/DSC03470.jpg"></a></p>
+<p>The next day we visited the Red Breaks canyon system, which has some spectacular slots filled with nice sandstone and small climbing problems. Not shown: climbing problems and freezing, waist-deep water.</p>
+<p><a href="../extra_files/spring_2017/DSC03476.jpg"><img src="../extra_files/spring_2017/DSC03476.jpg"></a></p>
+<p>A bizarre landform in the Red Breaks area that is often called the Escalante Volcano (though it is not, as far as I know, of volcanic origin). It&#8217;s hard to tell from this photo but this thing is enormous; the sandstone dome in the center of the &#8220;volcano&#8221; is about 80 feet tall.</p>
+<p><a href="../extra_files/spring_2017/DSC03496.jpg"><img src="../extra_files/spring_2017/DSC03496.jpg"></a></p>
+<p>A neat area of petrified logs in Egg Canyon off the Burr Trail near Boulder, UT.</p>
+<p><a href="../extra_files/spring_2017/DSC03509.jpg"><img src="../extra_files/spring_2017/DSC03509.jpg"></a></p>
+<p>Some of the logs bridged the waterway.</p>
+<p><a href="../extra_files/spring_2017/DSC03510.jpg"><img src="../extra_files/spring_2017/DSC03510.jpg"></a></p>
+<p>I hope everyone else had a nice spring too!</p>
+]]></content:encoded>
+			</item>
+		<item>
+		<title>Taming Undefined Behavior in LLVM</title>
+		<link>https://blog.regehr.org/archives/1496</link>
+		<comments>https://blog.regehr.org/archives/1496#comments</comments>
+		<pubDate>Fri, 14 Apr 2017 20:15:18 +0000</pubDate>
+		<dc:creator><![CDATA[regehr]]></dc:creator>
+				<category><![CDATA[Compilers]]></category>
+		<category><![CDATA[Computer Science]]></category>
+		<category><![CDATA[Software Correctness]]></category>
+
+		<guid isPermaLink="false">http://blog.regehr.org/?p=1496</guid>
+		<description><![CDATA[Earlier I wrote that Undefined Behavior != Unsafe Programming, a piece intended to convince you that there&#8217;s nothing inherently wrong with undefined behavior as long as it isn&#8217;t in developer-facing parts of the system. Today I want to talk about a new paper about undefined behavior in LLVM that&#8217;s going to be presented in June &#8230; <p class="link-more"><a href="https://blog.regehr.org/archives/1496" class="more-link">Continue reading<span class="screen-reader-text"> "Taming Undefined Behavior in LLVM"</span></a></p>]]></description>
+				<content:encoded><![CDATA[<p>Earlier I wrote that <a href="https://blog.regehr.org/archives/1467">Undefined Behavior != Unsafe Programming</a>, a piece intended to convince you that there&#8217;s nothing inherently wrong with undefined behavior as long as it isn&#8217;t in developer-facing parts of the system.</p>
+<p>Today I want to talk about <a href="http://www.cs.utah.edu/~regehr/papers/undef-pldi17.pdf">a new paper about undefined behavior in LLVM</a> that&#8217;s going to be presented in June at <a href="http://pldi17.sigplan.org/">PLDI 2017</a>. I&#8217;m an author of this paper, but not the main one. This work isn&#8217;t about debating the merits of undefined behavior, its goal is to describe and try to fix some unintended consequences of the design of undefined behavior at the level of LLVM IR.</p>
+<p>Undefined behavior in C and C++ is sort of like a bomb: either it explodes or it doesn&#8217;t. We never try to reason about undefined programs because a program becomes meaningless once it executes UB. LLVM IR contains this same kind of UB, which we&#8217;ll call &#8220;immediate UB.&#8221; It is triggered by bad operations such as an out-of-bounds store (which is likely to corrupt RAM) or a division by zero (which may cause the processor to trap).</p>
+<p>Our problems start because LLVM also contains two kinds of &#8220;deferred UB&#8221; which don&#8217;t explode, but rather have a contained effect on the program. We need to reason about the meaning of these &#8220;slightly undefined&#8221; programs which can be challenging. There have been long threads on the LLVM developers&#8217; mailing list going back and forth about this.</p>
+<p>The first kind of deferred UB in LLVM is the <em>undef</em> value that acts like an uninitialized register: an undef evaluates to an arbitrary value of its type. Undef is useful because sometimes we want to say that a value doesn&#8217;t matter, for example because we know a location is going to be over-written later. If we didn&#8217;t have something like undef, we&#8217;d be forced to initialize locations like this to specific values, which costs space and time. So undef is basically a note to the compiler that it can choose whatever value it likes. During code generation, undef usually gets turned into &#8220;whatever was already in the register.&#8221;</p>
+<p>Unfortunately, the semantics of undef don&#8217;t justify all of the optimizations that we&#8217;d like to perform on LLVM code. For example, consider this LLVM function:</p>
+<pre>
+define i1 @f(i32) {
+  %2 = add nsw i32 %0, 1
+  %3 = icmp sgt i32 %2, %0
+  ret i1 %3
+}
+</pre>
+<p>This is equivalent to &#8220;return x+1 > x;&#8221; in C and we&#8217;d like to be able to optimize it to &#8220;return true;&#8221;. In both languages the undefinedness of signed overflow needs to be recognized to make the optimization go. Let&#8217;s try to do that using undef. In this case the semantics of &#8220;add nsw&#8221; are to return undef if signed overflow occurs and to return the mathematical answer otherwise. So this example has two cases:</p>
+<ol>
+<li>The input is not INT_MAX, in which case the addition returns input + 1.
+<li>The input is INT_MAX, in which case the addition returns undef.
+</ol>
+<p>In case 1 the comparison returns true. Can we make the comparison true for case 2, giving us the overall result that we want? Recall that undef resolves as an arbitrary value of its type. The compiler is allowed to choose this value. Alas, there&#8217;s no value of type i32 that is larger than INT_MAX, when we use a signed comparison. Thus, this optimization is not justified by the semantics of undef.</p>
+<p>One choice we could make is to give up on performing this optimization (and others like it) at the LLVM level. The choice made by the LLVM developers, however, was to introduce a second, stronger, form of deferred UB called <em>poison</em>. Most instructions, taking a poison value on either input, evaluate to poison. If poison propagates to a program&#8217;s output, the result is immediate UB. Returning to the &#8220;x + 1 > x&#8221; example above, making &#8220;add nsw INT_MAX, 1&#8221; evaluate to poison allows the desired optimization: the resulting poison value makes the icmp also return poison. To justify the desired optimization we can observe that returning 1 is a <em>refinement</em> of returning poison. Another way to say the same thing is that we&#8217;re always allowed to make code more defined than it was, though of course we&#8217;re never allowed to make it less defined.</p>
+<p>The most important optimizations enabled by deferred undefined behavior are those involving speculative execution such as hoisting loop-invariant code out of a loop. Since it is often difficult to prove that a loop executes at least once, loop-invariant code motion threatens to take a defined program where UB sits inside a loop that executes zero times and turn into into an undefined program. Deferred UB lets us go ahead and speculatively execute the code without triggering immediate UB. There&#8217;s no problem as long as the poisonous results don&#8217;t propagate somewhere that matters.</p>
+<p>So far so good! Just to be clear: we can make the semantics of an IR anything we like. There will be no problem as long as:</p>
+<ol>
+<li>The front-ends correctly refine C, C++, etc. into IR.
+<li>Every IR-level optimization implements a refinement.
+<li>The backends correctly refine IR into machine code.
+</ol>
+<p>The problem is that #2 is hard. Over the years some very subtle mistakes have crept into the LLVM optimizer where different developers have made different assumptions about deferred UB, and these assumptions can work together to introduce bugs. Very few of these bugs can result in end-to-end miscompilation (where a well-formed source-level program is compiled to machine code that does the wrong thing) but even this can happen. We spent a lot of time trying to explain this clearly in the paper and I&#8217;m unlikely to do better here! But <a href="http://www.cs.utah.edu/~regehr/papers/undef-pldi17.pdf#page=5">the details are all there in Section 3 of the paper</a>. The point is that so far these bugs have resisted fixing: nobody has come up with a way to make everything consistent without giving up optimizations that the LLVM community is unwilling to give up.</p>
+<p>The next part of the paper (Sections 4, 5, 6) introduces and evaluates our proposed fix, which is to remove undef, leaving only poison. To get undef-like semantics we introduce a new <em>freeze</em> instruction to LLVM. Freezing a normal value is a nop and freezing a poison value evaluates to an arbitrary value of the type. Every use of a given freeze instruction will produce the same value, but different freezes may give different values. The key is to put freezes in the right places. My colleagues have implemented a fork of LLVM 4.0 that uses freeze; we found that it more or less doesn&#8217;t affect compile times or the quality of the generated code.</p>
+<p>We are in the process of trying to convince the LLVM community to adopt our proposed solution. The change is somewhat fundamental and so this is going to take some time. There are lots of details that need to be ironed out, and I think people are (rightfully) worried about subtle bugs being introduced during the transition. One secret weapon we have is <a href="https://github.com/nunoplopes/alive">Alive</a> where Nuno has implemented the new semantics in the <a href="https://github.com/nunoplopes/alive/tree/newsema">newsema branch</a> and we can use this to test a large number of optimizations.</p>
+<p>Finally, we noticed that there has been an interesting bit of convergent evolution in compiler IRs: basically all heavily optimizing AOT compilers (including GCC, MSVC, and Intel CC) have their own versions of deferred UB. The details differ from those described here, but the effect is the same: deferred UB gives the compiler freedom to perform useful transformations that would otherwise be illegal. The semantics of deferred UB in these compilers has not, as far as we know, been rigorously defined and so it is possible that they have issues analogous to those described here.</p>
+]]></content:encoded>
+			<wfw:commentRss>https://blog.regehr.org/archives/1496/feed</wfw:commentRss>
+		<slash:comments>15</slash:comments>
+		</item>
+		<item>
+		<title>Fun at the UNIX Terminal Part 1</title>
+		<link>https://blog.regehr.org/archives/1483</link>
+		<comments>https://blog.regehr.org/archives/1483#comments</comments>
+		<pubDate>Wed, 05 Apr 2017 20:04:48 +0000</pubDate>
+		<dc:creator><![CDATA[regehr]]></dc:creator>
+				<category><![CDATA[Computer Science]]></category>
+		<category><![CDATA[Education]]></category>
+
+		<guid isPermaLink="false">http://blog.regehr.org/?p=1483</guid>
+		<description><![CDATA[This post is aimed at kids, like the 6th graders who I was recently teaching about programming in Python. It is more about having fun than about learning, but I hope that if you enjoy playing around at the UNIX terminal, you&#8217;ll eventually learn to use this kind of system for real. Keep in mind &#8230; <p class="link-more"><a href="https://blog.regehr.org/archives/1483" class="more-link">Continue reading<span class="screen-reader-text"> "Fun at the UNIX Terminal Part 1"</span></a></p>]]></description>
+				<content:encoded><![CDATA[<style type="text/css">
+pre { overflow: none; white-space: pre; }
+</style>
+<p>This post is aimed at kids, like the 6th graders who I was recently teaching about programming in Python. It is more about having fun than about learning, but I hope that if you enjoy playing around at the UNIX terminal, you&#8217;ll eventually learn to use this kind of system for real. Keep in mind this immortal <a href="https://www.youtube.com/watch?v=dFUlAQZB9Ng">scene from Jurassic Park</a>.</p>
+<p>To run the commands in this post, you&#8217;ll need a UNIX machine: either Linux or Mac OS X will work. You&#8217;ll also need the ability to install software. There are two options:</p>
+<ul>
+<li>Install precompiled binaries using a package manager, I&#8217;ll give command lines for Homebrew on OS X and for Apt on Ubuntu Linux. You&#8217;ll need administrator access to run Apt or to install Homebrew, but you do not need administrator access to install packages after Homebrew has been installed. Other versions of Linux have their own package managers and they are all pretty easy to use.
+<li>Build a program from source and install it in your home directory. This does not require administrator access but it&#8217;s more work and I&#8217;m not going to go into the details, though I hope to do this in a later post.
+</ul>
+<h2>ROT13 using tr</h2>
+<p>The tr utility should be installed by default on an OS X or Ubuntu machine. It translates the characters in a string into different characters according to rules that you provide. To learn more about tr (or any other command in this post) type this command (without typing the dollar sign):</p>
+<pre>
+$ man tr
+</pre>
+<p>This will show you the UNIX system&#8217;s built-in documentation for the command. </p>
+<p>In this and subsequent examples, I&#8217;ll show text that you should type on a line starting with a dollar sign, which is the default UNIX prompt. Text printed by the system will be on lines not starting with a dollar sign.</p>
+<p>We&#8217;re going to use tr to encrypt some text as ROT13, which simply moves each letter forward in the alphabet by 13 places, wrapping around from Z to A if necessary. Since there are 26 letters, encrypting twice using ROT13 gives back the original text. ROT13 is fun but you would not want to use it for actual secret information since it is trivial to decrypt. It is commonly used to make it hard for people to accidentally read spoilers when discussing things like movie plot twists.</p>
+<p>Type this:</p>
+<pre>
+$ echo 'Hello this is a test' | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+Uryyb guvf vf n grfg
+</pre>
+<p>Now to decrypt:</p>
+<pre>
+$ echo 'Uryyb guvf vf n grfg' | tr 'A-Za-z' 'N-ZA-Mn-za-m'
+Hello this is a test
+</pre>
+<p>Just two more things before moving on to the next command.</p>
+<p>First, the UNIX pipe operator (the &#8220;|&#8221; character in the commands above, which looks a little bit like a piece of pipe) is plumbing for UNIX commands: it &#8220;pipes&#8221; the output of one command to the input of a second command. We&#8217;ll be using it quite a bit.</p>
+<p>Second, how exactly did we tell tr to implement ROT13? Well, the first argument, &#8216;A-Za-z&#8217;, gives it a set of characters to work with. Here A-Z stands for A through Z and a-z stands for a through z (computers treat the capital and lowercase versions of letters as being separate characters). So we are telling tr that it is going to translate any letter of the alphabet and leave any other character (spaces, punctuation, numbers, etc.) alone. The second argument to tr, &#8216;N-ZA-Mn-za-m&#8217;, specifies a mapping for the characters in the first argument. So the first character in the first argument (A) will be translated to the first character of the second argument (N), and so on. We could just as easily use tr to put some text in all uppercase or all lowercase, you might try this as an exercise.</p>
+<h2>fortune</h2>
+<p>Tragically, this command isn&#8217;t installed by default on a Mac or on an Ubuntu Linux machine. On a Mac you can install it like this:</p>
+<pre>
+brew install fortune
+</pre>
+<p>If this doesn&#8217;t work then you need to get Homebrew setup, <a href="https://brew.sh/">try this page</a>.</p>
+<p>On Ubuntu try this:</p>
+<pre>
+sudo apt-get install fortune
+</pre>
+<p>The &#8220;sudo&#8221; command will ask you to enter your password before running the next command, apt-get, with elevated privileges, in order to install the fortune program in a system directory that you are normally not allowed to modify. This will only work if your machine has been specifically configured to allow you to run programs with elevated privileges.</p>
+<p>In any case, if you can&#8217;t get fortune installed, don&#8217;t worry about it, just proceed to the next command.</p>
+<p>Fortune randomly chooses from a large collection of mildly humorous quotes:</p>
+<pre>
+$ fortune 
+I have never let my schooling interfere with my education.
+		-- Mark Twain
+</pre>
+<h2>say</h2>
+<p>This command is installed by default on a Mac; on Ubuntu you&#8217;ll need to type &#8220;sudo apt install gnustep-gui-runtime&#8221;.</p>
+<p>Type this:</p>
+<pre>
+$ say "you just might be a genius"
+</pre>
+<p>Make sure you have sound turned up.</p>
+<p>The Linux say command, for whatever reason, requires its input to be a command line argument, so we cannot use a pipe to send fortune&#8217;s output to say. So this command will not work on Linux (though it does work on OS X):</p>
+<pre>
+$ fortune | say
+</pre>
+<p>However, there&#8217;s another trick we can use: we can turn the output of one command into the command-line arguments for another command by putting the first command in parentheses and prefixing this with a dollar sign. So this will cause your computer to read a fortune aloud:</p>
+<pre>
+$ say $(fortune)
+</pre>
+<p>Another way to accomplish the same thing is to put fortune&#8217;s output into a file and then ask say to read the file aloud:</p>
+<pre>
+$ fortune > my_fortune.txt
+$ say -f my_fortune.txt
+</pre>
+<p>Here the greater-than symbol &#8220;redirects&#8221; the output of fortune into a file. Redirection works like piping but the output goes to a file instead of into another program. It is super useful.</p>
+<p>If you run &#8220;say&#8221; on both a Linux box and a Mac you will notice that the Mac&#8217;s speech synthesis routines are better.</p>
+<h2>cowsay</h2>
+<p>The extremely important cowsay command uses ASCII art to show you a cow saying something. Use it like this:</p>
+<pre>
+$ fortune | cowsay
+ __________________________________ 
+/ What is mind? No matter. What is \
+| matter? Never mind.              |
+|                                  |
+\ -- Thomas Hewitt Key, 1799-1875  /
+ ---------------------------------- 
+        \   ^__^
+         \  (oo)\_______
+            (__)\       )\/\
+                ||----w |
+                ||     ||
+</pre>
+<p>Both Homebrew and Apt have a package called &#8220;cowsay&#8221; that you can install using the same kind of command line you&#8217;ve already been using.</p>
+<p>Cowsay has some exciting options, such as &#8220;-d&#8221; which makes the cow appear to be dead:</p>
+<pre>
+$ fortune | cowsay -d
+ _________________________________________ 
+/ Laws are like sausages. It's better not \
+| to see them being made.                 |
+|                                         |
+\ -- Otto von Bismarck                    /
+ ----------------------------------------- 
+        \   ^__^
+         \  (xx)\_______
+            (__)\       )\/\
+             U  ||----w |
+                ||     ||
+</pre>
+<p>Use &#8220;man cowsay&#8221; to learn more.</p>
+<h2>ponysay</h2>
+<p>Don&#8217;t  install ponysay unless you feel that cowsay is too restrictive. Also, it isn&#8217;t available as a precompiled package. You can build it from source code by first installing the &#8220;git&#8221; package using apt-get or brew and then running the following commands:</p>
+<pre>
+$ git clone https://github.com/erkin/ponysay.git
+$ cd ponysay
+$ ./setup.py --freedom=partial --private install
+</pre>
+<p>This procedure puts ponysay into an odd location, but whatever. Here (assuming Linux, on a Mac you&#8217;ll need to pipe a different command&#8217;s output to ponysay) a cute pony tells us the prime factorization of a number:</p>
+<p><img src="../extra_files/ponysay.png"></p>
+<h2>figlet</h2>
+<p>Figlet (actually called FIGlet but that&#8217;s not what you type to run the command) prints text using large letters comprised of regular terminal characters. For example:</p>
+<pre align="none">
+$ whoami | figlet
+                     _          
+ _ __ ___  __ _  ___| |__  _ __ 
+| '__/ _ \/ _` |/ _ \ '_ \| '__|
+| | |  __/ (_| |  __/ | | | |   
+|_|  \___|\__, |\___|_| |_|_|   
+          |___/                 
+</pre>
+<p>Figlet has lots of options for controlling the appearance of its output. For example, you can change the font:</p>
+<pre>
+$ echo 'hello Eddie' | figlet -f script
+ _          _   _          ___                    
+| |        | | | |        / (_)   |     |  o      
+| |     _  | | | |  __    \__   __|   __|      _  
+|/ \   |/  |/  |/  /  \_  /    /  |  /  |  |  |/  
+|   |_/|__/|__/|__/\__/   \___/\_/|_/\_/|_/|_/|__/
+</pre>
+<p>Another command, toilet, is similar to figlet but has even more options. Install both of these programs using the same kinds of commands we&#8217;ve already been using to talk to package managers.  </p>
+<h2>lolcat</h2>
+<p>The UNIX &#8220;cat&#8221; program prints a file, or whatever is piped into it, to the terminal. Lolcat is similar but it prints the text in awesome colors:</p>
+<p><img src="../extra_files/lolcat.png"></p>
+<h2>bb</h2>
+<p>The bb program doesn&#8217;t seem to be available from Homebrew, but on Ubuntu you can install it using &#8220;sudo apt-get install bb&#8221;. It is a seriously impressive ASCII art demo.</p>
+<h2>rig</h2>
+<p>You know how lots of web sites want you to sign up using your name and address, but your parents hopefully have trained you not to reveal your identity online? Well, the rig utility can help, it creates a random identity:</p>
+<pre>
+$ rig
+Juana Waters
+647 Hamlet St
+Austin, TX  78710
+(512) xxx-xxxx
+</pre>
+<p>The zip codes and telephone area codes are even correct. For some reason rig will never generate an identity that lives in Utah.</p>
+<h2>bc</h2>
+<p>The bc program is a calculator but unlike almost every other calculator you use, it can handle numbers of unlimited size (or, more precisely, numbers limited only by the amount of RAM in your computer) without losing precision. Try this:</p>
+<pre>
+$ echo '2 ^ 100' | bc
+1267650600228229401496703205376
+</pre>
+<p>Unfortunately bc does not have a built-in factorial function but you can write one easily enough using bc&#8217;s built-in programming language. Start bc in interactive mode (this will happen by default if you don&#8217;t pipe any text into bc) by just typing &#8220;bc&#8221;. Then enter this code:</p>
+<pre>
+define fact(n) {
+  if (n < 2) return 1;
+  return n * fact(n - 1);
+}
+</pre>
+<p>Now you can compute very large factorials:</p>
+<pre>
+fact(1000)
+40238726007709377354370243392300398571937486421071463254379991042993\
+85123986290205920442084869694048004799886101971960586316668729948085\
+58901323829669944590997424504087073759918823627727188732519779505950\
+99527612087497546249704360141827809464649629105639388743788648733711\
+91810458257836478499770124766328898359557354325131853239584630755574\
+09114262417474349347553428646576611667797396668820291207379143853719\
+58824980812686783837455973174613608537953452422158659320192809087829\
+73084313928444032812315586110369768013573042161687476096758713483120\
+25478589320767169132448426236131412508780208000261683151027341827977\
+70478463586817016436502415369139828126481021309276124489635992870511\
+49649754199093422215668325720808213331861168115536158365469840467089\
+75602900950537616475847728421889679646244945160765353408198901385442\
+48798495995331910172335555660213945039973628075013783761530712776192\
+68490343526252000158885351473316117021039681759215109077880193931781\
+14194545257223865541461062892187960223838971476088506276862967146674\
+69756291123408243920816015378088989396451826324367161676217916890977\
+99119037540312746222899880051954444142820121873617459926429565817466\
+28302955570299024324153181617210465832036786906117260158783520751516\
+28422554026517048330422614397428693306169089796848259012545832716822\
+64580665267699586526822728070757813918581788896522081643483448259932\
+66043367660176999612831860788386150279465955131156552036093988180612\
+13855860030143569452722420634463179746059468257310379008402443243846\
+56572450144028218852524709351906209290231364932734975655139587205596\
+54228749774011413346962715422845862377387538230483865688976461927383\
+81490014076731044664025989949022222176590433990188601856652648506179\
+97023561938970178600408118897299183110211712298459016419210688843871\
+21855646124960798722908519296819372388642614839657382291123125024186\
+64935314397013742853192664987533721894069428143411852015801412334482\
+80150513996942901534830776445690990731524332782882698646027898643211\
+39083506217095002597389863554277196742822248757586765752344220207573\
+63056949882508796892816275384886339690995982628095612145099487170124\
+45164612603790293091208890869420285106401821543994571568059418727489\
+98094254742173582401063677404595741785160829230135358081840096996372\
+52423056085590370062427124341690900415369010593398383577793941097002\
+77534720000000000000000000000000000000000000000000000000000000000000\
+00000000000000000000000000000000000000000000000000000000000000000000\
+00000000000000000000000000000000000000000000000000000000000000000000\
+0000000000000000000000000000000000000000000000000000
+</pre>
+<p>While we're at it, you should figure out why the factorial of any large number contains a lot of trailing zeroes.</p>
+<h2>Conclusion</h2>
+<p>We've only scratched the surface, I'll share more entertaining UNIX commands in a followup post. Some of these programs I hadn't even heard of until recently, a bunch of people on Twitter gave me awesome suggestions that I've used to write this up. If you want to see a serious (but hilariously outdated) video about what you can do using the UNIX command line, check out <a href="https://www.youtube.com/watch?v=tc4ROCJYbm0">this video</a> in which one of the original creators of UNIX shows how to build a spell checker by piping together some simple commands.</p>
+]]></content:encoded>
+			<wfw:commentRss>https://blog.regehr.org/archives/1483/feed</wfw:commentRss>
+		<slash:comments>29</slash:comments>
+		</item>
+		<item>
+		<title>Elk and Arch</title>
+		<link>https://blog.regehr.org/archives/1455</link>
+		<pubDate>Wed, 22 Mar 2017 00:18:31 +0000</pubDate>
+		<dc:creator><![CDATA[regehr]]></dc:creator>
+				<category><![CDATA[Outdoors]]></category>
+		<category><![CDATA[Utah]]></category>
+
+		<guid isPermaLink="false">http://blog.regehr.org/?p=1455</guid>
+		<description><![CDATA[I wanted to share a few pictures from a long, very cold snowshoe/hike I did in January. The goal was to reach a natural arch that I had previously spotted in upper City Creek Canyon. This was fun to find: I hadn&#8217;t realized there was an arch large enough to stand inside within walking distance &#8230; <p class="link-more"><a href="https://blog.regehr.org/archives/1455" class="more-link">Continue reading<span class="screen-reader-text"> "Elk and Arch"</span></a></p>]]></description>
+				<content:encoded><![CDATA[<p>I wanted to share a few pictures from a long, very cold snowshoe/hike I did in January. The goal was to reach a natural arch that I had previously spotted in upper City Creek Canyon. This was fun to find: I hadn&#8217;t realized there was an arch large enough to stand inside within walking distance of my house. I also saw the big herd of elk that live in this area, which doesn&#8217;t get a lot of visitation from humans other than hunters.</p>
+<p><a href="../extra_files/arch_01_2017//DSC03024.jpg"><img src="../extra_files/arch_01_2017//DSC03024.jpg"></a></p>
+<p><a href="../extra_files/arch_01_2017//DSC03031.jpg"><img src="../extra_files/arch_01_2017//DSC03031.jpg"></a></p>
+<p><a href="../extra_files/arch_01_2017//DSC03035.jpg"><img src="../extra_files/arch_01_2017//DSC03035.jpg"></a></p>
+<p><a href="../extra_files/arch_01_2017//DSC03040.jpg"><img src="../extra_files/arch_01_2017//DSC03040.jpg"></a></p>
+<p><a href="../extra_files/arch_01_2017//DSC03058.jpg"><img src="../extra_files/arch_01_2017//DSC03058.jpg"></a></p>
+<p><a href="../extra_files/arch_01_2017//DSC03071.jpg"><img src="../extra_files/arch_01_2017//DSC03071.jpg"></a></p>
+<p><a href="../extra_files/arch_01_2017//DSC03072.jpg"><img src="../extra_files/arch_01_2017//DSC03072.jpg"></a></p>
+<p><a href="../extra_files/arch_01_2017//DSC03074.jpg"><img src="../extra_files/arch_01_2017//DSC03074.jpg"></a></p>
+]]></content:encoded>
+			</item>
+		<item>
+		<title>Do Expressive Programming Languages Always Have Undefined Behavior?</title>
+		<link>https://blog.regehr.org/archives/1476</link>
+		<comments>https://blog.regehr.org/archives/1476#comments</comments>
+		<pubDate>Mon, 06 Mar 2017 22:21:37 +0000</pubDate>
+		<dc:creator><![CDATA[regehr]]></dc:creator>
+				<category><![CDATA[Compilers]]></category>
+		<category><![CDATA[Computer Science]]></category>
+
+		<guid isPermaLink="false">http://blog.regehr.org/?p=1476</guid>
+		<description><![CDATA[In the Hacker News comments on one of my previous posts about undefined behavior, someone said this: AFAIK Gödel&#8217;s incompleteness theorems imply that _any_ language will have at least some undefined behaviour. Let&#8217;s take a quick look at this statement, keeping in mind that incompleteness and undecidability can be remarkably tricky topics. Some years ago &#8230; <p class="link-more"><a href="https://blog.regehr.org/archives/1476" class="more-link">Continue reading<span class="screen-reader-text"> "Do Expressive Programming Languages Always Have Undefined Behavior?"</span></a></p>]]></description>
+				<content:encoded><![CDATA[<p>In the <a href="https://news.ycombinator.com/item?id=13648333">Hacker News comments</a> on <a href="https://blog.regehr.org/archives/1467">one of my previous posts about undefined behavior</a>, someone said this:</p>
+<blockquote><p>AFAIK Gödel&#8217;s incompleteness theorems imply that _any_ language will have at least some undefined behaviour.</p></blockquote>
+<p>Let&#8217;s take a quick look at this statement, keeping in mind that incompleteness and undecidability can be remarkably tricky topics. Some years ago I read and enjoyed <a href="https://www.amazon.com/G%C3%B6dels-Theorem-Incomplete-Guide-Abuse/dp/1568812388/">Gödel&#8217;s Theorem: An Incomplete Guide to Its Use and Abuse</a> (and no doubt need to reread it).</p>
+<p>First off, it is clear that there exist programming languages that are free of UB, such as one where the semantics of every program is to print &#8220;7&#8221;. Whatever it is that UB means (we have not formally defined it), it seems clear that the language that always prints &#8220;7&#8221; does not have it.</p>
+<p>There are also useful languages that are obviously UB-free, such as an expression language that evaluates elementary functions over IEEE floats. These languages are particularly easy to reason about because they are not Turing-complete: all computations terminate and we simply have to ensure that they terminate with a defined result.</p>
+<p>In contrast, the HN commenter may have intended to invoke <a href="https://en.wikipedia.org/wiki/Rice's_theorem">Rice&#8217;s Theorem</a>: &#8220;Any nontrivial property about the language recognized by a Turing machine is undecidable.&#8221; A consequence is that when f() is some arbitrary computation we cannot in general hope to decide whether a program like this invokes undefined behavior:</p>
+<pre class="brush: cpp; title: ; notranslate">
+main() {
+  f();
+  return 1 / 0; // UB!
+}
+</pre>
+<p>But this is a red herring. Rice&#8217;s Theorem only applies to non-trivial properties: &#8220;properties that apply neither to no programs nor all programs in the language.&#8221; To sidestep it, we only need to define a programming language where UB-freedom is a trivial property. This is done by ensuring that every operation that a program can perform is a total function: it is defined in all circumstances. Thus, programs in this language will either terminate in some defined state or else fail to terminate. This kind of extremely tight specification is not typically done for realistic programming languages because it is a lot of work, particularly if the language has open-ended interactions with other levels of the system, such as inline assembly. But the problem is only a practical one; there is no problem in principle. It is not too difficult to write an UB-free specification for a (Turing-complete) toy language or subset of a real language.</p>
+<p>Now let&#8217;s return to the original HN comment: it was about the incompleteness theorems, not about the halting problem. I&#8217;m not sure what to do with that, as I don&#8217;t see that Gödel&#8217;s theorems have any direct bearing on undefined behavior in programming languages.</p>
+]]></content:encoded>
+			<wfw:commentRss>https://blog.regehr.org/archives/1476/feed</wfw:commentRss>
+		<slash:comments>9</slash:comments>
+		</item>
+	</channel>
+</rss>

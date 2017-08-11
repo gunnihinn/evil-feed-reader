@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<rss version="2.0">
+<channel>
+	<title>flak rss</title>
+	<link>http://www.tedunangst.com/flak/</link>
+	<description>flak rss</description>
+	<image>
+	<url>//www.tedunangst.com/flak-icon.png</url>
+	<title>flak rss</title>
+	<link>http://www.tedunangst.com/flak/</link>
+	</image>
+	
+	<item>
+	<title>a repo upon the deep</title>
+	<description>&lt;p>In reference to arbitrary code execution in various source control programs. &lt;a href=&quot;https://subversion.apache.org/security/CVE-2017-9800-advisory.txt&quot;>Refer svn advisory&lt;/a>. Remember &lt;em>A Fire Upon the Deep&lt;/em>?
+&lt;p>There’s some code archaeologists who dig up an artifact. They don’t know what it does, but it includes some instructions for how to unpack it. And so they follow the instructions. And they think they’re taking precautions to prevent it from doing bad stuff, but they screw up, and the evil AI is turned loose. And then bad stuff happens.
+&lt;p>It’s funny how similar this is to today’s vulnerability. In theory, checking out a code repo should be a safe operation. All you’re doing is downloading some artifact from a server. Building the code, running the code, all that can be unsafe. But surely there’s no trouble to simply checking out some code?
+&lt;p>Alas, a repo is not just a repo. Checking out a repo might require checking out other sub repos and external resources. And so a dumb read only artifact is actually a smart read/execute artifact. The artifact can’t be checked out without also interpreting some of its contents. And if interpreting happens to execute some unwanted shell commands... Bad stuff happens.
+&lt;p>It’s a bug, and it’s fixed, but another lesson that nothing is ever simple when adding features. What looks like just a hostname over here could be interpreted as a shell command over there.</description>
+	<category>security</category><category>software</category>
+	<link>http://www.tedunangst.com/flak/post/a-repo-upon-the-deep</link>
+	<pubDate>Thu, 10 Aug 2017 23:38:25 GMT</pubDate>
+	<guid isPermaLink="true">http://www.tedunangst.com/flak/post/a-repo-upon-the-deep</guid>
+	</item>
+	
+	<item>
+	<title>openbsd changes of note 626</title>
+	<description>&lt;p>Hackerthon is imminent.
+&lt;p>There are two signals one can receive after accessing invalid memory, SIGBUS and SIGSEGV. Nobody seems to know what the difference is or should be, although some theories have been unearthed. Make some attempt to be slightly more consistent and predictable in OpenBSD.
+&lt;p>Introduces jiffies in an effort to appease our penguin oppressors.
+&lt;p>Clarify that IP.OF.UPSTREAM.RESOLVER is not actually the hostname of a server you can use.
+&lt;p>Switch acpibat to use _BIX before _BIF, which means you might see discharge cycle counts, too.
+&lt;p>Assorted clang compatibility. clang uses -Oz to mean optimize for size and -Os for something else, so make gcc accept -Oz so all makefiles can be the same. Adjust some hardlinks. Make sure we build gcc with gcc.
+&lt;p>The SSL_check_private_key function is a lie.
+&lt;p>Switch the amd64 and i386 compiler to clang and see what happens.
+&lt;p>We are moving towards using wscons (wstpad) as the driver for touchpads.
+&lt;p>Dancing with the stars, er, NET_LOCK().
+&lt;p>clang emits lots of warnings. Fix some of them. Turn off a bunch of clang builtins because we have a strong preference that code use our libc versions. Some other changes because clang is not gcc.
+&lt;p>Among other curiosities, static variables in the special .openbsd.randomdata are sometimes assumed to be all zero, leading the clang optimizer to eliminate reads of such variables.
+&lt;p>Some more pledge rules for sed. If the script doesn’t require opening new files, don’t let it.
+&lt;p>Backport a bajillion fixes to stable. Release errata.
+&lt;p>RFC 1885 was obsoleted nearly 20 years ago by RFC 2463 which was obsoleted over 10 years ago by RFC 4443. We are probably not going back.
+&lt;p>Update libexpat to 2.2.3.
+&lt;p>vmm: support more than 3855MB guest memory.
+&lt;p>Merge libdrm 2.4.82.
+&lt;p>Disable SSE optimizations on i386/amd64 for SlowBcopy. It is supposed to be slow. Prevents crashes when talking to memory mapped video memory in a hypervisor.</description>
+	<category>openbsd</category>
+	<link>http://www.tedunangst.com/flak/post/openbsd-changes-of-note-626</link>
+	<pubDate>Wed, 09 Aug 2017 01:59:17 GMT</pubDate>
+	<guid isPermaLink="true">http://www.tedunangst.com/flak/post/openbsd-changes-of-note-626</guid>
+	</item>
+	
+	<item>
+	<title>books chapter seven</title>
+	<description>&lt;p>Lucky sevens.
+&lt;p>&lt;a name=&quot;coders&quot;>&lt;/a>&lt;h4>coders&lt;/h4>
+&lt;p>Simon Peyton Jones doesn’t even have a PhD, but he’s got something even better: GHC. Pure and functional Haskell is radical and elegant and just what we all need to avoid getting stuck in a local optimum of imperative programming. One of the nice properties of a lazy evaluated language is that it’s easy to make it modular. It’s not hard to make a generator in a stricter language, but there’s less guarantee that the interface will be accepted by all your other components. I hadn’t really considered this before, but a C function that takes an array is not trivially converted to taking a generator struct. Or one could start by making every function take a generator, but that’s a lot of work. But then we only need to step up to C++ to get iterators and the dilemma fades again.
+&lt;p>Simon is finally the STM (software transactional memory) advocate that Seibel has been searching for. They then discuss a kind of elaborate and stretched metaphor of reorganizing a library while permitting simultaneous checkouts. With primitive locks, the patron would have to wait until the whole reorganization is done to check out a book. So locks are subject to high latency. With STM, the librarian would finish organizing the library only to discover somebody checked out a book and then start over from the very beginning. So STM is subject to starvation. With a wave of the hand, they reduce the scale of the reorganization and replace the books with placeholders, and the operation completes successfully. But then they have to admit the same rewrite of the problem would improve the lock based version as well. Ah, but with STM you only have to make sure everything is in a well defined transaction that states all your invariants. So I think there’s a certain amount of optimism that if everything is correct then everything will be correct.
+&lt;p>On the subject of STM, it came to Haskell from Java, but then they refined the concept, and pushed their ideas and improvements back to Java. So even if nobody uses Haskell, and they avoid success at all cost, there’s a benefit to having this weird research language out there. They don’t just create new ideas, but they take other new ideas and make them work in another context, which refines them.
+&lt;p>He has some ideas on program bloat, that it doesn’t really matter how large a program is, because it still only spends most of its cycles in a tiny core. The problem arises when performing an action requires many, many abstraction layers to complete. So we might say the problem is not the width of the program, but the depth. I think sometimes we’re building in the wrong direction. And the fact we’re never satisfied. “The more robust your materials, the less you need to concentrate on the minutia instead of the larger-scale structures. Of course that will just make us more ambitious to build larger structures until we get to the point where they fall apart again.”
+&lt;p>&lt;a name=&quot;founders&quot;>&lt;/a>&lt;h4>founders&lt;/h4>
+&lt;p>Steve Perlman founded WebTV, bringing the tubes to your tube, but he’s got a long history of working on computer graphics and interaction projects that were just a little too soon. He did some video on demand work at Apple, before the hardware was really ready for it, but that eventually resulted in QuickTime. You reach forward, a little too far perhaps, and have to build up a lot of your own technology, but that technology has merit on its own.
+&lt;p>Then he went to Catapault, which added modem based multiplayer support to Nintendo games. The games weren’t built to support this, but they reverse engineered the cartridge and somehow tricked it into treating the modem as a second controller. They only needed to develop the hardware and some communication code, though, because it worked with (a select few) games that people already owned. One way to solve the bootstrapping problem. Add a feature to an existing product. I wish there had been some more detail about this project; it sounds awesome. Apart from the working conditions. “My admin, who came with me from General Magic, tells stories about coming in in the morning and trying to clean up. She’d pick up a folded pizza box and get scared because she’d find a guy sleeping underneath it - it was covering his face.”
+&lt;p>After that, it came time to make WebTV. It’s about 1995, and Campbell’s Soup has a website with some recipes on it, but the people most likely to benefit from those recipes don’t necessarily have computers, and they aren’t buying one just to get dialup access just to download some recipes. So another bootstrapping problem. But everybody has a TV. Just a little extra hardware, a basic browser (the glorious golden days of the web when that’s all you needed), and a subscription service, and you’ve got AOL for people who aren’t even ready for AOL.
+&lt;p>At one point, as they’re about to run out of funding and are desperate for a business partnership, they get a call that the Sony CTO is coming to visit. Coming to visit as in is currently on a private jet and will be landing in two hours, so get the demo ready. But the codebase was full of bugs because they were in the middle of a rewrite, and it took the whole two hours just to compile, and nobody knew if it was going to work. So a hard lesson in always keeping the source tree in a working state. And compile times kill!
+&lt;p>Mike Ramsay founded that other TV tech company, TiVo. It’s funny to read, because he’s talking about how fast seek times are for hard drives, which sounds strange today, but of course he’s comparing to tape. The entire TiVo concept depends on hard drives becoming available in large capacities for cheap  pricing. The original concept was actually a home server that would do all sorts of things, but the DVR aspect of it caught on and took over. The idea that you could pause live TV and resume it was so unbelievable to many people, they refused to believe it until demonstrated. In hindsight it seems like a fairly straightforward application of the technology, but I guess we’re not always good at recognizing when the impossible becomes possible.
+&lt;p>Possible doesn’t mean easy, though. A common theme for many interviews is to get the hard part right, and then the easy parts will be easy. TiVo spent a lot of time on pause, they apparently didn’t get record working. (Not sure how that’s possible, one seems to rely on the other, but maybe he’s referring to a specific aspect.) So I think the lesson is to not ignore the easy parts too completely, just in case you have misjudged what’s easy and hard.
+&lt;p>One of the important features of TiVo is they added the season pass feature, to record every episode of a show. But no duplicates. Also, if the season finale is two hours, you want to record all of it. They spent a lot of time getting the data for this, and massaging it, and making it work. I think it’s interesting to reflect that user interface aside (though also worth considering!) it’s easy to program a VCR to record one hour every Friday night. But adding just a small semantic layer, record The X-Files, which is what the user really wants, requires way more effort.
+&lt;p>&lt;a name=&quot;man-month&quot;>&lt;/a>&lt;h4>man-month&lt;/h4>
+&lt;p>Calling the shot contains some notes on programmer productivity. Key formula: effort = (constant) x (number of instructions) ^ 1.5. Independent of increased communication and networking costs, it takes more work to get anything done the larger a program gets.
+&lt;p>Brooks reviews various studies which conclude that productivity ranges from high hundreds to low thousands of instructions per man year. Which sounds really low. But then we end with a study about PL/I for MULTICS which found programmers produced the same number of &lt;em>lines&lt;/em> per year, and each line might turn into three to five instructions. The miracle of programming in a higher level language. Humans can only process and track so many items of information at a time, whether they be instructions or statements.
+&lt;p>&lt;a name=&quot;pragmatic&quot;>&lt;/a>&lt;h4>pragmatic&lt;/h4>
+&lt;p>Some lessons in writing software that isn’t going to work. Expect the worst and prepare for it.
+&lt;p>21. Design by Contract. Every function should have some invariants preconditions and postconditions, which will keep your program from going too far off course. One way to achieve this is to program in Eiffel, though I think that’s been relegated to the lolwut category these days. The rest of us will have to add invariants to our code by hand, although this is an area where tooling can help.
+&lt;p>22. Dead Programs Tell No Lies. It’s better for a program to crash than to continue running. This combines well with invariants. Add lots of invariants, when they’re violated, crash hard. Even if there’s no way for the invariant to be violated, software is complex and you never know what’s going to happen. Many times the initial error goes undetected, and the program continues running before something goes really wrong. We obviously want to reduce the time spent in a broken but still running state.
+&lt;p>&lt;a name=&quot;code&quot;>&lt;/a>&lt;h4>code&lt;/h4>
+&lt;p>In Chapter 12 we build a binary adding machine. If we take another look at our binary addition table, we can separate it into a sum table for the low bit and a carry table for the other bit. We’re also going to need to build a new gate, the XOR gate, which is a combination of OR, NAND, and AND. With this we can build up a half adder. This can add two binary digits and produce a sum bit and carry bit. Works great for the first bit of a number, but the later bits are also going to have a carry bit coming in. So we need two half adders to make a full adder. Eight of those and we can add some modestly sized numbers. Building one by hand would be kind of tedious, however, because it requires 144 gates. The advantages of modular composition.
+&lt;p>But what about subtraction? We return to the classroom to dissect subtraction into minuends and subtrahends. Subtraction by borrowing is too complex for a computer. Too many decisions. But if rearrange things to work with the nine’s complement (for base ten) it becomes much easier. There are a few more steps involved, but it’s pretty mechanical. We can do the same for binary using one’s complement. But wait, there’s more. If we decide to discard the sign bit and assume large numbers are actually negative, we can use &lt;em>two’s complement&lt;/em>. This simplifies working with subtraction and negative numbers quite a bit, with one new problem. The interpretation of bits as signed or unsigned requires additional information not contained within the number.
+&lt;p>“That’s the trouble with bits: They’re just zeros and ones and don’t tell you anything about themselves.”
+&lt;p>&lt;a name=&quot;coda&quot;>&lt;/a>&lt;h4>coda&lt;/h4>
+&lt;p>Sometimes a failed, or even just unpopular, idea is simply ahead of its time. This doesn’t really make it work any better, but perhaps some of it can be salvaged and reused in another context.</description>
+	<category>bookreview</category>
+	<link>http://www.tedunangst.com/flak/post/books-chapter-seven</link>
+	<pubDate>Sat, 05 Aug 2017 23:37:45 GMT</pubDate>
+	<guid isPermaLink="true">http://www.tedunangst.com/flak/post/books-chapter-seven</guid>
+	</item>
+	
+	<item>
+	<title>books chapter six</title>
+	<description>&lt;p>Making some headway.
+&lt;p>&lt;a name=&quot;coders&quot;>&lt;/a>&lt;h4>coders&lt;/h4>
+&lt;p>Joe Armstrong created Erlang in 1986, which is quite some time ago, and he learned to program even before that. You’d write a program, then somebody else would type it onto punch cards, then you’d feed it to the computer, and then you’d get an error. One error, the first encountered, after which your program was done. And that was with about a one week turnaround time. So he very quickly learned the advantages of concurrent programming, writing many small test programs for every function, and submitting that as a batch. Then, once all the parts worked, submit the final program that ties it all together.
+&lt;p>These days we have filesystems with directories and filenames longer than ten letters, and do we really need all that? Has it made us productive or just lazy? I think he’s got a good point that we’ve adopted this culture of if it compiles, it complies. Compile times are so fast, just keep throwing text at the compiler until it accepts something, then keep running the result until it looks acceptable. But how many bugs and unhandled edge cases remain? I would surely spend more time contemplating my code and examining it for bugs if it took a week to compile.
+&lt;p>He’s got a good story about peeking inside the black box and learning what’s happening at all levels. He wanted to connect some Erlang code to X. The normal way to do this is via Xlib, but that can be kind of messy from Erlang. Then he looked a little closer, at the X protocol, and of course it’s just messages back and forth between client and server. Erlang is very good at sending and receiving messages, so he programmed directly against the X protocol, stripping out the abstraction. I think a lot of the time we either forget or don’t bother to look at what’s on the other side of the abstraction layer, to see if maybe it’s not a better fit for what we’re trying to do.
+&lt;p>On debugging, he makes two recommendations. Explain the problem to somebody, which tests your own understanding. And bugs are often in the vicinity of the most recent change. Write a specification. The code only tells you the answer to a problem, making you guess the problem; the spec should identify the problem as well. 
+&lt;p>Joe converses a bit about remembering programs and being able to retype them from memory. Maybe not an exact replica, but something similar. No worries about losing code. This probably gets back to the way he spends more time thinking about the solution. I know I’ve worried about losing code quite a bit. Spend a few hours trying to solve a problem, finally get it working, and then immediately make a backup in case I lose it. Upon reflection though, I think this is a sign I don’t understand what I did. The code, the text of it, should be an expression of my understanding, but it’s a bad sign if the understanding itself is somehow locked inside the text.
+&lt;p>&lt;a name=&quot;founders&quot;>&lt;/a>&lt;h4>founders&lt;/h4>
+&lt;p>Arthur van Hoff founded Marimba. Kleiner Perkins wouldn’t let them spend any of their funding on an espresso machine, which seems really quaint because today I’m not sure VCs would allow you to start a company without an espresso machine, if not a full time barista and smoothie bar. They were in the automatic software updates business, which also sounds not very exciting now, given that pretty much all software is constantly auto updating, whether I want it to or not. Thanks, guys!
+&lt;p>Paul Buchheit created Gmail. At the time, this was something of a new direction for Google. Unlike a search index, you can’t discard somebody’s mail spool and simply recreate it a few days later. Similarly, when mail is received, people don’t expect to wait until the index is updated before they can read it. So offering a product like this is signing on to deliver a level of service they hadn’t worried about. Sometimes it’s possible to operate at enormous scale, but only given certain assumptions and shortcuts, and taking those away means you’re starting over with much less confidence.
+&lt;p>Gmail is definitely among the newest products in the book, but even so, it spent two years in development before the public launch. I find that pretty remarkable, in a climate of launch first, develop later.
+&lt;p>&lt;a name=&quot;man-month&quot;>&lt;/a>&lt;h4>man-month&lt;/h4>
+&lt;p>What went wrong with the Tower of Babel project? They had plenty of resources, engineers, and focus. But alas, they lacked communication, setting space exploration back about 6000 years. To solve this problem today, for large projects, one keeps a workbook, containing all the specifications, internal and external, for a project. This allows even very large groups to know what everyone else is doing. Keep a changelog as well.
+&lt;p>Brooks is talking about a project with five feet of printed documentation. And two inches of daily changes! I can’t even imagine. Eventually they switched to microfiche. Of course, today, you’d keep everything online, but the scope of the specifications involved just seems enormous.
+&lt;p>Every project needs a producer and a technical director. One or the other may be the boss, but it’s vital that they work together and divide labor efficiently.
+&lt;p>&lt;a name=&quot;pragmatic&quot;>&lt;/a>&lt;h4>pragmatic&lt;/h4>
+&lt;p>18. The section on debugging could probably be a whole chapter itself. It covers a range of topics. First things first, understand the problem. Find a way to easily reproduce it. Talk things through, with a rubber duck if necessary. Eliminate possibilities.
+&lt;p>19. It’s all text, so learn some serious text manipulation skills. awk, sed, perl, python, ruby. You can generate tests, code, documentation, anything and everything.
+&lt;p>20. In fact, there’s a whole section devoted to code generators. Sometimes you just need a one shot generator, either to convert from one format to another, or to generate a template that will be further edited by hand. Other times, you keep your database schema in a text file and constantly generate new code to access it.
+&lt;p>&lt;a name=&quot;code&quot;>&lt;/a>&lt;h4>code&lt;/h4>
+&lt;p>We start by taking a look at the new logic of George Boole. He invented an algebra that has addition and multiplication, but maybe it’s easier to call them union and intersection. The rules are also a little different from normal algebra, but they’re very helpful. We can prove Socrates was mortal. Or we can go to the pet store and find just the cat we want, one that matches all our criteria, which we express in Boolean logic.
+&lt;p>Next we return to our study of circuits and light bulbs. With the proper arrangement of switches, we can make the light go on whenever we see just the right cat. Boole himself lived somewhat before the time of the light bulb, but telegraph relays were available to him, as well as Charles Babbage. But it took a while for the connection between logic and circuits to be made.
+&lt;p>That would have to wait until 1938 and Claude Shannon, who incidentally invented the word bit as well. If we wire together some relays (remember the telegraph?) in the right way, we can make an AND gate. Or an OR gate. And combine them. Maybe make some NAND and NOR gates, too. If we return to the past, Augustus De Morgan came up with a set of laws that explain how we can translate one Boolean expression into another. Similarly, this will let us translate one circuit into another, which sounds like it will be very useful.
+&lt;p>&lt;a name=&quot;coda&quot;>&lt;/a>&lt;h4>coda&lt;/h4>
+&lt;p>Rubber duck debugging made two appearances this week. Actually, the general idea that one can peel things apart and understand them was a big theme. Don’t just stumble around assuming the black box must remain inscrutable.</description>
+	<category>bookreview</category>
+	<link>http://www.tedunangst.com/flak/post/books-chapter-six</link>
+	<pubDate>Fri, 28 Jul 2017 20:45:33 GMT</pubDate>
+	<guid isPermaLink="true">http://www.tedunangst.com/flak/post/books-chapter-six</guid>
+	</item>
+	
+	<item>
+	<title>hurray we won</title>
+	<description>&lt;p>A few thoughts after reading &lt;a href=&quot;https://media.defcon.org/DEF%20CON%2025/DEF%20CON%2025%20presentations/DEFCON-25-Ilja-van-Sprundel-BSD-Kern-Vulns.pdf&quot;>Are all BSDs created equally?&lt;/a> by Ilja	van Sprundel. Theo says OpenBSD is the best, Ilja fact checks.
+&lt;p>The &lt;em>sendsyslog&lt;/em> bug is kinda annoying. As in, annoying that it wasn’t caught, but it’s an easy mistake to make. The code mostly looks correct. There’s some length. We allocate some memory, and then we copy that amount. It’s unlike the typical buffer overflow where the wrong amount is allocated or copied. It’s just that the kernel imposes some extra restrictions to save itself from grinding to a halt with over sized allocations. This protection happens to take the form of a kernel assertion, however, so it’s not good to be user reachable.
+&lt;p>“mbuf handling is complicated and error prone”
+&lt;p>The NetBSD crypto overflow is a classic allocation overflow. A large count and a size, when multiplied, become very small. In OpenBSD, we replaced many (nearly all even?) instances of this pattern with &lt;em>mallocarray&lt;/em>, which performs an overflow check before doing the multiplication. It would still end in a panic, but that’s better than memory corruption.
+&lt;p>The FreeBSD ksyms bug is a pretty common object lifetime bug if I’m reading it correctly. It’s difficult to concretely identify the owner of some objects, or the last reference. A lot of references don’t necessarily have counts, relying on other implicit invariants to determine when it’s safe to free something. The result is stale references are fairly common. I would say that fd passing in particular causes all sorts of trouble because people like to assume they stay put, and then they end up in a different process. (There were some bugs like this reported against OpenBSD, too, where an fd is passed to another process and then bad things happen when the original process exits, but I don’t think any were serious.)
+&lt;p>“Compat layers rot very quickly.”
+&lt;p>On the point of fuse, at least in OpenBSD, you have to be root to mount a fuse filesystem, so you’re already pretty elevated. Still, the kernel in theory should be robust against even root, and especially we’d like for it to be possible to write a privilege dropping filesystem. Easy to slip up here and assume everything is already trusted.
+&lt;p>Wifi: “They didn’t think about the attack surface on this one”
+&lt;p>Conclusion: OpenBSD wins. A lot of this is reducing attack surface by deleting code. It’s not cheating if it works... Some of it is also trying to identify harmful patterns and reduce the impact, like &lt;em>mallocarray&lt;/em>.
+&lt;p>“Bugs are still easy to find in those kernels.” Sigh.</description>
+	<category>openbsd</category><category>security</category><category>software</category><category>thoughts</category>
+	<link>http://www.tedunangst.com/flak/post/hurray-we-won</link>
+	<pubDate>Fri, 28 Jul 2017 06:17:16 GMT</pubDate>
+	<guid isPermaLink="true">http://www.tedunangst.com/flak/post/hurray-we-won</guid>
+	</item>
+	
+	<item>
+	<title>life off the chain</title>
+	<description>&lt;p>A few notes about gathered experiences with https certs not part of the traditional chain.
+&lt;p>The simplest way to deal with an untrusted site is to add an exception. There are some quirks, however.
+&lt;p>Most browsers will ignore additional headers like HSTS. It’s a little weird, because if I indicated a desire to see https, regardless of cert, that should be interpreted as a positive indicator that I really want the https version, right? I think the motivation is to prevent a user from accidentally DOSing themselves if the https site goes away. HSTS is supposed to be under the control of the site owner, and if the cert is invalid, maybe it’s not the site owner, so ignore it? The eternal conflict between site owners and end users for control over how things work. (I did somehow trick Chrome into marking my site as HSTS required, but I think that was a bug.)
+&lt;p>Safari would refuse to load resources cross origin. I noticed this when using a static. subdomain for some images. The exception for the static site was in place, and it could be browsed normally, and once loaded into browser cache an image would be displayed on other sites, but it was cranky about making cross origin requests. Kind of curious.
+&lt;p>Chrome will only remember exceptions for a few days. Then you get the scary warning again. Their explanation is that maybe users will accept a cert by accident, and there’s no easy or obvious way to undo that, so the solution is to just automatically undo it. That’s kind of strange, no? Why not make it easier to manage exceptions? If we don’t want to condition users to blindly click through warnings, maybe don’t keep repeating the same warning over and over. If it’s necessary to remind users that a site is off chain, the message could be a reminder, but at least make it look very different than the typical under attack warning.
+&lt;p>At least browsers let you manage exceptions. A number of other programs, including but not limited to RSS readers, offer very little control over cert checking. This poses some difficulty.
+&lt;p>The other approach is to install a new root cert. This works better, where it can be done, but also has a quirk or two.
+&lt;p>Discovered a little too late that LibreSSL didn’t support name constraints for a whole domain. That’s kind of embarrassing. Slipped through my testing because the early trials didn’t use name constraints. And then, for a number of reasons including shaky support for SNI in python 2, my “production” environment generally sidesteps cert validation entirely. But better to find the bug now. Maybe someday name constraints will be relevant.
+&lt;p>When adding a custom root, HPKP is disabled. Maybe. This is necessary to allow interception to work (in those scenarios where you want interception to work). The precise wording is kind of unclear, however. From MDN: “Firefox and Chrome disable pin validation for pinned hosts whose validated certificate chain terminates at a user-defined trust anchor (rather than a built-in trust anchor). This means that for users who imported custom root certificates all pinning violations are ignored.” The first sentence and second sentence aren’t equivalent. If I import a trust anchor with constraints, are pinning violations ignored, as per second sentence? One would hope not, and the first sentence would seem to indicate that. It’s hard to explain how things work when we keep piling exceptions on top of exceptions.</description>
+	<category>software</category><category>web</category>
+	<link>http://www.tedunangst.com/flak/post/live-off-the-chain</link>
+	<pubDate>Thu, 27 Jul 2017 22:54:47 GMT</pubDate>
+	<guid isPermaLink="true">http://www.tedunangst.com/flak/post/live-off-the-chain</guid>
+	</item>
+	
+	<item>
+	<title>light screens vs dark screens</title>
+	<description>&lt;p>How best to use a computer at night?
+&lt;p>One approach, with a fair bit of cross platform support these days, is to color shift the screen, reducing white balance to eliminate blue light. This way your brain doesn’t get all confused about the time and you can sleep later. That’s great, but a bright yellow light is still a bright light.
+&lt;p>I’m looking at the screen and I look away, and there’s nothing to see until my pupils adjust. The screen is obviously too bright, right? But reducing brightness to a comfortable level has the side effect of reducing contrast. The white (yellow) background is now a fairly dim gray into which the black lettering disappears. I want to maintain contrast while reducing the lumens beaming out of the screen.
+&lt;p>There’s a rule of thumb that the screen should be about as bright as a piece of paper. Obviously in the dark, it’s pretty difficult to read plain paper. But we have technology. We can do better.
+&lt;p>How about reversing black and white? White text on a black background. This works really well, where I can get it to work. Keeping the backlight at a medium level is kind of wasteful, with the black background absorbing it all, but it allows the letters to shine through clearly.
+&lt;p>The real test is when I leave my laptop or tablet open in a dark room, does it illuminate the entire ceiling or opposite wall? At brightness levels sufficient to read comfortably, the answer is yes with a white background and no with a black background.
+&lt;p>I’m hardly the first to discover this, and of course it’s something I’ve known for a while now. I always do my programming in dark xterms, and I’ve never suffered much eye strain even programming late at night. On the other hand, switching over to a browser to search for an answer results in instant blindness. But can we go all dark all the time?
+&lt;p>Some programs are already prepared for dark backgrounds. The Kindle reading app supports a black background. Alas, it has a distracting amount of window trim that’s fairly light. Fortunately, it goes away in full screen mode. It’s a small detail, but it would make a big difference to make the whole UI reflect the color scheme.
+&lt;p>I found it’s easier to read text with a serif font when it’s black on white, but this tends to look fuzzy in reverse. So I also switch to a very clean sans serif font for white on black text.
+&lt;p>The biggest issue is web pages. Only a few sites have more than one color scheme (thank you Ars and MARC!). I’ve reworked some of my sites to support both color schemes and it helps. There’s some browser extensions that can rewrite CSS to change background, but I’ve found them unreliable. Either lots of flashing, or they fail to fix the text color resulting in black on black, or some other problem. Frustrating. More motivation to finish work on the various scrapers and proxies I have going. In addition to removing all the crap, I can flip the colors. (Dark Reader for Chrome looks promising; I forget now what extensions I tried before, there’s so many. Bah: it turns Ars Technica inside out so now it’s all bright!)
+&lt;p>Another sore point is PDFs. Some of the longer reading material I’d like to spend some time with comes in PDF form. It’s theoretically easy for a PDF reader to invert colors, but this seems to be a most uncommon option. (Zathura could be a contender. Or MuPDF by pressing the &lt;em>i&lt;/em> key; should have read the manual, doh.)
+&lt;p>In the end, I made some software changes and some habit changes. During the day, I keep everything black on white. It’s the easiest to read in brighter conditions. Then at night I switch the software I can to white on black and stop reading all but a few web sites.</description>
+	<category>computers</category><category>software</category>
+	<link>http://www.tedunangst.com/flak/post/light-screens-vs-dark-screens</link>
+	<pubDate>Thu, 27 Jul 2017 22:54:35 GMT</pubDate>
+	<guid isPermaLink="true">http://www.tedunangst.com/flak/post/light-screens-vs-dark-screens</guid>
+	</item>
+	
+	<item>
+	<title>books chapter five</title>
+	<description>&lt;p>A few different perspectives this week.
+&lt;p>&lt;a name=&quot;coders&quot;>&lt;/a>&lt;h4>coders&lt;/h4>
+&lt;p>All the previous interviewers were generally kind of down on Java, but now we’re talking to Joshua Bloch, Java Architect at Google, who’s pretty obviously down with Java. He also likes the Design Patterns book, in stark contrast to some previous subjects.
+&lt;p>As far as programming goes, in any language, he spends a lot of time just getting the names of identifiers right. Always keep a dictionary handy. Everybody knows one letter names are bad, but this is the first I’ve read about this level of attention. That kind of sounds excessive at first, but after some reflection I think he’s on to something. I can recall a few times when a function was roughly named correctly, but there was enough wiggle room for misunderstanding. Java is infamous for preposterously long names, but I suspect it’s possible to conjure up some precise short names as well.
+&lt;p>We spend some time talking about the coming age of concurrency and how Java is best suited to tackle it, and the rising use of Java within Google to replace some C++ code, and the burden of adding generics to Java. It reads not just a little, but a lot, like an interview today with someone from the Go team. His advocacy for Java concurrency seems pretty weak. They’ve got lowlevel primitives, but also ConcurrentHashMap, which to be honest doesn’t seem all that high level. You look around at Go or Rust today, and they’re taking a different approach. His comments on generics read exactly like what one would read today about Go. You didn’t really need them to write code, then they added them and the language became far more complicated than anybody expected. The more things change.
+&lt;p>One of the hardest problems he worked on turned out to be what we now call stack clash. A debug library would occasionally print the wrong thread ID in its messages. This was ignored as inconsequential. Finally, other problems arose, and after some debugging they found that an enormous stack variable was causing the stack pointer to jump way past the red zone and into another thread’s stack. A valuable lesson in not ignoring inconsequential bugs without understanding the cause.
+&lt;p>A colleague apparently mentioned that problems like this are why it’s important to understand how things work all the way down. He counters that it’s a reason to use safe languages (I believe the bug happened in C code), but that sounds like exactly the reason people need to study what’s happening beneath the abstraction. A “safe” language that doesn’t do stack probing will have the exact same issue.
+&lt;p>&lt;a name=&quot;founders&quot;>&lt;/a>&lt;h4>founders&lt;/h4>
+&lt;p>Tim Brady was the first employee at Yahoo. Yahoo got its start as a simple catalog of links that Jerry Yang and David Filo were collecting, mostly for their EE research. Then people sent them links, and the catalog grew and grew. I liked this as a slight variation of the typical advice to build a product that solves a problem you have. They built something, a very little something, that solved their problem but then they let other people use it.
+&lt;p>For a long time, Yahoo ignored full text search. They’d search their directory, and if that failed, use this partner or that partner to search the rest of the web. This worked well enough when full text search was kinda bad, and they could swap out one partner for another. Then Google came along and made search work, far better than before, and Yahoo was done. There’s a tipping point where the lesser product gets so much better that it becomes the better product.
+&lt;p>Mike Lazaridis founded Research In Motion, foresaw the rising important of wireless data and mobile email, and made  the BlackBerry, which dominates the market. Maybe revise that last part for the second printing.
+&lt;p>Very early on the company’s history, they had an opportunity to persue a contract for the Canadian space agency, which had always been a dream of Tim’s. After the prototypes would be approved, there would be a mass production order for... six. He turned that down to focus on wireless, which he was sure would eventually become much more popular. And indeed, it has. BlackBerry was even used by NASA, so in the long run he fulfilled his space dream anyway.
+&lt;p>He attributes a great deal of BlackBerry’s success to consistency, avoiding the fads, keeping the product simple. And I think that’s true up to a point. You learned how to use a BlackBerry and you were set. But then other fruits came along, and kind of like Yahoo, they found themselves obsolete before they had much of a chance to pivot.
+&lt;p>&lt;a name=&quot;man-month&quot;>&lt;/a>&lt;h4>man-month&lt;/h4>
+&lt;p>Everybody has heard the tale of the second system. All the stuff which was reasonably cut from the first system gets unreasonably piled into the second system. The very worst second systems are those designed by a whole team of architects who have each designed one previous system, which seems to the the natural tendency. You’ve built X, Y, and Z, and now you want to build the successor system, XYZ, which combines and unites these disparate systems. But everybody has their favorite features which got cut, and are essential to add to the next version. Brooks proposes self discipline as the cure, but I also wonder if this isn’t an argument that we should let separate products evolve a little longer on their own. Build X2, Y2, Z2, and so forth, and then see what features truly are essential. Only combine finished products, not works in progress.
+&lt;p>Which gets into the second half of the second system effect, when obsolete functionality is refined beyond its economic benefit. He gives as an example the linkage editor, which I believe we’d call &lt;em>ld&lt;/em>, and its support for overlays. Apparently the OS/360 overlay system was the greatest ever built, but the technique was somewhat obsolete by the time it shipped, in favor of dynamic linking. Alas, the overlay support itself, fine as it is, dramatically slows down the linker. Recognize when to let go and focus effort on building other features.
+&lt;p>On specifications, several important traits are identified. It must be precise. It must be consistent. It must be complete. One strategy is to have only one or two people write the final specification. They can work from the notes of many others, but the final product should be in their own voice.
+&lt;p>Many specifications have a formal and prose version. It’s essential that one specify which has precedence. Beware the dangers of specification by implementation. It’s often easier to change the manual than the code, but that doesn’t result in the best product. A good solution is to build multiple implementations in parallel. This makes it easier to detect discrepancies and also encourages making the right fix. He includes a few examples of systems where unspecified behavior eventually leaked into a de facto spec because there was only one implementation, such as the contents of a register after a particular operation. I’ve seen this plague just about every language, where building a second implementation eventually resorts to running tests against the first implementation instead of reading the manual.
+&lt;p>&lt;a name=&quot;pragmatic&quot;>&lt;/a>&lt;h4>pragmatic&lt;/h4>
+&lt;p>A chapter on tools. Craftsmen love their tools and always use the best.
+&lt;p>14. The power of plain text is that it’s easy to work with. Source code, obviously, but also configuration files, data files, etc. Its lowest common denominator nature means you’ll always have the tools to work with it, even when things have gone terribly wrong.
+&lt;p>15. Learn to use the shell, instead of clicking in the GUI. I don’t disagree, but there’s some cherry picking of examples here.
+&lt;p>16. Learn to use a powerful text editor and use it for everything. Code, email, administration, etc. I happen to use vim for a great many things, but not everything. And I think this advice might get pretty awkward for someone using gmail and an IDE. Not actually advice I would follow unquestioningly. Veering a little bit into myth here.
+&lt;p>17. Use source control. Can’t disagree with this, but the few remaining cavemen who don’t yet use source control probably aren’t going to start anytime soon.
+&lt;p>&lt;a name=&quot;code&quot;>&lt;/a>&lt;h4>code&lt;/h4>
+&lt;p>We’re going to learn about some bits, bit by bit. Paul Revere used two lanterns, or bits, to convey information about the British invasion. 00 for no action, 01 for land, 11 for sea. But what about 10? That’s also for land. It can be hard to see an unlit lantern at a distance at night, so we’ve added some redundancy.
+&lt;p>We can also use bits to encode movie ratings, from A+ all the way down to Pauly Shore. Or film speed. Or UPCs. UPC is a good case study, because there’s a lot of redundancy. The first few bits always follow the same pattern, as do the last bits. This lets you tell if you’re reading the code forwards or backwards. And there’s some check bits as well for parity.
+&lt;p>Stopping here, since the next two chapters go together.
+&lt;p>&lt;a name=&quot;coda&quot;>&lt;/a>&lt;h4>coda&lt;/h4>
+&lt;p>From Yahoo to RIM to OS/360, a lot of companies invested in obsolete technology. Classic disruption, where something that didn’t work gets better and eventually replaces the dominant technique. Do we include Java in the group as well?</description>
+	<category>bookreview</category>
+	<link>http://www.tedunangst.com/flak/post/books-chapter-five</link>
+	<pubDate>Fri, 21 Jul 2017 22:02:06 GMT</pubDate>
+	<guid isPermaLink="true">http://www.tedunangst.com/flak/post/books-chapter-five</guid>
+	</item>
+	
+	<item>
+	<title>openbsd changes of note 625</title>
+	<description>&lt;p>Halcyon changes of summer.
+&lt;p>Continue with some cleanup and improvement of the depend step of building. Lots of little things to support lex and yacc better as well.
+&lt;p>Intel Optane parts are leaking into the wild, some driver fixes to support them.
+&lt;p>Add support for pattern substitution to variables in ksh using a common syntax borrowed from ksh93. Or not, reverted.
+&lt;p>Deprecate &lt;em>fgetln&lt;/em>.
+&lt;p>Add detection for missing X sets to syspatch.
+&lt;p>Refinement of the inteldrm code, including better backlight support.
+&lt;p>A special edition of slaacd for the installer.
+&lt;p>After much wailing and gnashing of teeth, fix &lt;em>strtol&lt;/em> to parse strings like “0xridiculous”.
+&lt;p>A fix for malloc and zero sized allocations when using canaries.
+&lt;p>Add the ability to pause and unpause VMs in vmd.
+&lt;p>Remove “listen secure” syntax from smtpd.conf. It’s broken since a couple of months and noone complained.
+&lt;p>Remove sending of router solicitations and processing of router advertisements from the kernel. 
+&lt;p>The lidsuspend sysctl has been fully replaced by lidaction.
+&lt;p>Fix fortune to filter out unprintable characters. Convert the fortune files to using UTF-8 instead of archaic overprinting. Fortunes with unprintable words may still be obtained with the -o option.
+&lt;p>Introduce some quirks to the IDE and ATA code to prevent drives from attaching twice on hyper-v.
+&lt;p>Add vmctl send and receive as well.
+&lt;p>Update to xterm 330.
+&lt;p>Remove some magic cleanup from dhclient. It will not deliberately attempt to interfere with other operations on the same interface.
+&lt;p>Update libexpat to 2.2.2.  Fixes NULL parser dereference.
+&lt;p>Ilja Van Sprundel found a whole mess of kernel bugs in this and that. Some info leaks, some erroneous signal handling, some unbounded malloc calls. Lions, tigers, bears. Try to fix them.</description>
+	<category>openbsd</category>
+	<link>http://www.tedunangst.com/flak/post/openbsd-changes-of-note-625</link>
+	<pubDate>Fri, 21 Jul 2017 02:15:08 GMT</pubDate>
+	<guid isPermaLink="true">http://www.tedunangst.com/flak/post/openbsd-changes-of-note-625</guid>
+	</item>
+	
+	<item>
+	<title>moving to https</title>
+	<description>&lt;p>The time has finally come to switch everything to https. Actually, I’ve been using https for a while, but now it’s time to inflict, er invite, everyone else along for the ride.
+&lt;p>There is some security benefit, of course, but really it’s all about the speed. I want flak to be as fast as possible, thus we need to be using the fastest protocol.
+&lt;p>On the security front, however, there may be a few things to mention. Curiously, some browsers react to the addition of encryption to a website by issuing a security warning. Yesterday, reading this page in plaintext was perfectly fine, but today, add some AES to the mix, and it’s a terrible menace, unfit for even casual viewing. But fill out the right forms and ask the right people and we can fix that, right?
+&lt;p>I find it strange, to say the least, that I am required to request permission from the authorities to make a secure web site. When I first created flak, there was very little paperwork. I started a server, and that was that. Do we really want an internet where the use of encryption requires authorization?
+&lt;p>What if the authorities say no? Maybe not because they find me personally objectionable, though that’s certainly worth considering, but what happens when they inevitably fuck up some simple thing like leap seconds or URL parsing or whatever? In my experience, reliability is not increased by increasing external dependencies.
+&lt;p>Having opted out of having the authorities say I’m me, can I opt out of having them say anybody else is me? Alas, no. There is a secret browser handshake to partially opt out, but the wrinkle is that it first requires opting in. No way to actually decline the whole mess.
+&lt;p>But not all is lost. I have created my very own &lt;a href=&quot;https://www.tedunangst.com/ca-tedunangst-com.crt&quot;>certificate of great authenticity&lt;/a>. (sha256 on the &lt;a href=&quot;https://www.tedunangst.com/&quot;>front page&lt;/a>.) Before rushing to install, however, one might consider the consequences. What if I go rogue and sign a bunch of other sites I’m not supposed to? A reasonable concern if you don’t know me. But how well do you know the 300 people controlling the certs you do trust? Do you even know their names?
+&lt;p>Or maybe the creation of the rogue cert is not deliberate, but accidental. My signing protocol is currently “try not to fuck up too bad” which is probably shorter than the elaborately documented procedures and safeguards some other people use. Thus, we have the setup for a grand experiment. Who will improperly sign a certificate for a domain they don’t own or release a “testing only” cert into the wild first, me or someone else?
+&lt;p>To swing, briefly, back to the good news, my cert uses the name constraint extension, so in theory it should only be valid for my domain and of little risk to the internet at large. Like much of X.509, this seems slightly backwards: as the user about to install this cert, you should be telling the cert for what sites you trust it, instead of the cert telling you what’s trustworthy. Be aware that software support for name constraints is somewhat hit or miss, and it fails open, so make sure to consult the user manual for your browser. I’m sure it mentions name constraints in there somewhere. (I could, should?, mark the constraints as critical which in theory would mean that unsupported software would fail closed, which would indeed be safer, but then it becomes very difficult to override that, returning to the idea that too much information about the trustiness of a cert is contained within the cert itself. The absence of the critical marker does’t affect or degrade security for modern software.)
+&lt;p>So how does one verify that the downloaded cert is the original? The same way the CAs do. Perform a DNS lookup, make a web request, trust the result. The addition of HPKP would indicate that people find the CA model untrustworthy, solving the problem with trust on first use key continuity. Why not cut out the middle man? Protesting the CAs is admittedly pretty futile, but if I can’t do it, who can?
+&lt;p>One difficult wrinkle is that not everyone controls their own trust chain. A remote service RSS reader may not even offer the option to modify its https behavior. The perils of depending on software one doesn’t control. For now, RSS URLs are exempted from the redirect, but eventually that will be sealed off as well.
+&lt;p>Automated sentiment analysis: good news with a side of bad news with a side of good news with a side of bad news with a side of good news with a side of bad news with a side of good news with a side of bad news. Most likely topical match: TLS.</description>
+	<category>flak</category><category>security</category><category>thoughts</category><category>web</category>
+	<link>http://www.tedunangst.com/flak/post/moving-to-https</link>
+	<pubDate>Tue, 18 Jul 2017 19:12:45 GMT</pubDate>
+	<guid isPermaLink="true">http://www.tedunangst.com/flak/post/moving-to-https</guid>
+	</item>
+	
+</channel>
+</rss>

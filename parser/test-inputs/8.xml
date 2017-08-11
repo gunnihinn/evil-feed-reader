@@ -1,0 +1,664 @@
+<?xml version="1.0" encoding="UTF-8"?><rss xmlns:dc="http://purl.org/dc/elements/1.1/" version="2.0"><channel><description></description><title>Accidentally Quadratic</title><generator>Tumblr (3.0; @accidentallyquadratic)</generator><link>https://accidentallyquadratic.tumblr.com/</link><item><title>`godoc` struct rendering</title><description>&lt;p&gt;&lt;a href="https://blog.golang.org/godoc-documenting-go-code"&gt;&lt;code&gt;godoc&lt;/code&gt;&lt;/a&gt; is Go&amp;rsquo;s tool for extracting doc comments from source code and rendering HTML documentation (loosely parallel Java&amp;rsquo;s &amp;ldquo;javadoc&amp;rdquo;).&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;godoc&lt;/code&gt; processes Go &lt;code&gt;struct&lt;/code&gt; definitions in two passes. First, it runs over the AST recursively building rendering documentation and declarations into a textual output buffer containing an HTML fragment. The walker for this pass is shared with the rest of &lt;code&gt;godoc&lt;/code&gt;&amp;rsquo;s documentation rendering (so that e.g. top-level definitions and struct fields share the bulk of their rendering code).&lt;/p&gt;
+
+&lt;p&gt;Then, it performs a second pass, modifying the HTML to add anchors to field names, so that e.g. &lt;a href="https://golang.org/pkg/net/http/#Response.Header"&gt;https://golang.org/pkg/net/http/#Response.Header&lt;/a&gt; links specifically to the &lt;code&gt;Header&lt;/code&gt; field in the &lt;code&gt;Response&lt;/code&gt; struct.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, previously, &lt;code&gt;godoc&lt;/code&gt; &lt;a href="https://go.googlesource.com/tools/+/721f218496963f33ebc9fbc5cdbdeed007ad9c49/godoc/godoc.go#232"&gt;implemented this&lt;/a&gt; with nested loops over the struct fields and over the rendered text:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;for _, f := range st.Fields.List {
+    foreachLine(buf.Bytes(), func(line []byte) {
+        …
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Since each struct field added at least one line to the output, this turned into an O(n²) loop.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href="https://go-review.googlesource.com/c/35486/4/godoc/godoc.go"&gt;fix&lt;/a&gt; walks the two lists sequentially, first building up a &lt;code&gt;map&lt;/code&gt; of names that needs links, and then walking the text in a single pass, looking for lines that match any of the names.&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/161469946537</link><guid>https://accidentallyquadratic.tumblr.com/post/161469946537</guid><pubDate>Mon, 05 Jun 2017 08:55:49 -0700</pubDate><category>accidentally</category><category>quadratic</category><category>godoc</category><category>documentation</category><category>text</category></item><item><title>mercurial changegroup application</title><description>&lt;p&gt;&lt;a href="https://www.mercurial-scm.org/"&gt;Mercurial&lt;/a&gt; (sometimes called &amp;ldquo;hg&amp;rdquo;, the name of its command-line tool, named after the &lt;a href="https://en.wikipedia.org/wiki/Mercury_(element)"&gt;elemental symbol for mercury&lt;/a&gt;) is a distributed version-control system.&lt;/p&gt;
+
+&lt;p&gt;When applying a &amp;ldquo;change group&amp;rdquo; (a group of changes applied as a unit, e.g. in a single &lt;code&gt;hg push&lt;/code&gt;), Mercurial tracks the &lt;a href="https://www.mercurial-scm.org/wiki/Head"&gt;heads&lt;/a&gt; before and after the changeset. Previously, it stored the &amp;ldquo;&lt;code&gt;oldheads&lt;/code&gt;&amp;rdquo; list of pre-changeset heads as a Python list, and &lt;a href="https://www.mercurial-scm.org/repo/hg/file/ed5b25874d99/mercurial/changegroup.py#l429"&gt;computed the newly-created heads&lt;/a&gt; post-changeset with:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;newheads = [h for h in repo.heads() if h not in oldheads]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Since &lt;code&gt;h not in oldheads&lt;/code&gt; is O(n) on a list, a large repository would incur an O(N²) cost with respect to the number of heads in the repository.&lt;/p&gt;
+
+&lt;p&gt;What&amp;rsquo;s perhaps remarkable about this change is the &lt;a href="https://www.mercurial-scm.org/repo/hg/rev/ed5b25874d99"&gt;size of the fix&lt;/a&gt;, which I think is the smallest diff in Accidentally Quadratic&amp;rsquo;s history: Wrapping a simple &lt;code&gt;set(…)&lt;/code&gt; around the instantiation of the list.&lt;/p&gt;
+
+&lt;p&gt;In my judgment this fix is notable for a few reasons:&lt;/p&gt;
+
+&lt;ul&gt;&lt;li&gt;It&amp;rsquo;s a testament to Python&amp;rsquo;s expressiveness and consistency of APIs, that swapping out a &lt;code&gt;set&lt;/code&gt; for a &lt;code&gt;list&lt;/code&gt; can very often be a 5-character change.&lt;/li&gt;
+&lt;li&gt;It&amp;rsquo;s a vote in favor of all languages having a readily-available &lt;code&gt;set&lt;/code&gt; type in their standard libraries along side lists and mapping types, so that fixes of this type are easy, and also hopefully less-often necessary in the first place.&lt;/li&gt;
+&lt;li&gt;My first point notwithstanding, it&amp;rsquo;s an argument against having a polymorphic &lt;code&gt;in&lt;/code&gt; or &lt;code&gt;contains&lt;/code&gt; method that silently degrades to O(n) behavior on lists or similar containers. Wherever practical, asymptotics should be clear from the call site!&lt;/li&gt;
+&lt;/ul&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/161243900944</link><guid>https://accidentallyquadratic.tumblr.com/post/161243900944</guid><pubDate>Tue, 30 May 2017 09:01:13 -0700</pubDate><category>accidentally</category><category>quadratic</category><category>hg</category><category>membership</category><category>list</category><category>set</category></item><item><title>Elasticsearch IndicesQuery</title><description>&lt;p&gt;&lt;a href="https://www.elastic.co/products/elasticsearch"&gt;Elasticsearch&lt;/a&gt; is a distributed search engine. One can store “documents” within “indices”, which are collections of documents. One common pattern for storing time based data is to use one index per day. E.g.: &lt;code&gt;tweets-2017-01-01&lt;/code&gt;, &lt;code&gt;tweets-2017-02-01&lt;/code&gt; and so on. This makes having many indices decently common, and it also makes searching across many indices common in a single search.&lt;/p&gt;
+
+&lt;p&gt;Elasticsearch has a query type called IndicesQuery, which lets you (among other things) optimise your query path by knowing which index to search in. For example, say that you have one index pattern for tweets (&lt;code&gt;tweets-YYYY-MM-DD&lt;/code&gt;) and one for Reddit posts (&lt;code&gt;reddit-YYYY-MM-DD&lt;/code&gt;). Say that someone searches for “hashtag: kittens OR subreddit: awww”. You know that you don’t have to execute the hashtag query in the Reddit indices and that you do not have to execute the subreddit query in the tweet indices. This is done by specifying to only execute the hashtag in indices that match &lt;code&gt;tweets-*&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;When executing the query, Elasticsearch will consider each shard (of an index) separately. Usually one has 2-5 shards per index. For each shard, it will check if the index name matches the pattern given by the &lt;code&gt;IndicesQuery&lt;/code&gt;. This is where we find our performance bug.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="https://github.com/elastic/elasticsearch/blob/3f941183906efd3a80ae9cd2a1f53f51c4c88138/src/main/java/org/elasticsearch/index/query/IndicesFilterParser.java#L148-L157"&gt;The algorithm in the 1.X&lt;/a&gt; &lt;a href="https://github.com/elastic/elasticsearch/blob/52859e3a523983275cea0bbb0bd2d4f0203f69cf/core/src/main/java/org/elasticsearch/index/query/IndicesQueryParser.java#L155-L163"&gt;and 2.X&lt;/a&gt; versions of ES work by first expanding a pattern into the list of all matching indices – &lt;code&gt;tweets-*&lt;/code&gt; becomes &lt;code&gt;["tweets-2017-01-01", "tweets-2017-01-02", …]&lt;/code&gt;. Then, for each index being considered, it checks for membership in that list:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt; protected boolean matchesIndices(String currentIndex, String... indices) {
+    final String[] concreteIndices = indexNameExpressionResolver.concreteIndices(clusterService.state(),     IndicesOptions.lenientExpandOpen(), indices);
+    for (String index : concreteIndices) {
+      if (Regex.simpleMatch(index, currentIndex)) {
+        return true;
+      }
+    }
+  return false;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(Here, &lt;code&gt;indices&lt;/code&gt; is a list of patterns, and the &lt;code&gt;concreteIndices()&lt;/code&gt; method &lt;a href="https://github.com/elastic/elasticsearch/blob/54669d69925aa12d24b5ab2303f5fe98c6552a07/src/main/java/org/elasticsearch/cluster/metadata/MetaData.java#L692-L692"&gt;applies the wildcard internally to the list of all indices&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;This means that the time complexity per shard is &lt;code&gt;O(n)&lt;/code&gt;, where n is the number of indices in your cluster. Since we consider at least one shard per index, the overall search complexity then goes to &lt;code&gt;O(n^2)&lt;/code&gt;. Furthermore, this expansion (and Elasticsearch’s &lt;code&gt;Regex.simpleMatch&lt;/code&gt; &lt;a href="https://github.com/jprante/elasticsearch-client/blob/master/elasticsearch-client-common/src/main/java/org/elasticsearch/common/regex/Regex.java"&gt;pattern matcher&lt;/a&gt;) generate a lot of garbage, stressing the garbage collector and making the process even slower.&lt;/p&gt;
+
+&lt;p&gt;(For those of you arriving here via &lt;a href="https://research.swtch.com/glob"&gt;Russ’s blog&lt;/a&gt;, you’ll be chagrined to note that ES implements an &lt;a href="https://github.com/jprante/elasticsearch-client/blob/master/elasticsearch-client-common/src/main/java/org/elasticsearch/common/regex/Regex.java"&gt;exponential-time backtracking&lt;/a&gt; glob matcher, although that fact isn’t implicated in the bug in question.)&lt;/p&gt;
+
+&lt;p&gt;We used this query in our not-too-shabby production cluster. At the time, it had a total of 1152 cores and we searched over roughly 150 TB of data in about 8500 indices. We discovered that we spent almost half of our CPU time in the &lt;code&gt;Regex.simpleMatch&lt;/code&gt; method. We patched the algorithm to instead directly check if the current index matches any of the specified indices, making it O(m), where m is the number of index patterns specified in the query (we usually had 2-3). On top of the saved CPU, this also had the benefit of making us spent about 1/3 as much time in Garbage Collection pauses, due to the fewer allocations of Strings.&lt;/p&gt;
+
+&lt;p&gt;This seems to have been fixed in the &lt;a href="https://www.elastic.co/blog/the-great-query-refactoring-thou-shalt-only-parse-once"&gt;‘Great Query Rewrite’&lt;/a&gt; for Elasticsearch 5. I do not know if this was explicitly targeted as a performance fix, if it was by accident or if someone just thought &amp;lsquo;oh this might be slow’.&lt;/p&gt;
+
+&lt;hr&gt;&lt;p&gt;This post was contributed by &lt;a href="https://github.com/antonha/"&gt;Anton Hägerstrand&lt;/a&gt;.&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/160052105651</link><guid>https://accidentallyquadratic.tumblr.com/post/160052105651</guid><pubDate>Thu, 27 Apr 2017 09:01:09 -0700</pubDate><category>accidentally</category><category>quadratic</category><category>submission</category><category>elasticsearch</category><category>wut</category><category>java</category><category>pattern matching</category></item><item><title>vim TAGS lookup</title><description>&lt;p&gt;A &lt;a href="https://en.wikipedia.org/wiki/Ctags"&gt;tags file&lt;/a&gt; is a classic UNIX format for storing an index of where symbols are defined in a source tree, for ease of finding a symbol definition from within an editor. Both vim and emacs have native support for loading TAGS files and using them to jump to symbol definitions.&lt;/p&gt;
+
+&lt;p&gt;When performing tags lookups, &lt;code&gt;vim&lt;/code&gt; deduplicates results, to suppress identical matches (perhaps in case you&amp;rsquo;ve concatenated multiple tags files? I&amp;rsquo;ll admit to not fully understanding the intent here).&lt;/p&gt;
+
+&lt;p&gt;However, historically, it stored the matches in an array, which meant that looking up tags was &lt;a href="https://github.com/vim/vim/issues/1044"&gt;accidentally quadratic in the number of returned matches&lt;/a&gt;. Presumably this escaped notice in part because usually most symbols have only a few definitions, but it was a problem for programmatic use, or in some edge cases of manual search or pathological code bases.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href="https://github.com/vim/vim/pull/1046"&gt;fix&lt;/a&gt;, as it often is on this blog, was to store the results in a hash table, providing duplicate-merging for free.&lt;/p&gt;
+
+&lt;p&gt;Interestingly, some earlier developer had &lt;a href="https://github.com/vim/vim/blob/1b0c2fcf6e85c9b85c24757ba970061e1f3e4e80/src/tag.c#L2381-L2386"&gt;noticed that this code could be slow&lt;/a&gt;, but instead of fixing it, had added code to check for &lt;code&gt;^C&lt;/code&gt; and abort the entire match, so as to return use of the editor to the user! We may never know if that author didn&amp;rsquo;t realize there was a relatively-easy fast solution, or just thought it was too much work in C (as of the fix, vim did have a built-in hash table type, but it needed to be extended to support non-NULL-terminated strings).&lt;/p&gt;
+
+&lt;p&gt;Thanks to James McCoy for &lt;a href="https://github.com/vim/vim/pull/1046"&gt;fixing this one&lt;/a&gt; as well as bringing it to my attention.&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/158074080953</link><guid>https://accidentallyquadratic.tumblr.com/post/158074080953</guid><pubDate>Mon, 06 Mar 2017 10:01:04 -0800</pubDate><category>accidentally</category><category>quadratic</category><category>vim</category><category>tags</category><category>c</category><category>hash table</category></item><item><title>Capistrano server definition</title><description>&lt;p&gt;&lt;a href="http://capistranorb.com/"&gt;Capistrano&lt;/a&gt; is a server automation and deployment tool written in Ruby. It provides a Ruby DSL for defining deployments and other operations on a set of servers, and executing those flows.&lt;/p&gt;
+
+&lt;p&gt;A Capistrano environment defines a number of servers, each of which has zero or more &amp;ldquo;roles&amp;rdquo;, which help define which of your rules should be executed on them. Servers are distinguished by their hostname and ssh ports; Two servers with the same hostname and ssh port are considered to be the same server.&lt;/p&gt;
+
+&lt;p&gt;Capistrano allows you to define servers using either the &lt;code&gt;role&lt;/code&gt; helper, which attaches a role to a server (defining the server if needed), or the more explicit &lt;code&gt;server&lt;/code&gt; method. If you define multiple roles on the same server (as in &lt;a href="http://capistranorb.com/documentation/getting-started/preparing-your-application/#4-configure-your-server-addresses-in-the-generated-files"&gt;this example in the docs&lt;/a&gt;):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;role :app, %w{example.com}
+role :web, %w{example.com}
+role :db,  %w{example.com}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then Capistrano identifies that those servers are the same server, and merges the roles into a single &lt;code&gt;Server&lt;/code&gt;:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;[10] pry(main)&amp;gt; Capistrano::Configuration.env.servers
+=&amp;gt; #&amp;lt;Capistrano::Configuration::Servers:0x00000001763eb8
+ @servers=
+  [#&amp;lt;Capistrano::Configuration::Server:0x00000001763c88
+    @hostname="example.com",
+    @keys=[],
+    @local=false,
+    @port=nil,
+    @properties=#&amp;lt;Capistrano::Configuration::Server::Properties:0x00000001763940 @properties={}, @roles=#&amp;lt;Set: {:db, :app, :web}&amp;gt;&amp;gt;,
+    @user=nil&amp;gt;]&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;However, &lt;a href="https://github.com/capistrano/capistrano/pull/1846/"&gt;until recently&lt;/a&gt;, this merging and deduplication was performed by walking the list of all registered servers, comparing hostname and port. Obviously, this meant that each new server definition had to scan all previous servers, for a classic O(n²) bug.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href="https://github.com/capistrano/capistrano/pull/1846/"&gt;patch&lt;/a&gt; resolved the issue in the obvious way, by storing servers in a hash keyed by the &lt;code&gt;(hostname, port)&lt;/code&gt; pair.&lt;/p&gt;
+
+&lt;p&gt;Thanks to &lt;a href="https://twitter.com/dbenamy"&gt;Daniel Benamy&lt;/a&gt; for finding, fixing, and bringing this one to my attention.&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/157780750486</link><guid>https://accidentallyquadratic.tumblr.com/post/157780750486</guid><pubDate>Mon, 27 Feb 2017 07:00:51 -0800</pubDate><category>accidentally</category><category>quadratic</category><category>capistrano</category><category>ruby</category><category>devops</category></item><item><title>Ruby `reject!`</title><description>&lt;p&gt;The &lt;a href="https://docs.ruby-lang.org/en/2.4.0/Array.html#method-i-reject-21"&gt;&lt;code&gt;reject!&lt;/code&gt; method&lt;/a&gt; in Ruby selectively removes elements from an array in-place, based on a provided predicate (in the form of a block).&lt;/p&gt;
+
+&lt;p&gt;Between Ruby 1.9.3 and Ruby 2.3, &lt;code&gt;reject!&lt;/code&gt; &lt;a href="https://bugs.ruby-lang.org/issues/10714"&gt;was accidentally quadratic&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href="https://github.com/ruby/ruby/blob/6343e30c147dc00e34e9d45ea3f74f94873b9709/array.c#L2589-L2591"&gt;underlying bug&lt;/a&gt; was fairly straightforward. Every time the provided predicate returned &lt;code&gt;true&lt;/code&gt;, the code immediately deleted that element:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;if (RTEST(rb_yield(v))) {
+    rb_ary_delete_at(ary, i);
+    result = ary;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In an array, deleting an index necessitates shifting back all the following episodes, and so is an O(n) operation; If your predicate rejects a fixed fraction of elements, the total runtime is this O(n²).&lt;/p&gt;
+
+&lt;p&gt;The bug was &lt;a href="https://github.com/ruby/ruby/commit/5ec029d1ea52224a365a11987379c3e9de74b47a"&gt;fixed&lt;/a&gt; by keeping a count of accepted elements, and moving each element into its proper final position as it is scanned, and truncating the array at the end.&lt;/p&gt;
+
+&lt;p&gt;This bug is fairly straightforward, but the part I find most interesting was why it was introduced. The code used to be linear, but it regressed in response to &lt;a href="https://bugs.ruby-lang.org/issues/2545"&gt;bug #2545&lt;/a&gt;, which concerned the behavior when the block passed to &lt;code&gt;reject!&lt;/code&gt; executed a &lt;code&gt;break&lt;/code&gt; or otherwise exited early. Because &lt;code&gt;reject!&lt;/code&gt; is in-place, any partial modifications it makes are still visible after an early exit, and &lt;code&gt;reject!&lt;/code&gt; was leaving the array in a nonsensical state. The obvious fix was to ensure that the array was &lt;em&gt;always&lt;/em&gt; in a consistent state, which is what resulted in the &amp;ldquo;delete every time&amp;rdquo; behavior.&lt;/p&gt;
+
+&lt;p&gt;I find this interesting as a cautionary tale of how several of Ruby&amp;rsquo;s features (here, ubiquitous mutability, blocks, and nonlocal exits) interact to create suprising edge cases that need to be addressed, and how addressing those edge cases can easily result in yet more problems (here, quadratic performance). In my mind, I&amp;rsquo;d just rather not have a &lt;code&gt;reject!&lt;/code&gt; at all, and callers who need to mutate an array in-place can figure out how to do safely with respect to their own use cases.&lt;/p&gt;
+
+&lt;p&gt;(Thanks to &lt;a href="https://twitter.com/_RussellDavis"&gt;Russell Davis&lt;/a&gt; for bringing this one to my attention).&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/157496054437</link><guid>https://accidentallyquadratic.tumblr.com/post/157496054437</guid><pubDate>Mon, 20 Feb 2017 12:14:44 -0800</pubDate><category>accidentally</category><category>quadratic</category><category>ruby</category><category>reject!</category></item><item><title>Chrome Server-Sent Event Parsing</title><description>&lt;p&gt;&lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events"&gt;Server-sent events&lt;/a&gt; are a standard for web servers to stream a sequence of events to a browser over a single HTTP connection. You can view them as a simpler, unidirectional, alternative to websockets (that doesn&amp;rsquo;t require support from any middleboxes), or as an optimization over one-event-per-request longpolling.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events#Event_stream_format"&gt;wire format&lt;/a&gt; for an event consists of a number of newline-separated key-value pairs, in a simple &lt;code&gt;key: value&lt;/code&gt; format. For instance, the documentation provides the example event:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;event: userconnect
+data: {"username": "bobby", "time": "02:33:48"}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Until &lt;a href="https://bugs.chromium.org/p/chromium/issues/detail?id=570148"&gt;recently&lt;/a&gt;, Chrome&amp;rsquo;s &lt;a href="https://chromium.googlesource.com/chromium/src.git/+/97eb71c08a82bbd3d979a91691750b7cafb4d787/third_party/WebKit/Source/core/page/EventSource.cpp"&gt;parser for this format&lt;/a&gt; worked strictly line-at-a-time, maintaining no additional state. When it received data from the server, it appended the data to its buffer, and then attempted to parse a k-v pair off the first line:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;void EventSource::didReceiveData(const char* data, unsigned length)
+{
+    append(m_receiveBuf, m_decoder-&amp;gt;decode(data, length));
+    parseEventStream();
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If it didn&amp;rsquo;t find a complete event (e.g. missing newline), the parser just stopped, waiting for the next batch of data to arrive.&lt;/p&gt;
+
+&lt;p&gt;This works well as long each line arrives in a relatively small number of packets. However, if you have a very long line (e.g. a 16MB &lt;code&gt;data&lt;/code&gt; field), it will (of necessity) be chunked into many smaller packets on the wire, which will end up getting passed to &lt;code&gt;didReceiveData&lt;/code&gt; separately. In response to each packet, the parser will scan the entire line to the end, note the lack of newline, and then abort. Thus, we will do &lt;code&gt;N/chunk-size&lt;/code&gt; scans of our line, each one scanning more and more bytes, resulting in an overall quadratic blowup!&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href="https://chromium.googlesource.com/chromium/src.git/+/f8259072812989d0042d6c287c03a9a351e2dfff"&gt;fix&lt;/a&gt; makes the &lt;a href="https://chromium.googlesource.com/chromium/src.git/+/f8259072812989d0042d6c287c03a9a351e2dfff/third_party/WebKit/Source/core/page/EventSourceParser.cpp"&gt;new parser&lt;/a&gt; more stateful, so that it keeps track of its progress in the parse across each new packet, and avoids scanning the buffer &lt;code&gt;O(N)&lt;/code&gt; times.&lt;/p&gt;
+
+&lt;p&gt;(bug submitted by @whyareallthesenamestakenalready)&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/154996874112</link><guid>https://accidentallyquadratic.tumblr.com/post/154996874112</guid><pubDate>Mon, 26 Dec 2016 15:23:46 -0800</pubDate><category>accidentally</category><category>quadratic</category><category>chrome</category><category>server-sent-events</category><category>strings</category><category>parsing</category></item><item><title>Rust hash iteration+reinsertion</title><description>&lt;p&gt;It was &lt;a href="https://github.com/rust-lang/rust/issues/36481"&gt;recently discovered&lt;/a&gt; that some surprising operations on Rust’s standard hash table types could go quadratic.&lt;/p&gt;
+
+&lt;p&gt;Perhaps the simplest illustration is &lt;a href="https://github.com/rust-lang/rust/issues/36481#issuecomment-258247661"&gt;this snippet from a comment&lt;/a&gt;, here simplified even further:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;use std::collections::hash_set::HashSet;
+
+fn main() {
+    println!("populating...");
+
+    let mut one = HashSet::new();
+    for i in 1..5000000 {
+        one.insert(i);
+    }
+    println!("cloning...");
+
+    let mut two = HashSet::new();
+    for v in one {
+        two.insert(v);
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In this example, the first loop (populating &lt;code&gt;one&lt;/code&gt;) finishes fairly quickly, as you would expect, but the second loop (copying into &lt;code&gt;two&lt;/code&gt;) takes much, much longer.&lt;/p&gt;
+
+&lt;p&gt;I enjoy this bug for at least two reasons: One, it’s fun technically, allowing us to take a brief deep dive into hash-table implementation – something most of us are normally able to treat as a solved problem – and two, it’s a great example of subtle quadratic behavior in a system specifically designed by smart and well-informed developers to avoid the possibility of accidental quadratic behavior!&lt;/p&gt;
+
+&lt;h2&gt;Robin-Hood hashing&lt;/h2&gt;
+
+&lt;p&gt;To understand the bug, we’re going to need to understand the hash table strategy used by Rust’s standard hash tables. A major challenge in any general-purpose hash table implementation is how to handle hash collisions; If you have a table with N buckets, eventually you’ll get two elements with the same value of &lt;code&gt;hashcode%N&lt;/code&gt;, and what do you do?&lt;/p&gt;
+
+&lt;p&gt;Rust uses &lt;a href="http://www.sebastiansylvan.com/post/robin-hood-hashing-should-be-your-default-hash-table-implementation/"&gt;Robin Hood hashing&lt;/a&gt;, a relatively old technique that’s recently received new attention. Robin Hood hashing is a variation on good old open addressing with linear probing, with a small twist.&lt;/p&gt;
+
+&lt;p&gt;First, let’s refresh our memory:&lt;/p&gt;
+
+&lt;p&gt;In hash tables, “open addressing” refers to the technique of, upon encountering a collision, somehow selecting an alternate location in the hash table. It’s most commonly contrasted with “chaining”, in which you store multiple entries in a single hash bucket, typically using a linked list.&lt;/p&gt;
+
+&lt;p&gt;Linear probing, in particular, means that select alternate buckets by scanning forward from the natural bucket. If you try to insert an element with hash code &lt;code&gt;H&lt;/code&gt; into a table with &lt;code&gt;N&lt;/code&gt; buckets, and bucket &lt;code&gt;H%N&lt;/code&gt; is full, you try &lt;code&gt;(H+1)%N&lt;/code&gt;, &lt;code&gt;(H+2)%N&lt;/code&gt; and so on, until you find an empty bucket. On lookup, you start at &lt;code&gt;H%N&lt;/code&gt; and scan forward until you find your element or an empty bucket.&lt;/p&gt;
+
+&lt;p&gt;Open addressing with linear probing is arguably the simplest possible general-purpose hash table implementation, and it can work fine (assuming a good hash function) as long as you don’t let your load factor get too high (reminder: the load factor is the number of elements stored in the table, divided by the number of buckets in the hash table. A load factor of 0.5 means that half the buckets are in use). If your load factor gets too high, then elements can end up extremely far from their natural hash bucket, necessitating a lot of scanning on inserts and lookups.&lt;/p&gt;
+
+&lt;p&gt;Robin Hood hashing improves on linear probing with a simple trick: When you’re scanning forward from &lt;code&gt;H%N&lt;/code&gt;, look at each element you encounter. If the inserting element is further from its “natural” bucket than the element in the bucket you’re considering, then swap the new element and the element in that bucket, and continue scanning with the other element.&lt;/p&gt;
+
+&lt;p&gt;Let’s consider an example. Imagine this is a subset of a hash table; I’ve labeled each bucket below it with its index, and inside the bucket I’ve placed &lt;code&gt;hashcode%N&lt;/code&gt;, what I’ve been calling the “natural” index of an element:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;+---+---+---+---+---+
+| 0 | 0 | 2 | 1 |   | ...
++---+---+---+---+---+
+  0   1   2   3   4
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now suppose we want to insert an element with &lt;code&gt;hash%N == 1&lt;/code&gt;. We start at bucket 1, and find it full. The element in that bucket is at index &lt;code&gt;1&lt;/code&gt; and wants to be at index &lt;code&gt;0&lt;/code&gt;, so it’s further from home than our new element is. We keep looking. At index &lt;code&gt;2&lt;/code&gt; we find an element with natural index of &lt;code&gt;2&lt;/code&gt;. It is a distance &lt;code&gt;0&lt;/code&gt; from home, and we’re a distance &lt;code&gt;1&lt;/code&gt;, which is further. So we place our new element at index &lt;code&gt;2&lt;/code&gt;, and pick up whatever element used to be there, and continue. Eventually, we end up with:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;+---+---+---+---+---+
+| 0 | 0 | 1 | 1 | 2 | ...
++---+---+---+---+---+
+  0   1   2   3   4
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The net result of this process is to reduce the &lt;em&gt;variance&lt;/em&gt; of how far out-of-position elements are. Reducing variance means we have much more predictable insert and lookup times, which is strongly desirable. When we employ robin hood hashing, we can safely load a table up to a load factor of 90% or even 95%. We can even prove (as the author of &lt;a href="https://cs.uwaterloo.ca/research/tr/1986/CS-86-14.pdf"&gt;the original paper&lt;/a&gt; did) fairly tight bounds on the expected maximum probe distance.&lt;/p&gt;
+
+&lt;h2&gt;The Problem&lt;/h2&gt;
+
+&lt;p&gt;Rust’s problem arises when you iterate over one table and insert the resulting entries into another table. The problem occurs because iteration over a hash table procedes by walking the backing array of the hash table directly. This results in yielding entries approximately in hash order, which turns out to be fatal when combined with the other elements of Rust’s implemention.&lt;/p&gt;
+
+&lt;p&gt;The final detail we need to know in order to understand the bug is Rust’s table-sizing algorithm. Rust uses power-of-two sized tables (a common technique, since it means you can use bitmasks instead of more-expensive modulus), and grows tables when they reach a 90% load factor.&lt;/p&gt;
+
+&lt;p&gt;Now, let’s consider what happens when we execute the above example. For simplicity, we’ll pretend that &lt;code&gt;two&lt;/code&gt; starts out with a table size of half of &lt;code&gt;one&lt;/code&gt;’s. In reality it will start out extremely small and grow through powers of two, but the half-size case exhibits the necessary behavior and is simpler for illustration. We can modify the above example to initialize &lt;code&gt;two&lt;/code&gt; as &lt;code&gt;let two = HashSet::with_capacity(one.capacity()/2);&lt;/code&gt; to verify that this still exhibits quadratic behavior.&lt;/p&gt;
+
+&lt;p&gt;So, let’s consider what happens as we start copying &lt;code&gt;one&lt;/code&gt; into a &lt;code&gt;two&lt;/code&gt; half its size. Things procede uneventually for the first half of the table; Because &lt;code&gt;two&lt;/code&gt; has half as many buckets as &lt;code&gt;one&lt;/code&gt;, &lt;code&gt;hash%two.raw_capacity() == hash%one.raw_capacity()&lt;/code&gt; for the first half of the table, and elements are inserted into &lt;code&gt;two&lt;/code&gt; in approximately the same indexes as they had in &lt;code&gt;one&lt;/code&gt;. Because elements have been reordered slightly in &lt;code&gt;one&lt;/code&gt; by the insertion process we occasionally have to search slightly, but never far, because most of the space to the right is still free. So, as we go, the picture looks something like (where &lt;code&gt;Xs&lt;/code&gt; are filled buckets, and dots are empty):&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;one:    |XX.XX.XXXX.XXXXXX.XXX..XXX|
+                 ^-- cursor
+two:    |X.XXXX.XX....|
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;However, eventually we reach the midpoint of &lt;code&gt;one&lt;/code&gt;’s table. At this point, indexes in &lt;code&gt;two&lt;/code&gt;’s half-sized table wrap around, and we start searching for openings beginning near the start of &lt;code&gt;two&lt;/code&gt; once again.&lt;/p&gt;
+
+&lt;p&gt;At this point, &lt;code&gt;two&lt;/code&gt;’s load factor is approximately equal to that of &lt;code&gt;one&lt;/code&gt;; it has half as many buckets, and approximately half as many elements. Because Rust resizes tables at a 90% load factor, we know &lt;code&gt;one&lt;/code&gt;’s load factor to be between 45% and 90%. If we suppose by way of example that &lt;code&gt;one&lt;/code&gt; is at a 70% factor, &lt;code&gt;two&lt;/code&gt; can absorb 20% of its capacity past &lt;code&gt;one&lt;/code&gt;’s half-way point until it will resize.&lt;/p&gt;
+
+&lt;p&gt;During the insertion of that additional 20% of &lt;code&gt;two&lt;/code&gt;’s capacity (constituting something like 70% * 10% = 7% of &lt;code&gt;one&lt;/code&gt;’s elements), we run into trouble.&lt;/p&gt;
+
+&lt;p&gt;We begin inserting at the beginning of &lt;code&gt;two&lt;/code&gt;. &lt;code&gt;two&lt;/code&gt; is 70% full, so as we insert we search to the right until we find an empty bucket.&lt;/p&gt;
+
+&lt;p&gt;However, “immediately to the right” is &lt;em&gt;also&lt;/em&gt; where our future inserts will land, since we’re walking &lt;code&gt;two&lt;/code&gt; in bucket order. And so, as we go, the position at which we attempt an insertion marches forward at a rate of one bucket per bucket in &lt;code&gt;one&lt;/code&gt;; But the insertions all “stack up”, pushing the distance-until-empty forward at &lt;em&gt;greater&lt;/em&gt; than one bucket per bucket, since we must also contend with the 70% of buckets already full. The situation rapidly looks something more like:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;one:    |XX.XX.XXXX.XXXXXX.XXX..XXX|
+                           ^-- cursor
+two:    |XXXXXXX.X.....|
+            ^-- cursor/2
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;With each element we insert, we must search further and further to the right to find the empty spaces in &lt;code&gt;two&lt;/code&gt;. This is, essentially, a classic triangular pattern, and definitely quadratic.&lt;/p&gt;
+
+&lt;p&gt;This pattern continue until we fill up &lt;code&gt;two&lt;/code&gt; to 90% capacity; At that point, &lt;code&gt;two&lt;/code&gt; will be resized, and performance will go back to something reasonable. However, even though the quadratic regime covers only a small fraction of the middle of the loop, it’s an approximately-constant fraction, and so the quadratic behavior is still quadratic.&lt;/p&gt;
+
+&lt;p&gt;We can demonstrate this, visually. If we &lt;a href="https://gist.github.com/nelhage/c99ad393a45c921ed5b1fffe48228143"&gt;augment&lt;/a&gt; the above program to measure the cumulative time to insert N elements into &lt;code&gt;two&lt;/code&gt;, we observe the above behavior:&lt;/p&gt;
+
+&lt;p&gt;&lt;figure class="tmblr-full" data-orig-height="405" data-orig-width="540" data-orig-src="https://68.media.tumblr.com/7fa3438822a69215161289dc331ddd08/tumblr_inline_oh2uc2w06w1qkpwp0_540.png"&gt;&lt;img src="https://68.media.tumblr.com/ae622f53a8a2c3028173f26dbefe89d6/tumblr_inline_oh3v9hu5hm1qkpwp0_540.png" alt="" data-orig-height="405" data-orig-width="540" data-orig-src="https://68.media.tumblr.com/7fa3438822a69215161289dc331ddd08/tumblr_inline_oh2uc2w06w1qkpwp0_540.png"/&gt;&lt;/figure&gt;&lt;/p&gt;
+
+&lt;p&gt;We can see the exact behavior I described – efficient performance for the first half, a quadratic explosion, and then a return to efficiency.&lt;/p&gt;
+
+&lt;p&gt;If we don’t preallocate &lt;code&gt;capacity/2&lt;/code&gt; elements, we can see the full picture:
+&lt;figure class="tmblr-full" data-orig-height="405" data-orig-width="540" data-orig-src="https://68.media.tumblr.com/43c255a25b455c752718db3d4d81eac6/tumblr_inline_oh2uewjKy61qkpwp0_540.png"&gt;&lt;img src="https://68.media.tumblr.com/dea2b060828857a9546bd70f235ae66f/tumblr_inline_oh3v9ikMmi1qkpwp0_540.png" alt="" data-orig-height="405" data-orig-width="540" data-orig-src="https://68.media.tumblr.com/43c255a25b455c752718db3d4d81eac6/tumblr_inline_oh2uewjKy61qkpwp0_540.png"/&gt;&lt;/figure&gt;&lt;/p&gt;
+
+&lt;p&gt;It is an essentially similar picture, except that the quadratic breakdown happens prior to each resize of the underlying table.&lt;/p&gt;
+
+&lt;h1&gt;The Fix&lt;/h1&gt;
+
+&lt;p&gt;Rust &lt;a href="https://github.com/rust-lang/rust/pull/37470"&gt;is working around the issue&lt;/a&gt; by reseeding the underlying SipHash hashing algorithm on a per-table basis. This solves the problem very thoroughly, by ensuring that the order of elements in two different tables has no correlation to each other, restoring all the nice assumptions about independence that make Robin Hood hashing work. They’re also speculating about a more fundamental fix to the hash table implementation, so that users who drop in a different hash algorithm are not again vulnerable. One proposal is that hash tables ought to retain their insertion order, since this bug is much less likely to happen if tables do not leak their hash order.&lt;/p&gt;
+
+&lt;h1&gt;Concluding Thoughts&lt;/h1&gt;
+
+&lt;p&gt;This was a subtle bug. Rust’s hash tables were very carefully thought by experienced developers well-versed in the literature and practice of &lt;em&gt;deliberate quadratic attacks&lt;/em&gt; on hash tables. They selected an algorithm, a hashing algorithm (SipHash) and developed an implementation specifically to avoid such anomalies. But  quadratics are sneaky creatures, and unexpected correlations can bite any algorithm based on statistical independence.&lt;/p&gt;
+
+&lt;p&gt;For my part, this was one of the harder bugs I’ve written up to understand. When the ticket was initially linked to me, I had to read it several times and read up on robin hood hashing and try several approaches to developing intuitions about the system before it began to make sense to me. But even then, when I sat down to write this post, I realized I had oversimplified it in my head and my explanation was wrong! I had to resort to a lot of experimentation with the above test case before I was confident I understood the dynamics.&lt;/p&gt;
+
+&lt;p&gt;Surprisingly to me, the specific dynamics of Robin Hood hashing end up being relatively unimportant here; I believe that vanilla linear probing would exhibit similar behaviors. The key effect of Robin Hood hashing is just that it gives you confidence and/or hubris to push a table to 90% capacity, which greatly exacerbates the problem.&lt;/p&gt;
+
+&lt;p&gt;Definitely a keeper of a bug. &lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/153545455987</link><guid>https://accidentallyquadratic.tumblr.com/post/153545455987</guid><pubDate>Tue, 22 Nov 2016 20:30:20 -0800</pubDate><category>accidentally</category><category>quadratic</category><category>rust</category><category>hash table</category><category>robin hood</category><category>hashing</category></item><item><title>golang `text/template` parsing</title><description>&lt;p&gt;Go&amp;rsquo;s &lt;a href="https://golang.org/pkg/text/template/"&gt;text/template package&lt;/a&gt; implements a templating system for Go. Like many templating systems, when it loads a template it &lt;a href="https://golang.org/pkg/text/template/parse/"&gt;parses it into an AST&lt;/a&gt;, which can then be walked to render the template against one or more inputs.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="https://golang.org/pkg/text/template/parse/#ActionNode"&gt;AST nodes&lt;/a&gt; in the template AST hold the line number from which that element was parsed, primarily for better error-reporting.&lt;/p&gt;
+
+&lt;p&gt;In go1.7.3 and earlier, as the AST is walked, the line number field of each element is filled in by &lt;a href="https://github.com/golang/go/blob/5f74ce394f02714a88dd375f54e8709ce58d1805/src/text/template/parse/lex.go#L172-L177"&gt;counting the newlines since the start of the file&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Of course, this means that for an N-line file containing roughly a template directive every few lines, we have to count through O(N²) newlines, making template parsing quadratic in file line count!&lt;/p&gt;
+
+&lt;p&gt;go1.8 &lt;a href="https://github.com/golang/go/commit/24a088d20ad52c527f61b34217da72589e366833"&gt;will update the lexer&lt;/a&gt; to count the line number as it lexes and sees newlines, restoring linear-time behavior.&lt;/p&gt;
+
+&lt;p&gt;(Thanks to &lt;a href="https://twitter.com/derivativeburke/status/798735083741974528"&gt;@derivativeburke&lt;/a&gt; for bringing this one to my attention)&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/153310173287</link><guid>https://accidentallyquadratic.tumblr.com/post/153310173287</guid><pubDate>Thu, 17 Nov 2016 10:58:58 -0800</pubDate><category>accidentally</category><category>quadratic</category><category>golang</category><category>text/template</category><category>parse</category><category>lex</category><category>line numbers</category></item><item><title>Regular Expression Backtracking on StackOverflow</title><description>&lt;p&gt;They wrote a really nice postmortem, analyzing, explaining the problem, and a linear time fix:&lt;/p&gt;
+
+
+&lt;p&gt;&lt;a href="http://stackstatus.net/post/147710624694/outage-postmortem-july-20-2016"&gt;http://stackstatus.net/post/147710624694/outage-postmortem-july-20-2016&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;I see quadratic time regular expressions &lt;strong&gt;all the time&lt;/strong&gt;, and there have been multiple submitted that I haven’t posted just because they’re so common. This one is noteworthy because of the scale of impact it had.&lt;/p&gt;
+
+
+&lt;p&gt;As &lt;a href="https://twitter.com/rob_pike/status/755856685923639296"&gt;Rob Pike&lt;/a&gt; points out, linking to &lt;a href="https://swtch.com/~rsc/regexp/regexp1.html"&gt;Russ Cox’s excellent post&lt;/a&gt; these bugs are all the more tragic for being utterly avoidable: building guaranteed-linear-time regex matching is quite simple with a bit of automaton theory.&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/147713851567</link><guid>https://accidentallyquadratic.tumblr.com/post/147713851567</guid><pubDate>Wed, 20 Jul 2016 14:01:00 -0700</pubDate><category>accidentally</category><category>quadratic</category><category>submission</category><category>regex</category></item><item><title>UIKit Subviews with custom tints</title><description>&lt;p&gt;A few days ago, &lt;a href="https://twitter.com/benjaminencz"&gt;Benjamin Encz&lt;/a&gt; blogged an &lt;a href="http://blog.benjamin-encz.de/post/disassembling-uikit-tintcolor-visitor"&gt;excellent writeup&lt;/a&gt; of disassembling and reverse engineering UIKit to track down an incident of accidentally quadratic behavior in Apple&amp;rsquo;s UIKit when adding subviews.&lt;/p&gt;
+
+&lt;p&gt;I don&amp;rsquo;t have much to add, but readers of this blog would almost certainly enjoy his post!&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/144354180437</link><guid>https://accidentallyquadratic.tumblr.com/post/144354180437</guid><pubDate>Sat, 14 May 2016 10:31:33 -0700</pubDate><category>accidentally</category><category>quadratic</category><category>UIKit</category><category>Apple</category></item><item><title>Dolphin Emulator Trampoline Generation</title><description>&lt;p&gt;[Ed note: This post was contributed by Dougall Johnson via email, and edited by me, with permission]&lt;/p&gt;
+
+&lt;p&gt;Dolphin is a Wii/GameCube emulator. A few years back, it had a &lt;a href="https://github.com/dolphin-emu/dolphin/pull/1218"&gt;bug&lt;/a&gt; where it was
+crashing with the error &amp;ldquo;Trampoline cache full&amp;rdquo; during the &amp;ldquo;Super
+Smash Bros. Brawl&amp;rdquo; character selection screen.&lt;/p&gt;
+
+&lt;p&gt;Dolphin uses a JIT compiler that translates blocks of PowerPC code
+from Wii or GameCube games into x86-64 instructions as the game runs.
+It generally uses a feature called &amp;ldquo;fastmem&amp;rdquo;, to quickly emulate the
+Wii’s memory management unit by leveraging the host’s memory
+management. Fastmem configures a 4GB range of memory to match the
+Wii’s address space, and PPC memory accesses are translated directly
+to x86 memory accesses into this region. Certain parts of memory are
+special and require more complex handling: for example, the FIFO
+address which sends all data written to it to the GPU. Fastmem doesn’t
+map these parts of memory, so when JIT code tries to write to the FIFO
+a fault occurs. Dolphin handles these faults, and simulates the
+behaviour of special areas of memory (in the FIFO write example, by
+buffering the data and sending it to the emulated GPU).&lt;/p&gt;
+
+&lt;p&gt;However fault handling is extremely slow, so Dolphin also “back
+patches” the faulting instruction to call directly into the full
+memory-write code (implemented in C). This requires saving registers
+and setting up the arguments for the C function, which is much bigger
+than a single “write” instruction, so Dolphin generates some
+“trampoline” code to invoke the C code, and patches the write
+instruction with a call instruction in the original JIT code.&lt;/p&gt;
+
+&lt;p&gt;4MB of JIT memory is allocated for trampoline generation (the
+“trampoline cache”) and this was somehow being exceeded, even though
+each trampoline is very small and there couldn’t have been more than a
+few thousand write instructions needing patching in the game code.&lt;/p&gt;
+
+&lt;p&gt;However, it turns out that writing to the FIFO is slightly more complicated than it looks. Whenever a write overflows the FIFO buffer, Dolphin adds the address to an internal table  (&lt;code&gt;jit-&amp;gt;js.fifoWriteAddresses&lt;/code&gt;) and triggers a recompilation of the faulting address, which will cause additional exception-handling code to be compiled in. The code that handles this looks like:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;void CompileExceptionCheck()
+{
+    std::unordered_set&amp;lt;u32&amp;gt; *exception_addresses;
+    exception_addresses = &amp;amp;jit-&amp;gt;js.fifoWriteAddresses;
+
+    if (PC != 0 &amp;amp;&amp;amp; (exception_addresses-&amp;gt;find(PC) ==
+                    exception_addresses-&amp;gt;end()))
+    {
+        int optype = GetOpInfo(Memory::ReadUnchecked_U32(PC))-&amp;gt;type;
+        if (optype == OPTYPE_STORE || optype == OPTYPE_STOREFP ||
+            optype == OPTYPE_STOREPS)
+        {
+            exception_addresses-&amp;gt;insert(PC);
+
+            // Invalidate the JIT block so that it gets recompiled
+            // with the external exception check included.
+            jit-&amp;gt;GetBlockCache()-&amp;gt;InvalidateICache(PC, 4);
+        }
+   }
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The key detail here is &lt;code&gt;InvalidateICache(PC, 4)&lt;/code&gt;, which invalidates the compiled code for the entire basic block containing &lt;code&gt;PC&lt;/code&gt; (since code is JIT'ed a basic block at a time, there&amp;rsquo;s no way to invalidate a smaller range).&lt;/p&gt;
+
+&lt;p&gt;When the block is next invoked, the JIT compiler re-compiles the code, adding an external exception check because the
+instruction is in jit-&amp;gt;js.fifoWriteAddresses (which is the whole point
+of the recompilation). Recompiling inadvertently has the side effect of removing any back-patches from the code. Because of the &lt;code&gt;exception_addresses-&amp;gt;find(PC)&lt;/code&gt; check in the above function, this recompilation can only occur once per distinct instruction that writes to the FIFO.&lt;/p&gt;
+
+&lt;p&gt;It turns out that there is a single block of code in Super Smash Bros. Brawl which
+contains 216 FIFO write instructions. You can see the PPC assembly
+code here: &lt;a href="http://codepad.org/XMRCtzaG"&gt;http://codepad.org/XMRCtzaG&lt;/a&gt; .&lt;/p&gt;
+
+&lt;p&gt;JITing and then executing this block will generate 216 faults (one for each write), 216 back-patches, and 216 trampolines.&lt;/p&gt;
+
+&lt;p&gt;However, as the code runs, eventually each of those 216 FIFO writes will happen to be the write that overflows the FIFO. When that happens, it will trigger a recompilation of the entire block, meaning the next execution will result in an additional 216 faults, backpatches, and trampolines.&lt;/p&gt;
+
+&lt;p&gt;In the limit, this can lead to 217 compilations of this block (the initial one, plus one per write), each of which results in 216 backpatches, for a theoretical limit of 46872 trampolines! This accidentally-quadratic trampoline generation was more than sufficient to blow the 4MB cache.&lt;/p&gt;
+
+&lt;p&gt;The bug was initially fixed by adding a map lookup to find and reuse existing
+trampolines. Later, the constant propagation was improved to detect
+all the FIFO writes ahead of time, avoiding all back patching in this
+case.&lt;/p&gt;
+
+&lt;p&gt;Confusingly, the bug first appeared in Dolphin 4.0-140, which was a
+tiny patch, that introduced the following code, just before generating
+each write instruction:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;// Helps external systems know which instruction triggered the write
+  MOV(32, M(&amp;amp;PC), Imm32(jit-&amp;gt;js.compilerPC));&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Prior to this commit, the PC wasn&amp;rsquo;t updated within the block (only at
+the start/end), so each block would only have been recompiled once,
+preventing the excessive trampoline generation. At that time, the
+character selection screen in Super Smash Bros. Brawl would work with
+only 1500 trampolines generated. After that commit, the trampoline
+count would start at around 4000 and quickly grow to over 20000.&lt;/p&gt;
+
+&lt;hr&gt;&lt;p&gt;For more interesting Dolphin stories, see the Dolphin Progress Reports
+(&lt;a href="https://dolphin-emu.org/blog/"&gt;https://dolphin-emu.org/blog/&lt;/a&gt;), and “Gekko the Dolphin” by Fiora in
+PoC||GTFO 0x06 (&lt;a href="https://www.alchemistowl.org/pocorgtfo/pocorgtfo06.pdf"&gt;https://www.alchemistowl.org/pocorgtfo/pocorgtfo06.pdf&lt;/a&gt;
+— 97MB PDF).&lt;/p&gt;
+
+&lt;p&gt;[Ed note: I love the war stories that come from the Dolphin team. Emulators are amazing pieces of software, and the Dolphin team writes some awesome stories of reverse-engineering and low-level debugging to figure out how the hell the platform they&amp;rsquo;re emulating ever worked in the first place] &lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/142829260822</link><guid>https://accidentallyquadratic.tumblr.com/post/142829260822</guid><pubDate>Thu, 14 Apr 2016 21:27:05 -0700</pubDate><category>accidentally</category><category>quadratic</category><category>dolphin</category><category>jit</category><category>submission</category></item><item><title>Apache Spark</title><description>&lt;p&gt;&lt;a href="http://spark.apache.org/"&gt;Apache Spark&lt;/a&gt; is a cluster computing engine, essentially an alternative computation model to MapReduce for executing jobs across large clusters.&lt;/p&gt;
+
+&lt;p&gt;Spark&amp;rsquo;s scheduler stores pending work on a number of arrays, to keep track of which work is available to be executed where in the cluster.&lt;/p&gt;
+
+&lt;p&gt;In Spark 1.6, a bug &lt;a href="https://github.com/apache/spark/commit/3535b91#diff-bad3987c83bd22d46416d3dd9d208e76L789"&gt;was introduced&lt;/a&gt;, that meant that any time Spark added a new task to one of these arrays, it would first exhaustively search the array to ensure it wasn&amp;rsquo;t re-adding a duplicate.&lt;/p&gt;
+
+&lt;p&gt;Since the array search is O(n), this &lt;a href="https://issues.apache.org/jira/browse/SPARK-13279"&gt;resulted in O(n²) behavior&lt;/a&gt; to schedule n tasks.&lt;/p&gt;
+
+&lt;p&gt;Like all good accidentallyquadratic bugs, this went unnoticed until some poor user tried to submit 200k jobs to their Spark install in one go, and observed it hanging for effectively forever.&lt;/p&gt;
+
+&lt;p&gt;It turns out that the code didn&amp;rsquo;t actually require the uniqueness guarantee in the array, so the &lt;a href="https://github.com/apache/spark/pull/11175"&gt;fix&lt;/a&gt; was simply to remove the check. (Of course, if they had needed the check, keeping a secondary hash map, or turning the array into an ordered hash map, would likely have worked just as well).&lt;/p&gt;
+
+&lt;p&gt;(Thanks to &lt;a href="https://twitter.com/leifwalsh/status/715967863509676032"&gt;@leifwalsh&lt;/a&gt; for bringing this one to my attention)&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/142540386522</link><guid>https://accidentallyquadratic.tumblr.com/post/142540386522</guid><pubDate>Sat, 09 Apr 2016 16:49:06 -0700</pubDate><category>accidentally</category><category>quadratic</category><category>apache</category><category>spark</category><category>bigdata</category></item><item><title>node.js left-pad</title><description>&lt;p&gt;If you’re a programmer, there’s a good chance you noticed the
+&lt;a href="http://blog.npmjs.org/post/141577284765/kik-left-pad-and-npm"&gt;node.js left-pad fiasco&lt;/a&gt; of a few weeks back that temporarily
+broke most of the npm ecosystem.&lt;/p&gt;
+
+&lt;p&gt;This blog doesn’t have an opinion on any of that. However, in the
+ensuing kerfluffle, &lt;a href="https://twitter.com/lordmauve/status/712781855469252610"&gt;several&lt;/a&gt; &lt;a href="https://twitter.com/HybridEidolon/status/712518194657894400"&gt;people&lt;/a&gt;
+&lt;a href="https://twitter.com/leifwalsh/status/712487743142694912"&gt;observed&lt;/a&gt; &lt;a href="https://twitter.com/matei_zaharia/status/712783256769445889"&gt;that&lt;/a&gt; left-pad appears to be quadratic, and that is
+definitely this blog’s concern.&lt;/p&gt;
+
+&lt;p&gt;If we look at the code, we see that the main loop looks like so:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;while (++i &amp;lt; len) {
+  str = ch + str;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In most languages’ string implementations, this would be definitely
+quadratic — + copies the entire string (of size O(len)) on each
+iteration, and this loop runs O(len) times.&lt;/p&gt;
+
+&lt;p&gt;However, I happen to know that modern JS implementations have a whole
+pile of complex String optimizations, including &lt;a href="https://en.wikipedia.org/wiki/Rope_(data_structure)"&gt;rope&lt;/a&gt;-like data
+structures. And this is an evidence-driven blog, so I decided to take
+a deeper look. And what I found is fascinating and bizarre and I
+honestly can’t explain it yet.&lt;/p&gt;
+
+&lt;h2&gt;The benchmarks&lt;/h2&gt;
+
+&lt;p&gt;But let’s start with something easy. I ran a benchmark in
+&lt;a href="https://developer.mozilla.org/en-US/docs/Mozilla/Projects/Rhino"&gt;rhino&lt;/a&gt;, which I judged to be the javascript implementation
+that I had easy access to least likely to have super-advanced string
+optimizations. We can clearly see the telltale quadratic curve:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="https://68.media.tumblr.com/c7e98638c901b671d139b118f20a7ecf/tumblr_inline_o58w6amFxh1qkpwp0_540.png" alt=""/&gt;&lt;/p&gt;
+
+&lt;p&gt;But now let’s try something a bit more sophisticated, which also
+happens to be my primary browser: Chrome. Running a left-pad benchmark in Chrome yields the following result:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="https://68.media.tumblr.com/fa8b7f4c5eee6eb2988ed61ade942d94/tumblr_inline_o58w6ugV6v1qkpwp0_540.png" alt=""/&gt;&lt;/p&gt;
+
+&lt;p&gt;There’s bit of anomalous behavior, especially at small
+sizes, but it makes a compelling case for being linear out through the
+1MB limit I ran the test over!&lt;/p&gt;
+
+&lt;p&gt;(I’m running Chrome Version 50.0.2661.57 beta (64-bit); your results
+may well vary with Chrome version!)&lt;/p&gt;
+
+&lt;p&gt;And in fact, the Chrome developer tools will let us &lt;em&gt;see&lt;/em&gt; the rope
+structure that Chrome has used to make these concatenations efficient!
+If we &lt;code&gt;leftpad('hi', 100000, 'x')&lt;/code&gt; in a Chrome console and then take a
+heap snapshot, we can see that the string is a “concatenated string”
+made up of a huge number of chunks linked together:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="https://68.media.tumblr.com/5d6fe5bbd46388b8e0240ed9e88eb8e8/tumblr_inline_o58w7bPDfS1qkpwp0_540.png" alt=""/&gt;&lt;/p&gt;
+
+&lt;p&gt;(The downside of this optimization, as you can also see from that
+screenshot, is that our 100kb string now consumes 4MB of RAM…)&lt;/p&gt;
+
+&lt;p&gt;Moving on, we can also try Safari, another modern browser with an
+incredibly-sophisticated Javascript engine. In Safari, we see this odd
+behavior:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="https://68.media.tumblr.com/12bed10c6a67f206d5118010f8a7a6a8/tumblr_inline_o58w7rXqTH1qkpwp0_540.png" alt=""/&gt;&lt;/p&gt;
+
+&lt;p&gt;It’s a bit hard to be sure, but the data appears to fit &lt;em&gt;two&lt;/em&gt; linear
+fits, with a cutover somewhere around 350k. This pattern was
+reproducible across multiple experiments, but I don’t have an
+explanation.&lt;/p&gt;
+
+&lt;p&gt;I also decided to try node, since that is the actual runtime that NPM
+primarily targets, after all. node runs the same v8 engine as Chrome,
+so we’d expect similar behavior, but version skew, configuration, or
+who knows what could cause divergence. And in fact, we see:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="https://68.media.tumblr.com/a41ee7278371f3e7c12b9dd33756514a/tumblr_inline_o58w89pOaW1qkpwp0_540.png" alt=""/&gt;&lt;/p&gt;
+
+&lt;p&gt;Oddly, it also seems to exhibit two separate linear regimes!&lt;/p&gt;
+
+&lt;p&gt;At this point, I’m out of energy for what was meant to be a short
+post, but if anyone can follow-up and explain what’s happening, I’d be terribly curious.&lt;/p&gt;
+
+&lt;h2&gt;In Conclusion&lt;/h2&gt;
+
+&lt;p&gt;This adventure turned out to be another excellent demonstration of a
+principle I’ve expounded on frequently in this blog: Quadratic
+behavior (or, in this case, the lack there of!) often results in
+complex interactions between pieces of code operating at different
+layers of abstraction. In this case, the action-at-a-distance saved
+us: Modern Javascript VMs, in their sophistication, were able to
+optimize what looked like extremely quadratic code into a linear
+linked list! But the principle remains, that it was actually
+completely impossible for us to analyze &lt;code&gt;left-pad&lt;/code&gt;’s performance
+without a deep understanding of the specific underlying Javascript VM
+we cared about (or, in my case, resorting to brute experiment!).&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/142387131042</link><guid>https://accidentallyquadratic.tumblr.com/post/142387131042</guid><pubDate>Wed, 06 Apr 2016 20:56:09 -0700</pubDate><category>accidentally</category><category>quadratic</category><category>left-pad</category><category>node</category><category>javascript</category><category>js</category></item><item><title>Linux `/proc/pid/maps`</title><description>&lt;p&gt;The &lt;a href="https://en.wikipedia.org/wiki/Procfs"&gt;/proc/ filesystem&lt;/a&gt;, if you&amp;rsquo;re not familiar with it, is a magical place full of all kinds of useful debugging tools for introspecting (and modifying) the state of a Linux machine – especially for inspecting other processes.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;/proc/&amp;lt;pid&amp;gt;/maps&lt;/code&gt; shows, for any process on the system, a list of all of the memory mappings in its address space. For a simple &lt;code&gt;cat&lt;/code&gt; execution on my machine, it looks like:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;[nelhage@nelhage:~]$ cat /proc/self/maps
+00400000-0040b000 r-xp 00000000 09:01 254164                             /bin/cat
+0060a000-0060b000 r--p 0000a000 09:01 254164                             /bin/cat
+0060b000-0060c000 rw-p 0000b000 09:01 254164                             /bin/cat
+007dc000-007fd000 rw-p 00000000 00:00 0                                  [heap]
+7fc8e702b000-7fc8e72f4000 r--p 00000000 fc:00 4861                       /usr/lib/locale/locale-archive
+7fc8e72f4000-7fc8e74af000 r-xp 00000000 09:01 223514                     /lib/x86_64-linux-gnu/libc-2.19.so
+7fc8e74af000-7fc8e76ae000 ---p 001bb000 09:01 223514                     /lib/x86_64-linux-gnu/libc-2.19.so
+7fc8e76ae000-7fc8e76b2000 r--p 001ba000 09:01 223514                     /lib/x86_64-linux-gnu/libc-2.19.so
+7fc8e76b2000-7fc8e76b4000 rw-p 001be000 09:01 223514                     /lib/x86_64-linux-gnu/libc-2.19.so
+7fc8e76b4000-7fc8e76b9000 rw-p 00000000 00:00 0
+7fc8e76b9000-7fc8e76dc000 r-xp 00000000 09:01 221267                     /lib/x86_64-linux-gnu/ld-2.19.so
+7fc8e78cc000-7fc8e78cf000 rw-p 00000000 00:00 0
+7fc8e78d9000-7fc8e78db000 rw-p 00000000 00:00 0
+7fc8e78db000-7fc8e78dc000 r--p 00022000 09:01 221267                     /lib/x86_64-linux-gnu/ld-2.19.so
+7fc8e78dc000-7fc8e78dd000 rw-p 00023000 09:01 221267                     /lib/x86_64-linux-gnu/ld-2.19.so
+7fc8e78dd000-7fc8e78de000 rw-p 00000000 00:00 0
+7fffd912a000-7fffd914b000 rw-p 00000000 00:00 0                          [stack]
+7fffd91a9000-7fffd91ab000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 r-xp 00000000 00:00 0                  [vsyscall]
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Notably, &lt;code&gt;/proc/$pid/maps&lt;/code&gt; attempts to label each mapping with information about its provenance. For regions that map files, the kernel has to track this information directly, anyways, but for regions like the &lt;code&gt;[heap]&lt;/code&gt; and &lt;code&gt;[stack]&lt;/code&gt; maps, it&amp;rsquo;s more heuristic.&lt;/p&gt;
+
+&lt;p&gt;As of &lt;a href="https://github.com/torvalds/linux/commit/b76437579d1344b612cf1851ae610c636cec7db0"&gt;kernel 3.3&lt;/a&gt;, the kernel attempts to mark stacks of &lt;em&gt;any&lt;/em&gt; thread that is part of that process, as &lt;code&gt;[stack:&amp;lt;thread-id&amp;gt;]&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;However, the code that &lt;a href="https://github.com/torvalds/linux/blob/d8ec26d7f8287f5788a494f56e8814210f0e64be/mm/util.c#L282-L288"&gt;checks if a mapping is a stack&lt;/a&gt; does so by looping over each thread in the process, to check if its stack pointer points into that mapping.&lt;/p&gt;
+
+&lt;p&gt;Since each thread will typically have its own stack, and each stack is typically its own mapping, this means that enumerating &lt;code&gt;/proc/$pid/maps&lt;/code&gt; is quadratic in the number of threads in a process. For most applications this isn&amp;rsquo;t a big deal, but if we consider, say, a database that uses a thread per connection, and has 10s of thousands of connections, we can rapidly get very sad…&lt;/p&gt;
+
+&lt;p&gt;This bug was &lt;a href="http://comments.gmane.org/gmane.linux.kernel.mm/144712"&gt;noticed&lt;/a&gt; fairly recently, and it looks like it will be resolved in the next kernel release by just removing the offending code: The feature isn&amp;rsquo;t worth the cost, and userspace can always look at threads individually if it really needs this information.&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/139582829077</link><guid>https://accidentallyquadratic.tumblr.com/post/139582829077</guid><pubDate>Thu, 18 Feb 2016 20:25:44 -0800</pubDate><category>linux</category><category>kernel</category><category>accidentally</category><category>quadratic</category><category>memory</category><category>procfs</category></item><item><title>Ruby `parser` gem</title><description>&lt;p&gt;The ruby &lt;a href="https://github.com/whitequark/parser"&gt;&lt;code&gt;parser&lt;/code&gt;&lt;/a&gt; gem is an implementation of a Ruby parser in Ruby itself, which allows for Ruby code to parse and introspect Ruby code. It&amp;rsquo;s used in a number of places, but perhaps most prominently by &lt;a href="https://github.com/bbatsov/rubocop"&gt;rubocop&lt;/a&gt;, a Ruby linter and style checker.&lt;/p&gt;
+
+&lt;p&gt;In &lt;code&gt;parser&lt;/code&gt; versions &amp;lt;= &lt;code&gt;2.3.0.4&lt;/code&gt;, the parser is quadratic in the length of the input string, for any input containing &amp;gt;0 unicode codepoints outside of the ASCII range.&lt;/p&gt;
+
+&lt;p&gt;The problem arises initially in the lexer, which turns the source input into a sequence of tokens. The lexer is implemented using &lt;a href="http://www.colm.net/open-source/ragel/"&gt;ragel&lt;/a&gt;, to generate a state machine that processes the input sequentially, generating tokens as it goes.&lt;/p&gt;
+
+&lt;p&gt;The problem comes when the lexer attempts to extract tokens and return them to its caller. As it lexes, it keeps track of character offsets, and it returns tokens via a &lt;a href="https://github.com/whitequark/parser/blob/v2.3.0.3/lib/parser/lexer.rl#L335-L339"&gt;character-range slice&lt;/a&gt; of the input:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;def tok(s = @ts, e = @te)
+  source = @source[s...e]
+  return source unless @need_encode
+  source.encode(@encoding)
+end
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The problem arises because the input, at this point, has been UTF-8-encoded. Because UTF-8 is a variable-length encoding, finding the &lt;code&gt;n&lt;/code&gt;th character requires a linear traversal to skip over one codepoint at a time. Therefore, &lt;code&gt;@source[s...e]&lt;/code&gt; is linear in the end position. Since the input contains O(n) tokens, and each one requires an O(n) scan to extract, just extracting the tokens requires quadratic time.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href="https://github.com/whitequark/parser/pull/269"&gt;fix&lt;/a&gt;, which I implemented after &lt;a href="https://github.com/whitequark/parser/issues/268"&gt;discussion&lt;/a&gt; with the authors, was to re-encode any non-ASCII input into UTF-32 before processing. UTF-32 imposes a significant memory overhead, but it obviously admits O(1) character indexing, and the tradeoff is well worth avoiding quadratic behavior – on a 1500-line test case from the Stripe codebase, the change dropped parsing from about 2.5s to about 900ms.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m fond of this one because of how &lt;em&gt;subtle&lt;/em&gt; it was. I&amp;rsquo;m obviously well-attuned to being on the lookout for these issues, but even after my &lt;a href="https://github.com/tmm1/stackprof"&gt;profiler&lt;/a&gt; showed 50% of the parser&amp;rsquo;s time in &lt;code&gt;tok&lt;/code&gt;, it took my a long time to realize what was happening. I eventually had to run it under Linux &lt;code&gt;perf&lt;/code&gt;, and see a large amount of time in &lt;code&gt;str_utf8_nth&lt;/code&gt;, before it clicked.&lt;/p&gt;
+
+&lt;p&gt;And it&amp;rsquo;s subtle, too, because of Ruby&amp;rsquo;s &amp;ldquo;clever&amp;rdquo; handling of strings: Even if a string is marked as UTF-8-encoded, Ruby knows internally if it happens to only contain 7-bit codepoints, and optimizes access to O(1) in that case. And so the exact same code, on the exact same &amp;ldquo;shape&amp;rdquo; of data (a UTF-8-encoded string) could change dramatically in time complexity by the modification of a single character anywhere in the input!&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/139210135602</link><guid>https://accidentallyquadratic.tumblr.com/post/139210135602</guid><pubDate>Fri, 12 Feb 2016 20:07:09 -0800</pubDate><category>ruby</category><category>parser</category><category>utf8</category><category>accidentally</category><category>quadratic</category><category>strings</category></item><item><title>GHC Derived Foldable and Traversable Instances</title><description>&lt;p&gt;(Boy is there a lot of Haskell here now. What’s up with that?)&lt;/p&gt;
+
+&lt;p&gt;This one comes by way of Shachaf Ben-Kiki, who found it originally and mentioned it to me.&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;Data.Traversable&lt;/code&gt; and &lt;code&gt;Data.Foldable&lt;/code&gt; are two Haskell typeclasses that express related notions of a data structure being “list-like” in the sense that it contains zero or more elements, and an externally-provided function can be mapped over those elements in some way.&lt;/p&gt;
+
+&lt;p&gt;GHC provides support (as a language extension) for automatically “deriving” instances of these type classes for algebraic data types; Essentially this asks the compiler to generate the “obvious” code to traverse your data structure in the appropriate way.&lt;/p&gt;
+
+&lt;p&gt;In GHC prior to 7.8, given a classic definition of a cons-cell list:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;data List a = Nil | Cons a (List a)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;GHC &lt;a href="https://ghc.haskell.org/trac/ghc/ticket/7436"&gt;would derive&lt;/a&gt; a &lt;code&gt;Foldable&lt;/code&gt; instance that looks something like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;instance Foldable List where
+    foldr f z Nil = z
+    foldr f z (Cons x xs) = f x (foldr (\a b -&amp;gt; f a b) z xs)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The bug arises from the unnecessary &lt;a href="https://wiki.haskell.org/Eta_conversion"&gt;eta-expansion&lt;/a&gt; of &lt;code&gt;f&lt;/code&gt; in the second line. A list N elements long will recurse into &lt;code&gt;Cons&lt;/code&gt; case &lt;code&gt;N&lt;/code&gt; times, and each time &lt;code&gt;f&lt;/code&gt; will get wrapped in a no-op lambda. When the evaluations are finally forced, we get a series of evaluations of expressions like:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;f a b
+(\a b -&amp;gt; f a b) a b
+(\a b -&amp;gt; (\a b -&amp;gt; f a b) a b) a b
+(\a b -&amp;gt; (\a b -&amp;gt; (\a b -&amp;gt; f a b) a b) a b) a b
+…
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is a classic “triangle” pattern of evaluations, resulting in O(N²) reductions and thus runtime.&lt;/p&gt;
+
+&lt;p&gt;The &lt;a href="https://ghc.haskell.org/trac/ghc/changeset/49ca2a37bef18aa57235ff1dbbf1cc0434979b1e/ghc"&gt;fix&lt;/a&gt; involved tweaking the code generator to not produce the extra lambdas, which were essentially only there as a quirk of the abstractions used in the code generation.&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/134605666547</link><guid>https://accidentallyquadratic.tumblr.com/post/134605666547</guid><pubDate>Sat, 05 Dec 2015 11:57:37 -0800</pubDate><category>ghc</category><category>haskell</category><category>accidentally</category><category>quadratic</category></item><item><title>`puppet apply`</title><description>&lt;p&gt;&lt;a href="https://puppetlabs.com/"&gt;puppet&lt;/a&gt; is a popular configuration-management tool. Puppet&amp;rsquo;s basic model is declarative: You define a set of “resources” and the state they should be in. A “resource” can be basically anything that might be managed on a server: file on disk, a user account, a provisioned database instance, a running service, …&lt;/p&gt;
+
+&lt;p&gt;Puppet compiles the input puppet configuration into a “catalog” with all the defined resources, and creates a dependency graph: e.g. before the MySQL service can be started, the MySQL package has to be created.&lt;/p&gt;
+
+&lt;p&gt;Applying a puppet catalog involves walking the catalog in dependency order, analyzing each resource in turn and modifying the running system to reflect the desired state (creating or removing a user, starting or stopping a service, …).&lt;/p&gt;
+
+&lt;p&gt;As with most problems in engineering, puppet has to deal with the ever-present possibility of failures or errors: What happens if a resource node cannot be applied correctly? Permission errors, insufficient disk space, being asked to install a typoed package, …&lt;/p&gt;
+
+&lt;p&gt;If a resource fails, puppet records this fact and then continues applying the catalog, attempting to apply as much of the catalog as it can. Since it maintains a dependency graph, it can selectively skip only the resources that depend on a failed resource.&lt;/p&gt;
+
+&lt;p&gt;However, &lt;a href="https://github.com/puppetlabs/puppet/pull/3591"&gt;until recently&lt;/a&gt;, puppet implemented this skipping by, for each node, &lt;a href="https://github.com/puppetlabs/puppet/blob/bda87b248e6034041e2328658072cfa2446d8006/lib/puppet/transaction.rb#L228-L254"&gt;visiting each recursive-dependency and checking if that failed&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;It performed this check regardless of whether any failures had happened or not, for every node. This trivially leads to O(n²) behavior for a depth-N dependency chain!&lt;/p&gt;
+
+&lt;p&gt;&lt;a href="https://github.com/puppetlabs/puppet/pull/3591"&gt;My fix&lt;/a&gt;, scheduled for release with Puppet 4.2, attaches a list of failed recursive-dependencies to each node. When visiting a node, the list is computed for that node by directly unioning the lists of the immediate dependencies.&lt;/p&gt;
+
+&lt;p&gt;To demonstrate the fix I constructed a series of puppet manifest that just included N &lt;code&gt;notify&lt;/code&gt; resources in a linear chain, and compared runtime before and after my patch:&lt;/p&gt;
+
+&lt;p&gt;&lt;img src="https://cloud.githubusercontent.com/assets/16725/6623712/f0c1481e-c8a1-11e4-8634-14e62617fab1.png"/&gt;&lt;/p&gt;
+
+&lt;p&gt;[edited to add]: The above graph is plotted to an artificially large N to make the quadratic behavior extremely obvious to visible inspection; I don&amp;rsquo;t mean to imply that real manifests will have depth-6000 dependency trees. However, the patch is also a significant improvement on real-life manifests: As noted in the PR, it cut puppet runtime nearly in half on many real servers at Stripe.&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/118629661042</link><guid>https://accidentallyquadratic.tumblr.com/post/118629661042</guid><pubDate>Sun, 10 May 2015 12:14:33 -0700</pubDate><category>puppet</category><category>accidentally</category><category>quadratic</category><category>ruby</category><category>graph</category></item><item><title>Revisiting Haskell Network.HTTP</title><description>&lt;p&gt;I spent a while talking with Greg Price about &lt;a href="http://accidentallyquadratic.tumblr.com/post/113847081597/haskell-network-http"&gt;the Haskell Network.HTTP issue&lt;/a&gt; previously featured here, and he was unconvinced I had the whole story. He spent a while reading some source and thinking about folds, and pointed out today that my analysis was incomplete, and flat-out wrong for the &lt;code&gt;cabal&lt;/code&gt; case referenced in the commit.&lt;/p&gt;
+
+&lt;p&gt;One detail I glossed over in the last post (deliberately for simplicity, but over-zealously!) was the &lt;code&gt;bufOps&lt;/code&gt; variable. &lt;code&gt;bufOps&lt;/code&gt; is an instance of &lt;a href="http://hackage.haskell.org/package/HTTP-4000.2.19/docs/Network-BufferType.html#v:bufferOps"&gt;&lt;code&gt;BufferOps&lt;/code&gt;&lt;/a&gt;, which provides an abstraction layer that allows the same code to work on a variety of byte-buffer or string types.&lt;/p&gt;
+
+&lt;p&gt;For simplicity, I chose to ignore the indirection and did the analysis assuming a strict buffer backed by a flat memory array, such as Haskell&amp;rsquo;s &lt;a href="https://hackage.haskell.org/package/bytestring-0.9.2.1/docs/Data-ByteString.html"&gt;&lt;code&gt;Data.ByteString&lt;/code&gt;&lt;/a&gt;. And my analysis was correct for a caller using &lt;code&gt;Data.ByteString&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;However, Greg pointed out, it is much more common in modern idiomatic Haskell to use &lt;a href="https://hackage.haskell.org/package/bytestring-0.9.2.1/docs/Data-ByteString-Lazy.html"&gt;Data.ByteString.Lazy&lt;/a&gt;, and indeed &lt;code&gt;cabal&lt;/code&gt; does so. And for &lt;code&gt;Data.ByteString.Lazy&lt;/code&gt;&amp;rsquo;s different buffer implementation, my analysis is completely wrong!&lt;/p&gt;
+
+&lt;p&gt;For &lt;code&gt;Data.ByteString.Lazy&lt;/code&gt;, the issue hinges on the representation of the bytestring, and the implementation of &lt;code&gt;append&lt;/code&gt;. &lt;code&gt;ByteString.Lazy&lt;/code&gt; stores buffers as immutable &lt;code&gt;cons&lt;/code&gt;-cell style lists of immutable chunks of string data – the string “Hello, World” might be stored as&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;("Hell") -&amp;gt; ("o, Wor") -&amp;gt; ("ld") -&amp;gt; null
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;In order to append two of these structures, we must copy the list structure of the left-hand side, replacing the final &lt;code&gt;null&lt;/code&gt; with a pointer to the right-hand-side. e.g.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;append(("Hello, ") -&amp;gt; ("World") -&amp;gt; null,
+       ("Good Night, ") -&amp;gt; ("Moon") -&amp;gt; null)
+= ("Hello, ") -&amp;gt; ("World") -&amp;gt; ("Good Night, ") -&amp;gt; ("Moon") -&amp;gt; null
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This copies the left hand side, but reuses the right-hand side directly and thus has performance &lt;code&gt;O(n)&lt;/code&gt; where &lt;code&gt;n&lt;/code&gt; is the length of the left-hand side, and the length of the right-hand side is irrelevant.&lt;/p&gt;
+
+&lt;p&gt;Armed with that knowledge, we can consider the effects of&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;foldr (flip append) empty strs
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;foldr&lt;/code&gt; will repeatedly apply &lt;code&gt;flip append&lt;/code&gt; (which is just &lt;code&gt;append&lt;/code&gt; with the arguments reversed: &lt;code&gt;(flip append) a b = append b a&lt;/code&gt;) to pairs of strings, starting with the empty string, and working from the end of the list backwards. If we suppose &lt;code&gt;strs = ["a", "b", "c", "d"]&lt;/code&gt;, this will result in the following series of calls:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;(flip append) "d" ""    = append "" "d"    = "d"
+(flip append) "c" "d"   = append "d" "c"   = "dc"
+(flip append) "b" "dc"  = append "dc" "b"  = "dcb"
+(flip append) "a" "dcb" = append "dcb" "a" = "dcba"
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Note that the ever-growing result always ends up on the left-hand side of &lt;code&gt;append&lt;/code&gt;. Since &lt;code&gt;append&lt;/code&gt; is linear in its left-hand-side, this repeated copying and accumulation yields quadratic behavior.&lt;/p&gt;
+
+&lt;p&gt;But consider instead &lt;code&gt;foldr append $ reverse strs&lt;/code&gt; (which is just &lt;code&gt;foldr append (reverse strs)&lt;/code&gt; – here you can think of &lt;code&gt;$&lt;/code&gt; as an open-left-paren that is closed by end-of-line). That expression results in this sequence of calls:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt; append "a" ""     = "a"
+ append "b" "a"    = "ba"
+ append "c" "ba"   = "cba"
+ append "d" "cba"  = "dcba"
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now, the left-hand-side consists always of individual strings, giving a total runtime of O(Σn) = O(N) where N is the total length.&lt;/p&gt;
+
+&lt;p&gt;For &lt;code&gt;Data.ByteString.Lazy&lt;/code&gt;, then, the whole improvement comes from moving from &lt;code&gt;flip foldr&lt;/code&gt; to &lt;code&gt;reverse&lt;/code&gt;; Switching from an explicit fold to &lt;code&gt;concat&lt;/code&gt; makes the code more concise, but doesn&amp;rsquo;t affect the asymptotics. But for &lt;code&gt;Data.ByteString&lt;/code&gt;, as we saw last time, it is the switch to &lt;code&gt;concat&lt;/code&gt; that nets the improvement to O(n).&lt;/p&gt;
+
+&lt;p&gt;This code was, in essence, O(n²) for two different reasons, depending on which bytestring implementation the caller asked for, and the patch fixed both of them at once! Now that is the level of subtlety I expect to see packed into a few characters of Haskell code :)&lt;/p&gt;
+
+&lt;p&gt;I also think this example makes for a great example of the points I made in my &lt;a href="http://accidentallyquadratic.tumblr.com/post/113840433022/why-accidentally-quadratic"&gt;accidentally quadratic manifest&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Whoever wrote the original code was a skilled Haskell programmer, and almost certainly more than familiar with big-O notation and basic algorithmic analysis. This quadratic pathology arose not by incompetence or lack of knowledge by the author, but because of the subtle interaction of two different individually-linear layers (&lt;code&gt;foldr&lt;/code&gt; and &lt;code&gt;append&lt;/code&gt;). And as we&amp;rsquo;ve seen, the layering really is key: the author &lt;em&gt;could not&lt;/em&gt; have fully analyzed this code without peeking below the abstraction boundary and considering various concrete buffer implementations.&lt;/p&gt;
+
+&lt;p&gt;Additionally, this example shows off the interplay between constant factors and algorithmics. If your HTTP connections are slow, which are you going to assume: That the network or the server is slow, or that your HTTP client library has quadratic behavior hidden inside a simple operation? I&amp;rsquo;m speculating here, but it seems likely to me that that was a factor in allowing this bug to lurk longer than it might have.&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/114149142587</link><guid>https://accidentallyquadratic.tumblr.com/post/114149142587</guid><pubDate>Fri, 20 Mar 2015 12:03:52 -0700</pubDate><category>accidentally</category><category>quadratic</category><category>haskell</category><category>lazy</category><category>strict</category><category>http</category></item><item><title>Haskell Network.HTTP</title><description>&lt;p&gt;This one earned some infamy because the &lt;a href="https://github.com/nominolo/HTTP/commit/b9bd0a08fa09c6403f91422e3b23f08d339612eb"&gt;patch&lt;/a&gt; sped up &lt;code&gt;cabal update&lt;/code&gt; (&lt;a href="https://www.haskell.org/cabal/"&gt;cabal&lt;/a&gt; is the Haskell package manager) incredibly: The patch claims improvements from 80s to 0.01s.&lt;/p&gt;
+
+&lt;p&gt;Despite the patch being initially-inscrutable Haskell, this is actually a instance of an incredibly-common accidentally-quadratic bug.&lt;/p&gt;
+
+&lt;p&gt;The key part of the old code was&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;foldr (flip (buf_append bufOps)) (buf_empty bufOps) strs&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;There&amp;rsquo;s a bunch of noise here, but basically this is trying to take an array of byte buffers (&lt;code&gt;strs&lt;/code&gt;), and flatten them into a single buffer. It does so via a &lt;code&gt;foldr&lt;/code&gt; of &lt;code&gt;buf_append&lt;/code&gt;, starting with &lt;code&gt;buf_empty&lt;/code&gt; – the empty buffer.&lt;/p&gt;
+
+&lt;p&gt;Since &lt;code&gt;buf_append&lt;/code&gt; copies both underlying buffers into a new buffer, this will repeatedly copy data as it foldr&amp;rsquo;s. If the total data is length n, and the pieces are roughly constant-sized (say, one TCP packet a piece, or one socket buffer apiece), this will do O(n*n/k) = O(n²) work. It&amp;rsquo;s the exact same problem as building up long strings in Java using &lt;code&gt;+=&lt;/code&gt; instead of &lt;code&gt;StringBuilder&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The fix switches to &lt;code&gt;buf_concat&lt;/code&gt;, which takes the whole list and directly produces a new output buffer:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;buf_concat bufOps $ reverse strs&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;Since &lt;code&gt;buf_concat&lt;/code&gt; can walk the list once to determine the allocation size, and then copy each piece of data once, this restores linear performance.&lt;/p&gt;
+
+&lt;p&gt;I really like this one because even though Haskell performance and syntax can be totally inscrutable, once you dig into it, it&amp;rsquo;s actually the same super-common bug class that you find in a lot of imperative code.&lt;/p&gt;</description><link>https://accidentallyquadratic.tumblr.com/post/113847081597</link><guid>https://accidentallyquadratic.tumblr.com/post/113847081597</guid><pubDate>Mon, 16 Mar 2015 20:57:09 -0700</pubDate><category>accidentally</category><category>quadratic</category><category>haskell</category><category>cabal</category><category>http</category></item></channel></rss>
