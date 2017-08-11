@@ -1,20 +1,21 @@
 package flesher
 
 import (
-	"bytes"
 	"html"
 	"html/template"
 
+	"github.com/gunnihinn/evil-feed-reader/provider"
 	"github.com/mmcdole/gofeed"
 )
 
-// New detects feed type and returns an appropriate parser.
-func New(blob []byte) Parser {
-	return parseFeed
-}
+func Flesh(p provider.Provider, resource string) (FeedResult, error) {
+	reader, err := p(resource)
+	if err != nil {
+		return feedResult{}, err
+	}
+	defer reader.Close()
 
-func parseFeed(blob []byte) (FeedResult, error) {
-	feed, err := gofeed.NewParser().Parse(bytes.NewReader(blob))
+	feed, err := gofeed.NewParser().Parse(reader)
 	if err != nil {
 		return feedResult{}, err
 	}

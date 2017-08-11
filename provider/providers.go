@@ -1,87 +1,38 @@
 package provider
 
-/*
- * Package provider defines functions that fetch raw bytes from a input.
- */
-
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
+	"strings"
 )
 
-// Provider is the interface that any provider function has to satisfy.
-type Provider interface {
-	Get(string) ([]byte, error)
+type Provider func(string) (io.ReadCloser, error)
+
+// HTTP defines an HTTP provider.
+func HTTP(url string) (io.ReadCloser, error) {
+	response, err := http.Get(url)
+
+	return response.Body, err
 }
 
-// provider implements the Provider interface.
-type provider struct {
-	fromFunc func(string) ([]byte, error)
+// File defines a File provider.
+func File(filename string) (io.ReadCloser, error) {
+	return os.Open(filename)
 }
 
-// Get bytes from resource.
-func (p provider) Get(resource string) ([]byte, error) {
-	return p.fromFunc(resource)
+// String defines a String provider.
+func String(str string) (io.ReadCloser, error) {
+	return readerCloser{reader: strings.NewReader(str)}, nil
 }
 
-/*
-HTTP defines an HTTP provider.
-
-Its `Get` method makes a GET request to the URL `resource`.
-*/
-func HTTP() Provider {
-	return provider{
-		fromFunc: fromHTTP,
-	}
+// readerCloser defines a trivial Close() method on a Reader
+type readerCloser struct {
+	reader io.Reader
 }
 
-/*
-File defines a File provider.
-
-Its `Get` method reads bytes from a file named `resource` on disk.
-*/
-func File() Provider {
-	return provider{
-		fromFunc: fromFile,
-	}
+func (r readerCloser) Read(bs []byte) (n int, err error) {
+	return r.reader.Read(bs)
 }
 
-/*
-String defines a String provider.
-
-Its `Get` method converts the string `resource` into bytes.
-*/
-func String() Provider {
-	return provider{
-		fromFunc: fromString,
-	}
-}
-
-func fromHTTP(url string) ([]byte, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return []byte{}, err
-	}
-	defer resp.Body.Close()
-
-	blob, err := ioutil.ReadAll(resp.Body)
-
-	return blob, err
-}
-
-func fromFile(filename string) ([]byte, error) {
-	fh, err := os.Open(filename)
-	if err != nil {
-		return []byte{}, err
-	}
-	defer fh.Close()
-
-	blob, err := ioutil.ReadAll(fh)
-
-	return blob, err
-}
-
-func fromString(content string) ([]byte, error) {
-	return []byte(content), nil
-}
+func (r readerCloser) Close() error { return nil }

@@ -63,16 +63,7 @@ func (f feed) Entries() []Entry {
 func (f *feed) Update() ([]string, error) {
 	messages := make([]string, 0)
 
-	blob, err := f.provider.Get(f.resource)
-	if err != nil {
-		return messages, err
-	}
-
-	if f.parser == nil {
-		f.parser = flesher.New(blob)
-	}
-
-	feedResult, err := f.parser(blob)
+	feedResult, err := flesher.Flesh(f.provider, f.resource)
 	if err != nil {
 		return messages, err
 	}

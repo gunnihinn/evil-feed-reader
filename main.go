@@ -84,7 +84,7 @@ func main() {
 
 	feeds := make([]reader.Feed, 0)
 	for _, url := range urls {
-		feeds = append(feeds, reader.New(provider.HTTP(), url))
+		feeds = append(feeds, reader.New(provider.HTTP, url))
 	}
 
 	state, err := parseState(*stateFile)
