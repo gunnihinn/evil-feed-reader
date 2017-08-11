@@ -8,14 +8,13 @@ import (
 	"io"
 	"strings"
 
-	"github.com/gunnihinn/evil-feed-reader/flesher"
-	"github.com/gunnihinn/evil-feed-reader/provider"
+	"github.com/gunnihinn/evil-feed-reader/parser"
 )
 
-func New(provider provider.Provider, resource string) Feed {
+func New(provider parser.Provider, resource string) Feed {
 	return &feed{
 		resource: resource,
-		parser:   flesher.New(provider),
+		parser:   parser.New(provider),
 	}
 }
 
@@ -27,7 +26,7 @@ type feed struct {
 	hash     string
 	seen     bool
 
-	parser flesher.Parser
+	parser parser.Parser
 
 	title   string
 	url     string

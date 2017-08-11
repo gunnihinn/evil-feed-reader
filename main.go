@@ -11,7 +11,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gunnihinn/evil-feed-reader/provider"
+	"github.com/gunnihinn/evil-feed-reader/parser"
 	"github.com/gunnihinn/evil-feed-reader/reader"
 )
 
@@ -84,7 +84,7 @@ func main() {
 
 	feeds := make([]reader.Feed, 0)
 	for _, url := range urls {
-		feeds = append(feeds, reader.New(provider.HTTP, url))
+		feeds = append(feeds, reader.New(parser.HTTP, url))
 	}
 
 	state, err := parseState(*stateFile)

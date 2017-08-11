@@ -1,4 +1,4 @@
-package flesher
+package parser
 
 import (
 	"html/template"

@@ -1,19 +1,18 @@
-package flesher
+package parser
 
 import (
 	"html"
 	"html/template"
 
-	"github.com/gunnihinn/evil-feed-reader/provider"
 	"github.com/mmcdole/gofeed"
 )
 
 type Parser struct {
 	parser   *gofeed.Parser
-	provider provider.Provider
+	provider Provider
 }
 
-func New(p provider.Provider) Parser {
+func New(p Provider) Parser {
 	return Parser{
 		parser:   gofeed.NewParser(),
 		provider: p,
