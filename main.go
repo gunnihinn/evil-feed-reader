@@ -34,7 +34,7 @@ func Prepare(feeds []reader.Feed, active reader.Feed) Context {
 
 	for i, f := range feeds {
 		ctx.Sidebar[i] = Navitem{
-			Title:          f.Title(),
+			Title:          f.Nickname(),
 			Resource:       fmt.Sprintf("%d", i),
 			HasRecentItems: !f.Seen(),
 		}
@@ -77,14 +77,14 @@ func main() {
 
 	logger := Logger(*logFile)
 
-	urls, err := parseConfig(*configFile)
+	config, err := parseConfig(*configFile)
 	if err != nil {
 		logger.Printf("Couldn't parse config file: %s\n", err)
 	}
 
 	feeds := make([]reader.Feed, 0)
-	for _, url := range urls {
-		feeds = append(feeds, reader.New(parser.HTTP, url))
+	for _, cfg := range config {
+		feeds = append(feeds, reader.New(parser.HTTP, cfg.Resource, cfg.Nickname))
 	}
 
 	state, err := parseState(*stateFile)

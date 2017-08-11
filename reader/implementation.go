@@ -11,9 +11,10 @@ import (
 	"github.com/gunnihinn/evil-feed-reader/parser"
 )
 
-func New(provider parser.Provider, resource string) Feed {
+func New(provider parser.Provider, resource string, nickname string) Feed {
 	return &feed{
 		resource: resource,
+		nickname: nickname,
 		parser:   parser.New(provider),
 	}
 }
@@ -25,6 +26,7 @@ type feed struct {
 	resource string
 	hash     string
 	seen     bool
+	nickname string
 
 	parser parser.Parser
 
@@ -38,6 +40,14 @@ func (f feed) Resource() string {
 }
 
 func (f feed) Title() string {
+	return f.title
+}
+
+func (f feed) Nickname() string {
+	if f.nickname != "" {
+		return f.nickname
+	}
+
 	return f.title
 }
 

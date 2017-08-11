@@ -1,19 +1,25 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestConfigYaml(t *testing.T) {
+	// Careful not to put \t here
 	input := `
 # comment
-- a
-- b
+-
+    url: a
+-
+    url: b
 # comment
-- c
+-
+    url: c
 `
-	expected := []string{
-		"a",
-		"b",
-		"c",
+	expected := []Config{
+		Config{Resource: "a"},
+		Config{Resource: "b"},
+		Config{Resource: "c"},
 	}
 
 	got, err := parseConfigYaml([]byte(input))

@@ -10,6 +10,7 @@ type Feed interface {
 	SetSeen(bool)
 	Hash() string
 	SetState(FeedState)
+	Nickname() string
 
 	Title() string
 	Url() string

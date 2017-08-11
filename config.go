@@ -8,29 +8,34 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-func parseConfig(filename string) ([]string, error) {
+type Config struct {
+	Resource string `yaml:"url"`
+	Nickname string
+}
+
+func parseConfig(filename string) ([]Config, error) {
 	fh, err := os.Open(filename)
 	if err != nil {
-		return []string{}, err
+		return []Config{}, err
 	}
 	defer fh.Close()
 
 	blob, err := ioutil.ReadAll(fh)
 	if err != nil {
-		return []string{}, err
+		return []Config{}, err
 	}
 
 	return parseConfigYaml(blob)
 }
 
-func parseConfigYaml(blob []byte) ([]string, error) {
-	urls := make([]string, 0)
-	err := yaml.Unmarshal(blob, &urls)
+func parseConfigYaml(blob []byte) ([]Config, error) {
+	cfg := make([]Config, 0)
+	err := yaml.Unmarshal(blob, &cfg)
 	if err != nil {
-		return []string{}, err
+		return []Config{}, err
 	}
 
-	return urls, nil
+	return cfg, nil
 }
 
 func parseState(filename string) (map[string]reader.FeedState, error) {
