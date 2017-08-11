@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"crypto/tls"
 	"io"
 	"net/http"
 	"os"
@@ -9,9 +10,15 @@ import (
 
 type Provider func(string) (io.ReadCloser, error)
 
+var client = http.Client{
+	Transport: &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	},
+}
+
 // HTTP defines an HTTP provider.
 func HTTP(url string) (io.ReadCloser, error) {
-	response, err := http.Get(url)
+	response, err := client.Get(url)
 
 	return response.Body, err
 }
