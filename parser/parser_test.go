@@ -115,18 +115,45 @@ func TestSavedFeeds(t *testing.T) {
 
 		got, err := p.Parse(testFile)
 		if err != nil {
-			t.Errorf("Parse error in '%s': %s\n", testFile, err)
+			t.Errorf("%s: Parse error: %s\n", testFile, err)
 			return
 		}
 
 		if got.Title() != expected.title {
-			t.Errorf("Title:\nGot:\t\t'%s'\nExpected:\t'%s'\n", got.Title(), expected.title)
+			t.Errorf("%s: Title:\nGot:\t\t'%s'\nExpected:\t'%s'\n", testFile, got.Title(), expected.title)
 			return
 		}
 
 		if got.Url() != expected.url {
-			t.Errorf("Title:\nGot:\t\t'%s'\nExpected:\t'%s'\n", got.Url(), expected.url)
+			t.Errorf("%s: URL:\nGot:\t\t'%s'\nExpected:\t'%s'\n", testFile, got.Url(), expected.url)
 			return
+		}
+
+		if len(got.Items()) == 0 {
+			t.Errorf("%s: Got 0 items\n", testFile)
+			return
+		}
+
+		for _, item := range got.Items() {
+			if item.Title() == "" {
+				t.Errorf("%s: Item had no title\n%#v\n", testFile, item)
+				return
+			}
+
+			if item.Url() == "" {
+				t.Errorf("%s: Item had no URL\n%#v\n", testFile, item)
+				return
+			}
+
+			if item.Content() == "" {
+				t.Errorf("%s: Item had no content\n%#v\n", testFile, item)
+				return
+			}
+
+			if item.Published() == "" {
+				t.Errorf("%s: Item had no published field\n%#v\n", testFile, item)
+				return
+			}
 		}
 	}
 }

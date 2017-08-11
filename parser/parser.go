@@ -52,9 +52,21 @@ func (p Parser) Parse(resource string) (FeedResult, error) {
 			published = item.Published
 		}
 
+		var url string
+		if item.Link != "" {
+			url = item.Link
+		} else if len(item.Enclosures) > 0 {
+			for _, e := range item.Enclosures {
+				if e.URL != "" {
+					url = e.URL
+					break
+				}
+			}
+		}
+
 		entries = append(entries, entryResult{
 			title:     html.UnescapeString(item.Title),
-			url:       item.Link,
+			url:       url,
 			content:   template.HTML(content),
 			published: published,
 		})
