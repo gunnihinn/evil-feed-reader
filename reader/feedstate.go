@@ -5,9 +5,11 @@ import (
 )
 
 type FeedState struct {
-	URI  string
-	Hash string
-	Seen bool
+	Title    string
+	URL      string
+	Resource string
+	Hash     string
+	Seen     bool
 }
 
 func Marshal(feeds []Feed) ([]byte, error) {
@@ -15,9 +17,11 @@ func Marshal(feeds []Feed) ([]byte, error) {
 
 	for _, feed := range feeds {
 		data = append(data, FeedState{
-			URI:  feed.Resource(),
-			Hash: feed.Hash(),
-			Seen: feed.Seen(),
+			Title:    feed.Title(),
+			URL:      feed.Url(),
+			Resource: feed.Resource(),
+			Hash:     feed.Hash(),
+			Seen:     feed.Seen(),
 		})
 	}
 
@@ -34,7 +38,7 @@ func Unmarshal(blob []byte) (map[string]FeedState, error) {
 
 	feeds := make(map[string]FeedState)
 	for _, fs := range data {
-		feeds[fs.URI] = fs
+		feeds[fs.Resource] = fs
 	}
 
 	return feeds, nil

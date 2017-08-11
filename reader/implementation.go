@@ -48,6 +48,8 @@ func (f feed) Url() string {
 func (f *feed) SetState(state FeedState) {
 	f.hash = state.Hash
 	f.seen = state.Seen
+	f.title = state.Title
+	f.url = state.URL
 }
 
 func (f feed) Entries() []Entry {
@@ -68,18 +70,14 @@ func (f *feed) Update() ([]string, error) {
 
 	oldHashString := f.hashString()
 
-	if title := feedResult.Title(); f.title == "" && title != "" {
+	if title := feedResult.Title(); f.title != title && title != "" {
 		f.title = title
 		messages = append(messages, fmt.Sprintf("Setting feed title to '%s'", title))
-	} else {
-		messages = append(messages, fmt.Sprintf("No title found"))
 	}
 
-	if url := feedResult.Url(); f.url == "" && url != "" {
+	if url := feedResult.Url(); f.url != url && url != "" {
 		f.url = url
 		messages = append(messages, fmt.Sprintf("Setting feed URL to '%s'", url))
-	} else {
-		messages = append(messages, fmt.Sprintf("No URL found"))
 	}
 
 	if f.url == "" || f.title == "" {
