@@ -96,7 +96,10 @@ func main() {
 	for _, feed := range feeds {
 		s, ok := state[feed.Resource()]
 		if ok {
+			logger.Printf("Restoring state of %s\n", feed.Resource())
 			feed.SetState(s)
+		} else {
+			logger.Printf("No state found for %s\n", feed.Resource())
 		}
 	}
 

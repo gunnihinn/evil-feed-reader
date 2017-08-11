@@ -66,6 +66,8 @@ func (f *feed) Update() ([]string, error) {
 		return messages, err
 	}
 
+	oldHashString := f.hashString()
+
 	if title := feedResult.Title(); f.title == "" && title != "" {
 		f.title = title
 		messages = append(messages, fmt.Sprintf("Setting feed title to '%s'", title))
@@ -101,13 +103,16 @@ func (f *feed) Update() ([]string, error) {
 		})
 	}
 
-	if hash := f.calculateHash(); f.hash != hash {
+	newHashString := f.hashString()
+	if hash := f.calculateHash(newHashString); f.hash != hash {
 		if f.hash == "" {
 			f.seen = true
 			messages = append(messages, "New feed defaults to 'seen'")
 		} else {
 			f.seen = false
 			messages = append(messages, "New items in feed; marking feed 'not seen'")
+			messages = append(messages, fmt.Sprintf("Old:\n%s", oldHashString))
+			messages = append(messages, fmt.Sprintf("New:\n%s", newHashString))
 		}
 		f.hash = hash
 	}
@@ -121,14 +126,20 @@ func (f *feed) SetSeen(seen bool) { f.seen = seen }
 
 func (f feed) Hash() string { return f.hash }
 
-func (f feed) calculateHash() string {
+func (f feed) calculateHash(blob string) string {
 	h := sha1.New()
-	for _, entry := range f.entries {
-		io.WriteString(h, entry.Title())
-		io.WriteString(h, entry.Published())
-	}
+	io.WriteString(h, blob)
 
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+func (f feed) hashString() string {
+	s := ""
+	for _, entry := range f.entries {
+		s += fmt.Sprintf("%s - %s\n", entry.Published(), entry.Title())
+	}
+
+	return s
 }
 
 type entry struct {
