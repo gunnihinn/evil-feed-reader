@@ -171,5 +171,5 @@ func Logger(filename string) *log.Logger {
 		}
 	}
 
-	return log.New(file, "Message: ", log.LstdFlags)
+	return log.New(file, "", log.LstdFlags)
 }
