@@ -1,11 +1,11 @@
 binary=evilfr
 
 lib_src = $(wildcard */*.go)
-bin_src = $(wildcard cmd/evil-feed-reader/*.go)
+bin_src = $(wildcard *.go)
 project_package = github.com/gunnihinn/evil-feed-reader
 
 datadir = static
-data = $(wildcard cmd/evil-feed-reader/static/*)
+data = $(wildcard static/*)
 bindata = bindata.go
 bindata_gen = bindata_assetfs.go
 

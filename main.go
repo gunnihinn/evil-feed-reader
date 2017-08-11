@@ -122,6 +122,7 @@ func main() {
 
 	addr := fmt.Sprintf(":%d", *port)
 	logger.Printf("Listening on %s\n", addr)
+
 	handler := NewHandler()
 	server := &http.Server{
 		Addr:    addr,
@@ -129,11 +130,11 @@ func main() {
 	}
 
 	for i, feed := range feeds {
-		handler.mux.HandleFunc(fmt.Sprintf("/%d", i), createHandler(feeds, feed))
+		handler.HandleFunc(fmt.Sprintf("/%d", i), createHandler(feeds, feed))
 	}
-	handler.mux.HandleFunc("/", createHandler(feeds, nil))
-	handler.mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(assetFS())))
-	handler.mux.HandleFunc("/log", func(w http.ResponseWriter, r *http.Request) {
+	handler.HandleFunc("/", createHandler(feeds, nil))
+	handler.Handle("/static/", http.StripPrefix("/static/", http.FileServer(assetFS())))
+	handler.HandleFunc("/log", func(w http.ResponseWriter, r *http.Request) {
 		contents, err := readLog(*logFile)
 		if err != nil {
 			fmt.Fprintf(w, "%s", err)

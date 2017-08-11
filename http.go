@@ -18,6 +18,14 @@ func NewHandler() Handler {
 	}
 }
 
+func (h Handler) HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request)) {
+	h.mux.HandleFunc(pattern, handler)
+}
+
+func (h Handler) Handle(pattern string, handler http.Handler) {
+	h.mux.Handle(pattern, handler)
+}
+
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.mux.ServeHTTP(w, r)
 }
