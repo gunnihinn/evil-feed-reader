@@ -10,6 +10,7 @@ secrets
 
 # Config files
 *.cfg
+*.yaml
 
 # Embedded assets
 bindata.go

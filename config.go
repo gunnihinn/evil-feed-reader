@@ -1,12 +1,11 @@
 package main
 
 import (
-	"bufio"
 	"io/ioutil"
 	"os"
-	"strings"
 
 	"github.com/gunnihinn/evil-feed-reader/reader"
+	"gopkg.in/yaml.v2"
 )
 
 func parseConfig(filename string) ([]string, error) {
@@ -16,17 +15,22 @@ func parseConfig(filename string) ([]string, error) {
 	}
 	defer fh.Close()
 
-	urls := make([]string, 0)
-	scanner := bufio.NewScanner(fh)
-	for scanner.Scan() {
-		line := strings.Trim(scanner.Text(), " \t")
-		if line == "" || strings.Index(line, "#") == 0 {
-			continue
-		}
-		urls = append(urls, line)
+	blob, err := ioutil.ReadAll(fh)
+	if err != nil {
+		return []string{}, err
 	}
 
-	return urls, scanner.Err()
+	return parseConfigYaml(blob)
+}
+
+func parseConfigYaml(blob []byte) ([]string, error) {
+	urls := make([]string, 0)
+	err := yaml.Unmarshal(blob, &urls)
+	if err != nil {
+		return []string{}, err
+	}
+
+	return urls, nil
 }
 
 func parseState(filename string) (map[string]reader.FeedState, error) {

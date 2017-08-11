@@ -70,7 +70,7 @@ func createHandler(feeds []reader.Feed, active reader.Feed) func(http.ResponseWr
 
 func main() {
 	var port = flag.Int("port", 8080, "HTTP port")
-	var configFile = flag.String("feeds", "feeds.cfg", "Feeds config file")
+	var configFile = flag.String("config", "evil.yaml", "Reader config file")
 	var stateFile = flag.String("state", ".evil-state.json", "Internal state file")
 	var logFile = flag.String("log", "", "Reader log file; use STDOUT if absent")
 	flag.Parse()
