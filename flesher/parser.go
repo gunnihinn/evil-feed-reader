@@ -8,14 +8,26 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-func Flesh(p provider.Provider, resource string) (FeedResult, error) {
-	reader, err := p(resource)
+type Parser struct {
+	parser   *gofeed.Parser
+	provider provider.Provider
+}
+
+func New(p provider.Provider) Parser {
+	return Parser{
+		parser:   gofeed.NewParser(),
+		provider: p,
+	}
+}
+
+func (p Parser) Parse(resource string) (FeedResult, error) {
+	reader, err := p.provider(resource)
 	if err != nil {
 		return feedResult{}, err
 	}
 	defer reader.Close()
 
-	feed, err := gofeed.NewParser().Parse(reader)
+	feed, err := p.parser.Parse(reader)
 	if err != nil {
 		return feedResult{}, err
 	}
@@ -53,6 +65,3 @@ func Flesh(p provider.Provider, resource string) (FeedResult, error) {
 
 	return result, nil
 }
-
-// Parser parses a feed.
-type Parser func([]byte) (FeedResult, error)

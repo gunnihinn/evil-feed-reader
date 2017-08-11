@@ -15,7 +15,7 @@ import (
 func New(provider provider.Provider, resource string) Feed {
 	return &feed{
 		resource: resource,
-		provider: provider,
+		parser:   flesher.New(provider),
 	}
 }
 
@@ -27,8 +27,7 @@ type feed struct {
 	hash     string
 	seen     bool
 
-	provider provider.Provider
-	parser   flesher.Parser
+	parser flesher.Parser
 
 	title   string
 	url     string
@@ -63,7 +62,7 @@ func (f feed) Entries() []Entry {
 func (f *feed) Update() ([]string, error) {
 	messages := make([]string, 0)
 
-	feedResult, err := flesher.Flesh(f.provider, f.resource)
+	feedResult, err := f.parser.Parse(f.resource)
 	if err != nil {
 		return messages, err
 	}
