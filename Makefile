@@ -21,5 +21,5 @@ clean:
 	rm -f $(binary)
 
 deploy: $(bindata) $(lib_src) $(bin_src)
-	GOOS=freebsd GOARCH=amd64 go build -o $(binary) $(project_package)
+	GOOS=linux GOARCH=amd64 go build -o $(binary) $(project_package)
 	./deploy.sh > /dev/null

@@ -155,6 +155,13 @@ func main() {
 		}
 	}()
 
+	go func() {
+		time.Sleep(15 * time.Minute)
+		if err := writeState(*stateFile, feeds); err != nil {
+			logger.Printf("Couldn't write reader state to disk: %s\n", err)
+		}
+	}()
+
 	<-stop
 	logger.Print("Shutting down")
 
