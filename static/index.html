@@ -16,7 +16,7 @@
         <h1>Evil feed reader</h1>
 
         {{ range .Days }}
-            <h2>{{ .Date }}</h2>
+        <h2>{{ .Date.Year }}&ndash;{{ .Date.Format "01"}}&ndash;{{ .Date.Format "02" }}</h2>
             {{ range .Entries }}
                 <h3>{{ .Feed }}</a></h3>
                 <p><a href="{{ .Link }}">{{ .Title }}</a></p>

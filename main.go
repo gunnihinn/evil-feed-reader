@@ -26,7 +26,7 @@ type Content struct {
 }
 
 type DateEntries struct {
-	Date    string
+	Date    time.Time
 	Entries []Entry
 }
 
@@ -111,7 +111,7 @@ func gatherEntries(entries []Entry) Content {
 		if date == "" {
 			date = getDate(entry.Published)
 			bucket = DateEntries{
-				Date:    date,
+				Date:    entry.Published,
 				Entries: make([]Entry, 0),
 			}
 		}
@@ -125,7 +125,7 @@ func gatherEntries(entries []Entry) Content {
 			}
 
 			bucket = DateEntries{
-				Date:    date,
+				Date:    entry.Published,
 				Entries: make([]Entry, 0),
 			}
 		} else {
