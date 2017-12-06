@@ -12,6 +12,28 @@ import (
 	"syscall"
 )
 
+type Config struct {
+	URL      string
+	Nickname string
+	Prefix   string
+}
+
+func parseConfigFile(filename string) ([]Config, error) {
+	fh, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+
+	var configs []Config
+	decoder := json.NewDecoder(fh)
+	err = decoder.Decode(&configs)
+	if err != nil {
+		return nil, err
+	}
+
+	return configs, nil
+}
+
 func main() {
 	var port = flag.Int("port", 8080, "HTTP port")
 	var configFile = flag.String("config", "feeds.json", "Reader config file")
@@ -19,19 +41,7 @@ func main() {
 
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 
-	fh, err := os.Open(*configFile)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	type FeedConfig struct {
-		URL      string
-		Nickname string
-		Prefix   string
-	}
-	var feedConfigs []FeedConfig
-	decoder := json.NewDecoder(fh)
-	err = decoder.Decode(&feedConfigs)
+	configs, err := parseConfigFile(*configFile)
 	if err != nil {
 		logger.Fatal(err)
 	}
