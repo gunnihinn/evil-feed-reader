@@ -7,13 +7,19 @@
 
     <link href="static/style.css" rel="stylesheet">
 
-    <title>Title</title>
+    <title>Evil feed reader</title>
 </head>
 
 <body>
 
     <main>
-        <h1>Website</h1>
+        <h1>Evil feed reader</h1>
+
+        {{ range .Entries }}
+            <h2>{{ .Feed }}</h2>
+            <p>{{ .Published.Year }}-{{ .Published.Month }}-{{ .Published.Day }}</p>
+            <h3><a href="{{ .Link }}">{{ .Title }}</a></h3>
+        {{ end  }}
 
         <p>Text</p>
     </main>

@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sort"
 	"syscall"
 )
 
@@ -40,17 +41,18 @@ func main() {
 	logger.Println("START")
 
 	https := make(chan HTTP)
-	entries := make([]Entry, 0)
+	entries := make(entries, 0)
 
 	for _, config := range configs {
-		go func(url string) {
-			response, err := client.Get(url)
+		go func(cfg Config) {
+			response, err := client.Get(cfg.URL)
+
 			https <- HTTP{
-				config:   config,
+				config:   cfg,
 				response: response,
 				err:      err,
 			}
-		}(config.URL)
+		}(config)
 	}
 
 	i := 0
@@ -69,10 +71,12 @@ func main() {
 	}
 	logger.Println("END")
 
+	sort.Sort(sort.Reverse(entries))
+
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
 
-	server := setupServer(*port)
+	server := setupServer(*port, entries)
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
 			logger.Fatalf("Server error: %s\n", err)
@@ -99,7 +103,7 @@ func parseConfigFile(filename string) ([]Config, error) {
 	return configs, nil
 }
 
-func setupServer(port int) *http.Server {
+func setupServer(port int, entries entries) *http.Server {
 	handler := NewHandler()
 	server := &http.Server{
 		Addr:    fmt.Sprintf("localhost:%d", port),
@@ -120,7 +124,13 @@ func setupServer(port int) *http.Server {
 			return
 		}
 
-		if err := t.Execute(w, nil); err != nil {
+		ds := struct {
+			Entries []Entry
+		}{
+			Entries: entries,
+		}
+
+		if err := t.Execute(w, ds); err != nil {
 			fmt.Fprintf(w, "%s", err)
 			return
 		}
