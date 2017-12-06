@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
@@ -13,12 +14,27 @@ import (
 
 func main() {
 	var port = flag.Int("port", 8080, "HTTP port")
-	var configFile = flag.String("config", "evil.json", "Reader config file")
+	var configFile = flag.String("config", "feeds.json", "Reader config file")
 	flag.Parse()
 
 	logger := log.New(os.Stdout, "", log.LstdFlags)
 
-	logger.Printf("Config file %s\n", *configFile)
+	fh, err := os.Open(*configFile)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	type FeedConfig struct {
+		URL      string
+		Nickname string
+		Prefix   string
+	}
+	var feedConfigs []FeedConfig
+	decoder := json.NewDecoder(fh)
+	err = decoder.Decode(&feedConfigs)
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	handler := NewHandler()
 	server := &http.Server{
