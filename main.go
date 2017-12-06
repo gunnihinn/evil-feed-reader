@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -29,6 +30,34 @@ func main() {
 	if err != nil {
 		logger.Fatal(err)
 	}
+
+	var client = http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
+
+	logger.Println("START")
+	https := make(chan HTTP)
+	for _, config := range configs {
+		go func(url string) {
+			response, err := client.Get(url)
+			https <- HTTP{
+				config:   config,
+				response: response,
+				err:      err,
+			}
+		}(config.URL)
+	}
+	i := 0
+	for msg := range https {
+		logger.Println(msg.response.Status)
+		i++
+		if i == len(configs) {
+			break
+		}
+	}
+	logger.Println("END")
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
