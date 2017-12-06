@@ -38,7 +38,10 @@ func main() {
 	}
 
 	logger.Println("START")
+
 	https := make(chan HTTP)
+	entries := make([]Entry, 0)
+
 	for _, config := range configs {
 		go func(url string) {
 			response, err := client.Get(url)
@@ -49,9 +52,16 @@ func main() {
 			}
 		}(config.URL)
 	}
+
 	i := 0
 	for msg := range https {
-		logger.Println(msg.response.Status)
+		es, err := parseEntries(msg)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		entries = append(entries, es...)
+
 		i++
 		if i == len(configs) {
 			break
