@@ -15,10 +15,12 @@
     <main>
         <h1>Evil feed reader</h1>
 
-        {{ range .Entries }}
-            <h2>{{ .Feed }}</h2>
-            <p>{{ .Published.Year }}-{{ .Published.Month }}-{{ .Published.Day }}</p>
-            <h3><a href="{{ .Link }}">{{ .Title }}</a></h3>
+        {{ range .Days }}
+            <h2>{{ .Date }}</h2>
+            {{ range .Entries }}
+                <h3>{{ .Feed }}</a></h3>
+                <p><a href="{{ .Link }}">{{ .Title }}</a></p>
+            {{ end  }}
         {{ end  }}
     </main>
 

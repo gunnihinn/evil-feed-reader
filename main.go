@@ -12,12 +12,22 @@ import (
 	"os/signal"
 	"sort"
 	"syscall"
+	"time"
 )
 
 type Config struct {
 	URL      string
 	Nickname string
 	Prefix   string
+}
+
+type Content struct {
+	Days []DateEntries
+}
+
+type DateEntries struct {
+	Date    string
+	Entries []Entry
 }
 
 func main() {
@@ -41,7 +51,7 @@ func main() {
 	logger.Println("START")
 
 	https := make(chan HTTP)
-	entries := make(entries, 0)
+	entries := make([]Entry, 0)
 
 	for _, config := range configs {
 		go func(cfg Config) {
@@ -55,6 +65,7 @@ func main() {
 		}(config)
 	}
 
+	// TODO: Use wait groups
 	i := 0
 	for msg := range https {
 		es, err := parseEntries(msg)
@@ -71,12 +82,12 @@ func main() {
 	}
 	logger.Println("END")
 
-	sort.Sort(sort.Reverse(entries))
+	content := gatherEntries(entries)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
 
-	server := setupServer(*port, entries)
+	server := setupServer(*port, content)
 	go func() {
 		if err := server.ListenAndServe(); err != nil {
 			logger.Fatalf("Server error: %s\n", err)
@@ -85,6 +96,48 @@ func main() {
 
 	<-stop
 	logger.Print("Shutting down")
+}
+
+func gatherEntries(entries []Entry) Content {
+	sort.Sort(sort.Reverse(sortedEntries(entries)))
+
+	content := Content{
+		Days: make([]DateEntries, 0),
+	}
+
+	var date string
+	var bucket DateEntries
+	for _, entry := range entries {
+		if date == "" {
+			date = getDate(entry.Published)
+			bucket = DateEntries{
+				Date:    date,
+				Entries: make([]Entry, 0),
+			}
+		}
+
+		d := getDate(entry.Published)
+		if date != d {
+			date = d
+
+			if len(bucket.Entries) > 0 {
+				content.Days = append(content.Days, bucket)
+			}
+
+			bucket = DateEntries{
+				Date:    date,
+				Entries: make([]Entry, 0),
+			}
+		} else {
+			bucket.Entries = append(bucket.Entries, entry)
+		}
+	}
+
+	return content
+}
+
+func getDate(t time.Time) string {
+	return t.Format("2006-01-02")
 }
 
 func parseConfigFile(filename string) ([]Config, error) {
@@ -103,7 +156,7 @@ func parseConfigFile(filename string) ([]Config, error) {
 	return configs, nil
 }
 
-func setupServer(port int, entries entries) *http.Server {
+func setupServer(port int, content Content) *http.Server {
 	handler := NewHandler()
 	server := &http.Server{
 		Addr:    fmt.Sprintf("localhost:%d", port),
@@ -124,13 +177,7 @@ func setupServer(port int, entries entries) *http.Server {
 			return
 		}
 
-		ds := struct {
-			Entries []Entry
-		}{
-			Entries: entries,
-		}
-
-		if err := t.Execute(w, ds); err != nil {
+		if err := t.Execute(w, content); err != nil {
 			fmt.Fprintf(w, "%s", err)
 			return
 		}

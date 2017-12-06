@@ -89,16 +89,16 @@ func parseEntries(message HTTP) ([]Entry, error) {
 	return es, nil
 }
 
-type entries []Entry
+type sortedEntries []Entry
 
-func (p entries) Len() int {
+func (p sortedEntries) Len() int {
 	return len(p)
 }
 
-func (p entries) Less(i, j int) bool {
+func (p sortedEntries) Less(i, j int) bool {
 	return p[i].Published.Before(p[j].Published)
 }
 
-func (p entries) Swap(i, j int) {
+func (p sortedEntries) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
