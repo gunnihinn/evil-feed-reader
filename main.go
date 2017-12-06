@@ -18,6 +18,32 @@ type Config struct {
 	Prefix   string
 }
 
+func main() {
+	var port = flag.Int("port", 8080, "HTTP port")
+	var configFile = flag.String("config", "feeds.json", "Reader config file")
+	flag.Parse()
+
+	logger := log.New(os.Stdout, "", log.LstdFlags)
+
+	configs, err := parseConfigFile(*configFile)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
+
+	server := setupServer(*port)
+	go func() {
+		if err := server.ListenAndServe(); err != nil {
+			logger.Fatalf("Server error: %s\n", err)
+		}
+	}()
+
+	<-stop
+	logger.Print("Shutting down")
+}
+
 func parseConfigFile(filename string) ([]Config, error) {
 	fh, err := os.Open(filename)
 	if err != nil {
@@ -34,21 +60,10 @@ func parseConfigFile(filename string) ([]Config, error) {
 	return configs, nil
 }
 
-func main() {
-	var port = flag.Int("port", 8080, "HTTP port")
-	var configFile = flag.String("config", "feeds.json", "Reader config file")
-	flag.Parse()
-
-	logger := log.New(os.Stdout, "", log.LstdFlags)
-
-	configs, err := parseConfigFile(*configFile)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
+func setupServer(port int) *http.Server {
 	handler := NewHandler()
 	server := &http.Server{
-		Addr:    fmt.Sprintf("localhost:%d", *port),
+		Addr:    fmt.Sprintf("localhost:%d", port),
 		Handler: handler,
 	}
 
@@ -73,15 +88,5 @@ func main() {
 	})
 	handler.Handle("/static/", http.StripPrefix("/static/", http.FileServer(assetFS())))
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
-
-	go func() {
-		if err := server.ListenAndServe(); err != nil {
-			logger.Fatalf("Server error: %s\n", err)
-		}
-	}()
-
-	<-stop
-	logger.Print("Shutting down")
+	return server
 }
