@@ -1,0 +1,25 @@
+h1 {
+    font-family: Courier, monospace;
+    font-size: 36px;
+}
+
+h2 {
+    font-size: 20px;
+}
+
+ul {
+    list-style-type: none;
+}
+
+.item-days {
+    font-family: Helvetica, sans-serif;
+}
+
+.feed-title {
+    font-weight: bold;
+}
+
+.item-entries {
+    font-family: Palatino, Georgia, serif;
+    font-size: 18px;
+}

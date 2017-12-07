@@ -11,17 +11,30 @@
 </head>
 
 <body>
+    <nav>
+        <h1>Evil feed reader</h1>
+    </nav>
 
     <main>
-        <h1>Evil feed reader</h1>
-
+        <ul class="list-days">
         {{ range .Days }}
-        <h2>{{ .Date.Year }}&ndash;{{ .Date.Format "01"}}&ndash;{{ .Date.Format "02" }}</h2>
+        <li class="item-days">
+            <h2>{{ .Date.Day }}&nbsp;{{ .Date.Month }}&nbsp;{{ .Date.Year }}</h2>
+        </li>
+        <ul class="list-entries">
             {{ range .Entries }}
-                <h3>{{ .Feed }}</a></h3>
-                <p><a href="{{ .Link }}">{{ .Title }}</a></p>
+            <li class="item-entries">
+                <p>
+                <span class="feed-title">{{ .Feed }}</span>:
+                <span class="item-title">
+                    <a href="{{ .Link }}">{{ .Title }}</a>
+                </span>
+                </p>
+            </li>
             {{ end  }}
+        </ul>
         {{ end  }}
+        </ul>
     </main>
 
 </body>
