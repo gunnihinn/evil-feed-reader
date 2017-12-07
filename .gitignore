@@ -4,11 +4,11 @@
 *.so
 *.dylib
 evilfr
-.evil-state.json
 
 secrets
 
 # Config files
+*.json
 *.cfg
 *.yaml
 

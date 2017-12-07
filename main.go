@@ -22,7 +22,8 @@ type Config struct {
 }
 
 type Content struct {
-	Days []DateEntries
+	configs []Config
+	Days    []DateEntries
 }
 
 type DateEntries struct {
@@ -30,30 +31,23 @@ type DateEntries struct {
 	Entries []Entry
 }
 
-func main() {
-	var port = flag.Int("port", 8080, "HTTP port")
-	var configFile = flag.String("config", "feeds.json", "Reader config file")
-	flag.Parse()
-
-	logger := log.New(os.Stdout, "", log.LstdFlags)
-
-	configs, err := parseConfigFile(*configFile)
-	if err != nil {
-		logger.Fatal(err)
+func SetupContent(configs []Config) *Content {
+	return &Content{
+		configs: configs,
 	}
+}
 
+func (content *Content) Refresh() {
 	var client = http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
 	}
 
-	logger.Println("START")
-
 	https := make(chan HTTP)
 	entries := make([]Entry, 0)
 
-	for _, config := range configs {
+	for _, config := range content.configs {
 		go func(cfg Config) {
 			response, err := client.Get(cfg.URL)
 
@@ -76,13 +70,27 @@ func main() {
 		entries = append(entries, es...)
 
 		i++
-		if i == len(configs) {
+		if i == len(content.configs) {
 			break
 		}
 	}
-	logger.Println("END")
 
-	content := gatherEntries(entries)
+	content.Days = gatherEntries(entries)
+}
+
+func main() {
+	var port = flag.Int("port", 8080, "HTTP port")
+	var configFile = flag.String("config", "feeds.json", "Reader config file")
+	flag.Parse()
+
+	logger := log.New(os.Stdout, "", log.LstdFlags)
+
+	config, err := parseConfigFile(*configFile)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	content := SetupContent(config)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
@@ -98,12 +106,10 @@ func main() {
 	logger.Print("Shutting down")
 }
 
-func gatherEntries(entries []Entry) Content {
+func gatherEntries(entries []Entry) []DateEntries {
 	sort.Sort(sort.Reverse(sortedEntries(entries)))
 
-	content := Content{
-		Days: make([]DateEntries, 0),
-	}
+	days := make([]DateEntries, 0)
 
 	var date string
 	var bucket DateEntries
@@ -121,7 +127,7 @@ func gatherEntries(entries []Entry) Content {
 			date = d
 
 			if len(bucket.Entries) > 0 {
-				content.Days = append(content.Days, bucket)
+				days = append(days, bucket)
 			}
 
 			bucket = DateEntries{
@@ -133,7 +139,7 @@ func gatherEntries(entries []Entry) Content {
 		}
 	}
 
-	return content
+	return days
 }
 
 func getDate(t time.Time) string {
@@ -156,7 +162,7 @@ func parseConfigFile(filename string) ([]Config, error) {
 	return configs, nil
 }
 
-func setupServer(port int, content Content) *http.Server {
+func setupServer(port int, content *Content) *http.Server {
 	handler := NewHandler()
 	server := &http.Server{
 		Addr:    fmt.Sprintf("localhost:%d", port),
@@ -176,6 +182,8 @@ func setupServer(port int, content Content) *http.Server {
 			fmt.Fprintf(w, "%s", err)
 			return
 		}
+
+		content.Refresh()
 
 		if err := t.Execute(w, content); err != nil {
 			fmt.Fprintf(w, "%s", err)
