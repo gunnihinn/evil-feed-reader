@@ -1,0 +1,64 @@
+= Evil feed reader
+
+I'm frustrated with the RSS and atom readers available, and decided to
+write my own that does what I want, silly name and all.
+
+Note that what I personally want may not at all be what you want.
+
+== Features
+
+Very few!
+
+You define the feeds you want to follow in a JSON config file. The format the
+program understand is:
+
+[source,json]
+----
+[
+    {
+        "url": <feed URL>,
+        "nickname": <optional nickname for feed>,
+        "prefix": <optional prefix for feed link URLs>
+    }
+]
+----
+
+Every entry needs a `url` value. Use `nickname` to pick names for feed titles
+you think are better than what its authors chose. Use `prefix` if a feed only
+provides relative links to its items and you know what to prefix them with to
+make working links.
+
+Evil feed reader keeps no state. We currently render feeds in the browser,
+which is perfectly capable of remembering what links we've already visited, and
+thus what items we've already read.
+
+Management is open to feature requests.
+
+== To run
+
+You need a Go compiler. I'm using Go 1.8.1. The reader has one dependency
+outside of the standard library (and only on the binary from that project),
+which you can install by following the instructions on:
+
+    https://github.com/jteeuwen/go-bindata
+
+Then compile and run the reader with:
+
+    $ git clone https://github.com/gunnihinn/evil-feed-reader.git
+    $ make      # needs GNU make
+    $ ./evil-feed-reader
+
+This will launch an HTTP server on `localhost:8080` that renders the latest
+items from the feeds you are interested in.
+
+You'll need to setup some feed URLs for the reader to do anything. The reader
+will look for a file named `feeds.json` in the directory where it is run by
+default. You can have it look elsewhere by passing a `-feeds` flag to it when
+run.
+
+== Evil
+
+See [evilwm](http://www.6809.org.uk/evilwm/).
+
+
+# vim: ft=asciidoc

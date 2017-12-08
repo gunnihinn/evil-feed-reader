@@ -15,6 +15,8 @@ import (
 	"time"
 )
 
+var logger *log.Logger
+
 type Config struct {
 	URL      string
 	Nickname string
@@ -38,6 +40,9 @@ func SetupContent(configs []Config) *Content {
 }
 
 func (content *Content) Refresh() {
+	logger.Println("Refreshing content")
+	start := time.Now()
+
 	var client = http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
@@ -74,16 +79,22 @@ func (content *Content) Refresh() {
 			break
 		}
 	}
+	end := time.Now()
+	logger.Printf("Getting feeds took %d ms\n", (end.UnixNano()-start.UnixNano())/1000000)
 
+	start = time.Now()
 	content.Days = gatherEntries(entries)
+	end = time.Now()
+	logger.Printf("Gathering entries took %d us\n", (end.UnixNano()-start.UnixNano())/1000)
 }
 
 func main() {
+	logger = log.New(os.Stdout, "", log.LstdFlags)
+	logger.Println("Starting")
+
 	var port = flag.Int("port", 8080, "HTTP port")
 	var configFile = flag.String("config", "feeds.json", "Reader config file")
 	flag.Parse()
-
-	logger := log.New(os.Stdout, "", log.LstdFlags)
 
 	config, err := parseConfigFile(*configFile)
 	if err != nil {

@@ -1,0 +1,17 @@
+= TODO
+
+Math feeds
+Split data fetching and rendering
+Sanity checks: Did we get something from all feeds?
+* Logging for monitoring
+* Logging for performance
+- arXiv feeds
+* Fetch feeds on main page reload
+* Group entries by days
+* Parse config
+- Add timestamp info to config
+* Fetch URLs
+* Parse XML
+* Collect data from XML
+* Order data by timestamp
+* Render HTML
