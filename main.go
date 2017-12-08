@@ -50,6 +50,7 @@ func (content *Content) Refresh() {
 	}
 
 	https := make(chan HTTP)
+	feeds := make(chan Feed)
 	entries := make([]Entry, 0)
 
 	for _, config := range content.configs {
@@ -62,21 +63,27 @@ func (content *Content) Refresh() {
 				err:      err,
 			}
 		}(config)
+
+		go func(https chan HTTP) {
+			feed := parseEntries(<-https)
+			feeds <- feed
+		}(https)
 	}
 
-	// TODO: Use wait groups
 	i := 0
-	for msg := range https {
-		feed := parseEntries(msg)
+	for feed := range feeds {
+		i++
+
 		if feed.err != nil {
-			log.Fatal(feed.err)
+			log.Printf("Error: %s\n", feed.err)
+			continue
 		}
 
 		entries = append(entries, feed.entries...)
 
-		i++
 		if i == len(content.configs) {
-			break
+			close(https)
+			close(feeds)
 		}
 	}
 	end := time.Now()
