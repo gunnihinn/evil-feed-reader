@@ -67,12 +67,12 @@ func (content *Content) Refresh() {
 	// TODO: Use wait groups
 	i := 0
 	for msg := range https {
-		es, err := parseEntries(msg)
-		if err != nil {
-			log.Fatal(err)
+		feed := parseEntries(msg)
+		if feed.err != nil {
+			log.Fatal(feed.err)
 		}
 
-		entries = append(entries, es...)
+		entries = append(entries, feed.entries...)
 
 		i++
 		if i == len(content.configs) {

@@ -17,6 +17,12 @@ type HTTP struct {
 	err      error
 }
 
+type Feed struct {
+	config  Config
+	entries []Entry
+	err     error
+}
+
 type Entry struct {
 	Feed      string
 	Title     string
@@ -24,30 +30,36 @@ type Entry struct {
 	Published time.Time
 }
 
-func parseEntries(message HTTP) ([]Entry, error) {
+func parseEntries(message HTTP) Feed {
 	if message.err != nil {
-		return nil, message.err
+		return Feed{
+			config: message.config,
+			err:    message.err,
+		}
 	}
 
 	parser := gofeed.NewParser()
-	feed, err := parser.Parse(message.response.Body)
+	rawFeed, err := parser.Parse(message.response.Body)
 	if err != nil {
-		return nil, err
+		return Feed{
+			config: message.config,
+			err:    err,
+		}
 	}
 
 	es := make([]Entry, 0)
-	for _, item := range feed.Items {
+	for _, item := range rawFeed.Items {
 		var published time.Time
 		if item.UpdatedParsed != nil {
 			published = *item.UpdatedParsed
 		} else if item.PublishedParsed != nil {
 			published = *item.PublishedParsed
 		} else {
-			panic(fmt.Sprintf("No date in %s: %s\n", feed.Title, item.Title))
+			panic(fmt.Sprintf("No date in %s: %s\n", rawFeed.Title, item.Title))
 		}
 
 		if published.Unix() < 20*365*24*60*60 {
-			panic(fmt.Sprintf("No date in %s: %s\n", feed.Title, item.Title))
+			panic(fmt.Sprintf("No date in %s: %s\n", rawFeed.Title, item.Title))
 		}
 
 		var u string
@@ -75,7 +87,7 @@ func parseEntries(message HTTP) ([]Entry, error) {
 		if message.config.Nickname != "" {
 			feedTitle = message.config.Nickname
 		} else {
-			feedTitle = html.UnescapeString(feed.Title)
+			feedTitle = html.UnescapeString(rawFeed.Title)
 		}
 
 		es = append(es, Entry{
@@ -86,7 +98,10 @@ func parseEntries(message HTTP) ([]Entry, error) {
 		})
 	}
 
-	return es, nil
+	return Feed{
+		config:  message.config,
+		entries: es,
+	}
 }
 
 type sortedEntries []Entry
