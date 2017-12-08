@@ -1,8 +1,9 @@
 = TODO
 
 Math feeds
+Vendor dependencies
 Split data fetching and rendering
-Sanity checks: Did we get something from all feeds?
+- Sanity checks: Did we get something from all feeds?
 * Logging for monitoring
 * Logging for performance
 - arXiv feeds

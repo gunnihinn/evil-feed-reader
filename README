@@ -16,9 +16,9 @@ program understand is:
 ----
 [
     {
-        "url": <feed URL>,
-        "nickname": <optional nickname for feed>,
-        "prefix": <optional prefix for feed link URLs>
+        "url": "feed URL",
+        "nickname": "optional nickname for feed",
+        "prefix": "optional prefix for feed link URLs"
     }
 ]
 ----
@@ -31,8 +31,6 @@ make working links.
 Evil feed reader keeps no state. We currently render feeds in the browser,
 which is perfectly capable of remembering what links we've already visited, and
 thus what items we've already read.
-
-Management is open to feature requests.
 
 == To run
 
@@ -61,4 +59,5 @@ run.
 See [evilwm](http://www.6809.org.uk/evilwm/).
 
 
-# vim: ft=asciidoc
+
+// vim: ft=asciidoc

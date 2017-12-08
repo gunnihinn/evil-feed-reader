@@ -1,7 +1,7 @@
 #!/bin/bash
 
 binary=evilfr
-config=evil.yaml
+config=feeds.json
 
 service=evil
 
