@@ -1,24 +1,25 @@
 package main
 
 import (
-	//"html/template"
 	"fmt"
 	"html"
 	"net/http"
 	"net/url"
 	"time"
 
+	"github.com/gunnihinn/evil-feed-reader/config"
+
 	"github.com/mmcdole/gofeed"
 )
 
 type HTTP struct {
-	config   Config
+	config   config.Feed
 	response *http.Response
 	err      error
 }
 
 type Feed struct {
-	config  Config
+	config  config.Feed
 	entries []Entry
 	err     error
 }

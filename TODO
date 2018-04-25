@@ -1,8 +1,11 @@
 = TODO
 
 Math feeds
-Vendor dependencies
+SIGHUP reloads config
 Split data fetching and rendering
+Add config editing abilities
+Authenticate config editing
+* Vendor dependencies
 - Sanity checks: Did we get something from all feeds?
 * Logging for monitoring
 * Logging for performance
@@ -16,3 +19,16 @@ Split data fetching and rendering
 * Collect data from XML
 * Order data by timestamp
 * Render HTML
+
+== Plan
+
+The configuration doesn't change very often. Keep it in some basic set of objects:
+
+    type Feed struct{ // things }
+
+We can enrich (a copy of) that object with raw feed data, which will come from
+HTTP calls in our case.
+
+We can parse that data into a Feed with Entries.
+
+This is a scatter/gather operation.

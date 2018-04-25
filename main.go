@@ -2,7 +2,6 @@ package main
 
 import (
 	"crypto/tls"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"html/template"
@@ -13,18 +12,14 @@ import (
 	"sort"
 	"syscall"
 	"time"
+
+	"github.com/gunnihinn/evil-feed-reader/config"
 )
 
 var logger *log.Logger
 
-type Config struct {
-	URL      string
-	Nickname string
-	Prefix   string
-}
-
 type Content struct {
-	configs []Config
+	configs []config.Feed
 	Days    []DateEntries
 }
 
@@ -33,7 +28,7 @@ type DateEntries struct {
 	Entries []Entry
 }
 
-func SetupContent(configs []Config) *Content {
+func SetupContent(configs []config.Feed) *Content {
 	return &Content{
 		configs: configs,
 	}
@@ -53,16 +48,16 @@ func (content *Content) Refresh() {
 	feeds := make(chan Feed)
 	entries := make([]Entry, 0)
 
-	for _, config := range content.configs {
-		go func(cfg Config) {
-			response, err := client.Get(cfg.URL)
+	for _, cfg := range content.configs {
+		go func(c config.Feed) {
+			response, err := client.Get(c.URL)
 
 			https <- HTTP{
-				config:   cfg,
+				config:   c,
 				response: response,
 				err:      err,
 			}
-		}(config)
+		}(cfg)
 
 		go func(https chan HTTP) {
 			feed := parseEntries(<-https)
@@ -103,12 +98,17 @@ func main() {
 	var configFile = flag.String("config", "feeds.json", "Reader config file")
 	flag.Parse()
 
-	config, err := parseConfigFile(*configFile)
+	fh, err := os.Open(*configFile)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	content := SetupContent(config)
+	configs, err := config.Parse(fh)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	content := SetupContent(configs)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
@@ -162,22 +162,6 @@ func gatherEntries(entries []Entry) []DateEntries {
 
 func getDate(t time.Time) string {
 	return t.Format("2006-01-02")
-}
-
-func parseConfigFile(filename string) ([]Config, error) {
-	fh, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	var configs []Config
-	decoder := json.NewDecoder(fh)
-	err = decoder.Decode(&configs)
-	if err != nil {
-		return nil, err
-	}
-
-	return configs, nil
 }
 
 func setupServer(port int, content *Content) *http.Server {
