@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/tls"
 	"flag"
 	"fmt"
 	"html/template"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gunnihinn/evil-feed-reader/config"
+	"github.com/gunnihinn/evil-feed-reader/core"
 )
 
 var logger *log.Logger
@@ -25,7 +25,7 @@ type Content struct {
 
 type DateEntries struct {
 	Date    time.Time
-	Entries []Entry
+	Entries []core.Entry
 }
 
 func SetupContent(configs []config.Feed) *Content {
@@ -38,49 +38,16 @@ func (content *Content) Refresh() {
 	logger.Println("Refreshing content")
 	start := time.Now()
 
-	var client = http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
+	feeds, errors := core.ScatterGather(content.configs, core.HTTPFetcher)
+	for _, err := range errors {
+		log.Printf("Error: %s\n", err)
 	}
 
-	https := make(chan HTTP)
-	feeds := make(chan Feed)
-	entries := make([]Entry, 0)
-
-	for _, cfg := range content.configs {
-		go func(c config.Feed) {
-			response, err := client.Get(c.URL)
-
-			https <- HTTP{
-				config:   c,
-				response: response,
-				err:      err,
-			}
-		}(cfg)
-
-		go func(https chan HTTP) {
-			feed := parseEntries(<-https)
-			feeds <- feed
-		}(https)
+	entries := make([]core.Entry, 0)
+	for _, feed := range feeds {
+		entries = append(entries, feed...)
 	}
 
-	i := 0
-	for feed := range feeds {
-		i++
-
-		if feed.err != nil {
-			log.Printf("Error: %s\n", feed.err)
-			continue
-		}
-
-		entries = append(entries, feed.entries...)
-
-		if i == len(content.configs) {
-			close(https)
-			close(feeds)
-		}
-	}
 	end := time.Now()
 	logger.Printf("Getting feeds took %d ms\n", (end.UnixNano()-start.UnixNano())/1000000)
 
@@ -124,8 +91,8 @@ func main() {
 	logger.Print("Shutting down")
 }
 
-func gatherEntries(entries []Entry) []DateEntries {
-	sort.Sort(sort.Reverse(sortedEntries(entries)))
+func gatherEntries(entries []core.Entry) []DateEntries {
+	sort.Sort(sort.Reverse(core.SortedEntries(entries)))
 
 	days := make([]DateEntries, 0)
 
@@ -136,7 +103,7 @@ func gatherEntries(entries []Entry) []DateEntries {
 			date = getDate(entry.Published)
 			bucket = DateEntries{
 				Date:    entry.Published,
-				Entries: make([]Entry, 0),
+				Entries: make([]core.Entry, 0),
 			}
 		}
 
@@ -150,7 +117,7 @@ func gatherEntries(entries []Entry) []DateEntries {
 
 			bucket = DateEntries{
 				Date:    entry.Published,
-				Entries: make([]Entry, 0),
+				Entries: make([]core.Entry, 0),
 			}
 		} else {
 			bucket.Entries = append(bucket.Entries, entry)

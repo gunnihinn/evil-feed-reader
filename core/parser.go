@@ -1,9 +1,9 @@
-package main
+package core
 
 import (
 	"fmt"
 	"html"
-	"net/http"
+	"io"
 	"net/url"
 	"time"
 
@@ -12,18 +12,6 @@ import (
 	"github.com/mmcdole/gofeed"
 )
 
-type HTTP struct {
-	config   config.Feed
-	response *http.Response
-	err      error
-}
-
-type Feed struct {
-	config  config.Feed
-	entries []Entry
-	err     error
-}
-
 type Entry struct {
 	Feed      string
 	Title     string
@@ -31,21 +19,11 @@ type Entry struct {
 	Published time.Time
 }
 
-func parseEntries(message HTTP) Feed {
-	if message.err != nil {
-		return Feed{
-			config: message.config,
-			err:    message.err,
-		}
-	}
-
+func Parse(cfg config.Feed, raw io.Reader) ([]Entry, error) {
 	parser := gofeed.NewParser()
-	rawFeed, err := parser.Parse(message.response.Body)
+	rawFeed, err := parser.Parse(raw)
 	if err != nil {
-		return Feed{
-			config: message.config,
-			err:    err,
-		}
+		return nil, err
 	}
 
 	es := make([]Entry, 0)
@@ -56,10 +34,12 @@ func parseEntries(message HTTP) Feed {
 		} else if item.PublishedParsed != nil {
 			published = *item.PublishedParsed
 		} else {
+			// TODO: Don't panic
 			panic(fmt.Sprintf("No date in %s: %s\n", rawFeed.Title, item.Title))
 		}
 
 		if published.Unix() < 20*365*24*60*60 {
+			// TODO: Don't panic
 			panic(fmt.Sprintf("No date in %s: %s\n", rawFeed.Title, item.Title))
 		}
 
@@ -75,18 +55,20 @@ func parseEntries(message HTTP) Feed {
 			}
 		}
 
-		base, err := url.Parse(message.config.Prefix)
+		base, err := url.Parse(cfg.Prefix)
 		if err != nil {
+			// TODO: Don't panic
 			panic(fmt.Sprintf("%s\n", err))
 		}
 		ext, err := url.Parse(u)
 		if err != nil {
+			// TODO: Don't panic
 			panic(fmt.Sprintf("%s\n", err))
 		}
 
 		var feedTitle string
-		if message.config.Nickname != "" {
-			feedTitle = message.config.Nickname
+		if cfg.Nickname != "" {
+			feedTitle = cfg.Nickname
 		} else {
 			feedTitle = html.UnescapeString(rawFeed.Title)
 		}
@@ -99,22 +81,19 @@ func parseEntries(message HTTP) Feed {
 		})
 	}
 
-	return Feed{
-		config:  message.config,
-		entries: es,
-	}
+	return es, nil
 }
 
-type sortedEntries []Entry
+type SortedEntries []Entry
 
-func (p sortedEntries) Len() int {
+func (p SortedEntries) Len() int {
 	return len(p)
 }
 
-func (p sortedEntries) Less(i, j int) bool {
+func (p SortedEntries) Less(i, j int) bool {
 	return p[i].Published.Before(p[j].Published)
 }
 
-func (p sortedEntries) Swap(i, j int) {
+func (p SortedEntries) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
