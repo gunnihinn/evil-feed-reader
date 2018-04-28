@@ -1,25 +1,16 @@
-binary=evilfr
+binary=evil-feed-reader
+source = $(shell find -name "*.go")
+package = github.com/gunnihinn/evil-feed-reader/cmd/evil-feed-reader
 
-bin_src = $(shell find -name "*.go")
-project_package = github.com/gunnihinn/evil-feed-reader
-
-datadir = static
-data = $(wildcard static/*)
-bindata = bindata.go
-
-$(binary): $(bindata) $(bin_src)
-	go build -o $(binary) $(project_package)
-
-$(bindata): $(data)
-	go-bindata-assetfs $(datadir)/...
+$(binary): $(source)
+	go build -o $(binary) $(package)
 
 debug: $(binary)
 	dlv exec ./$(binary)
 
 clean:
-	rm -f $(bindata)
 	rm -f $(binary)
 
-deploy: $(bindata) $(bin_src)
-	GOOS=linux GOARCH=amd64 go build -o $(binary) $(project_package)
+deploy: $(source)
+	GOOS=linux GOARCH=amd64 go build -o $(binary) $(package)
 	./deploy.sh > /dev/null

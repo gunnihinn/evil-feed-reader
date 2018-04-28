@@ -80,9 +80,23 @@ func main() {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
 
-	server := setupServer(*port, content)
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		t, err := template.New("index.html").Parse(HTML)
+		if err != nil {
+			fmt.Fprintf(w, "%s", err)
+			return
+		}
+
+		content.Refresh()
+
+		if err := t.Execute(w, content); err != nil {
+			fmt.Fprintf(w, "%s", err)
+			return
+		}
+	})
+
 	go func() {
-		if err := server.ListenAndServe(); err != nil {
+		if err := http.ListenAndServe(fmt.Sprintf(":%d", *port), nil); err != nil {
 			logger.Fatalf("Server error: %s\n", err)
 		}
 	}()
@@ -129,37 +143,4 @@ func gatherEntries(entries []core.Entry) []DateEntries {
 
 func getDate(t time.Time) string {
 	return t.Format("2006-01-02")
-}
-
-func setupServer(port int, content *Content) *http.Server {
-	handler := NewHandler()
-	server := &http.Server{
-		Addr:    fmt.Sprintf("localhost:%d", port),
-		Handler: handler,
-	}
-
-	handler.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		data, err := Asset("static/index.html")
-		if err != nil {
-			fmt.Fprintf(w, "%s", err)
-			return
-		}
-
-		t := template.New("static/index.html")
-		_, err = t.Parse(string(data))
-		if err != nil {
-			fmt.Fprintf(w, "%s", err)
-			return
-		}
-
-		content.Refresh()
-
-		if err := t.Execute(w, content); err != nil {
-			fmt.Fprintf(w, "%s", err)
-			return
-		}
-	})
-	handler.Handle("/static/", http.StripPrefix("/static/", http.FileServer(assetFS())))
-
-	return server
 }

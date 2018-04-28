@@ -3,8 +3,8 @@
 *.dll
 *.so
 *.dylib
-evilfr
 
+/evil-feed-reader
 secrets
 
 # Config files
