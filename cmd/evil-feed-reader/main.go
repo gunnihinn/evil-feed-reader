@@ -20,8 +20,8 @@ import (
 var logger *log.Logger
 
 type Content struct {
-	configs []config.Feed
-	Days    []DateEntries
+	feeds []config.Feed
+	Days  []DateEntries
 }
 
 type DateEntries struct {
@@ -29,17 +29,11 @@ type DateEntries struct {
 	Entries []core.Entry
 }
 
-func SetupContent(config config.Config) *Content {
-	return &Content{
-		configs: config.Feeds,
-	}
-}
-
 func (content *Content) Refresh() {
 	logger.Println("Refreshing content")
 	start := time.Now()
 
-	feeds, errors := core.ScatterGather(content.configs, core.HTTPFetcher)
+	feeds, errors := core.ScatterGather(content.feeds, core.HTTPFetcher)
 	for _, err := range errors {
 		log.Printf("Error: %s\n", err)
 	}
@@ -66,20 +60,24 @@ func main() {
 	var configFile = flag.String("config", "config.yaml", "Reader config file")
 	flag.Parse()
 
-	fh, err := os.Open(*configFile)
+	content := &Content{}
+	err := content.Load(*configFile)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
-
-	configs, err := config.Parse(fh)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	content := SetupContent(configs)
 
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGSTOP, syscall.SIGINT)
+
+	reload := make(chan os.Signal, 1)
+	signal.Notify(reload, syscall.SIGHUP)
+	go func(filename string, sig chan os.Signal) {
+		for range sig {
+			if err := content.Load(filename); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}(*configFile, reload)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		t, err := template.New("index.html").Parse(HTML)
@@ -144,4 +142,20 @@ func gatherEntries(entries []core.Entry) []DateEntries {
 
 func getDate(t time.Time) string {
 	return t.Format("2006-01-02")
+}
+
+func (c *Content) Load(filename string) error {
+	fh, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+
+	cfg, err := config.Parse(fh)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	c.feeds = cfg.Feeds
+
+	return nil
 }
