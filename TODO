@@ -1,11 +1,11 @@
 = TODO
 
-Generate flame graphs
 Math feeds
 SIGHUP reloads config
 Add config editing abilities
 Authenticate config editing
 
+* Generate flame graphs
 * Split data fetching and rendering
 * Vendor dependencies
 - Sanity checks: Did we get something from all feeds?

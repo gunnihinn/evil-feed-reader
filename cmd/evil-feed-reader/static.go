@@ -10,14 +10,13 @@ var HTML string = `
 
 	<style>
 html {
-    background-color: #282828;
+    background-color: #fdfdfd;
 }
 
 body {
     margin: 0 auto;
     max-width: 23cm;
     padding: 1em;
-    background-color: #fdfdfd;
 }
 
 nav {
@@ -25,8 +24,13 @@ nav {
 }
 
 h1 {
-    font-size: 2.9em;
-    font-family: Courier, monospace;
+    font-size: 3.5em;
+    font-family: sans-serif;
+	text-align: center;
+}
+
+h1 > a {
+	text-decoration: none;
     color: #af111c;
 }
 
@@ -62,7 +66,7 @@ ul {
 
 <body>
     <nav>
-        <h1>Evil feed reader</h1>
+		<h1><a href="https://github.com/gunnihinn/evil-feed-reader">Evil feed reader</a></h1>
     </nav>
 
     <main>
