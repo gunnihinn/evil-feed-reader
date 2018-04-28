@@ -5,6 +5,9 @@ package = github.com/gunnihinn/evil-feed-reader/cmd/evil-feed-reader
 $(binary): $(source)
 	go build -o $(binary) $(package)
 
+check: $(source)
+	go test ./...
+
 debug: $(binary)
 	dlv exec ./$(binary)
 
