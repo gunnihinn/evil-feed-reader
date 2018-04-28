@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gunnihinn/evil-feed-reader/config"
 )
@@ -58,7 +59,8 @@ func ScatterGather(configs []config.Feed, goodboy Fetcher) ([][]Entry, []error) 
 
 var client = http.Client{
 	Transport: &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		ResponseHeaderTimeout: 2 * time.Second,
 	},
 }
 
