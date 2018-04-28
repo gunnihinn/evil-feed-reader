@@ -34,13 +34,8 @@ thus what items we've already read.
 
 == To run
 
-You need a Go compiler. I'm using Go 1.8.1. The reader has one dependency
-outside of the standard library (and only on the binary from that project),
-which you can install by following the instructions on:
-
-    https://github.com/jteeuwen/go-bindata
-
-Then compile and run the reader with:
+You need a Go compiler; any one should do. The project dependencies are
+vendored with `dep`. Compile and run the reader with:
 
     $ git clone https://github.com/gunnihinn/evil-feed-reader.git
     $ make      # needs GNU make
