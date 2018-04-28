@@ -1,10 +1,12 @@
 = TODO
 
+Generate flame graphs
 Math feeds
 SIGHUP reloads config
-Split data fetching and rendering
 Add config editing abilities
 Authenticate config editing
+
+* Split data fetching and rendering
 * Vendor dependencies
 - Sanity checks: Did we get something from all feeds?
 * Logging for monitoring
@@ -19,16 +21,3 @@ Authenticate config editing
 * Collect data from XML
 * Order data by timestamp
 * Render HTML
-
-== Plan
-
-The configuration doesn't change very often. Keep it in some basic set of objects:
-
-    type Feed struct{ // things }
-
-We can enrich (a copy of) that object with raw feed data, which will come from
-HTTP calls in our case.
-
-We can parse that data into a Feed with Entries.
-
-This is a scatter/gather operation.
