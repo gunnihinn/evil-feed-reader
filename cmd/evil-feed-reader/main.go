@@ -9,7 +9,9 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"os/signal"
+	"path"
 	"sort"
+	"strings"
 	"syscall"
 	"time"
 
@@ -57,11 +59,12 @@ func main() {
 	logger.Println("Starting")
 
 	var port = flag.Int("port", 8080, "HTTP port")
-	var configFile = flag.String("config", "config.yaml", "Reader config file")
+	var configFileOption = flag.String("config", "", "Reader config file")
 	flag.Parse()
 
 	content := &Content{}
-	err := content.Load(*configFile)
+	configFile := findConfigFile(configFileOption)
+	err := content.Load(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,7 +80,7 @@ func main() {
 				log.Fatal(err)
 			}
 		}
-	}(*configFile, reload)
+	}(configFile, reload)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		t, err := template.New("index.html").Parse(HTML)
@@ -145,6 +148,8 @@ func getDate(t time.Time) string {
 }
 
 func (c *Content) Load(filename string) error {
+	log.Printf("Loading config from '%s'", filename)
+
 	fh, err := os.Open(filename)
 	if err != nil {
 		return err
@@ -158,4 +163,39 @@ func (c *Content) Load(filename string) error {
 	c.feeds = cfg.Feeds
 
 	return nil
+}
+
+func findConfigFile(option *string) string {
+	if option != nil && *option != "" {
+		return *option
+	}
+
+	prefixes := make([]string, 0)
+
+	// Check current working directory first
+	prefixes = append(prefixes, "")
+
+	// https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables
+	if p := os.Getenv("XDG_CONFIG_HOME"); p != "" {
+		prefixes = append(prefixes, p)
+	} else {
+		prefixes = append(prefixes, path.Join(os.Getenv("HOME"), ".config"))
+	}
+
+	if ps := os.Getenv("XDG_CONFIG_DIRS"); ps != "" {
+		for _, p := range strings.Split(ps, ":") {
+			prefixes = append(prefixes, p)
+		}
+	} else {
+		prefixes = append(prefixes, "/etc/xdg")
+	}
+
+	for _, dir := range prefixes {
+		fn := path.Join(dir, "evil-feed-reader.yaml")
+		if _, err := os.Stat(fn); err == nil {
+			return fn
+		}
+	}
+
+	return "config.yaml"
 }

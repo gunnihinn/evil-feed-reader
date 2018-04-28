@@ -9,8 +9,13 @@ Note that what I personally want may not at all be what you want.
 
 Very few!
 
-You define the feeds you want to follow in a YAML config file. The format the
-program understands is:
+You define the feeds you want to follow in a YAML config file. This file should
+be called `evil-feed-reader.yaml`, and may be placed either in the directory
+the executable is running in, or any of the directories listed in the
+https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html#variables:[XDG directory specification].
+It can also be given at program start with the `-config` command-line option.
+
+The format the program understands is:
 
 [source,yaml]
 ----
