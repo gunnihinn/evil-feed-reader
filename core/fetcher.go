@@ -14,9 +14,6 @@ type Fetcher func(config.Feed) ([]Entry, error)
 
 // ScatterGather uses a given Fetcher to fetch feeds concurrently.
 func ScatterGather(configs []config.Feed, goodboy Fetcher) ([][]Entry, []error) {
-	feeds := make([][]Entry, len(configs))
-	errors := make([]error, 0, len(configs))
-
 	fs := make(chan []Entry)
 	es := make(chan error)
 	defer close(fs)
@@ -35,20 +32,19 @@ func ScatterGather(configs []config.Feed, goodboy Fetcher) ([][]Entry, []error) 
 		}(cfg)
 	}
 
+	feeds := make([][]Entry, len(configs))
 	go func() {
-		for {
-			select {
-			case f, ok := <-fs:
-				if ok {
-					feeds = append(feeds, f)
-					wg.Done()
-				}
-			case e, ok := <-es:
-				if ok {
-					errors = append(errors, e)
-					wg.Done()
-				}
-			}
+		for feed := range fs {
+			feeds = append(feeds, feed)
+			wg.Done()
+		}
+	}()
+
+	errors := make([]error, 0, len(configs))
+	go func() {
+		for err := range es {
+			errors = append(errors, err)
+			wg.Done()
 		}
 	}()
 
