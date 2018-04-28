@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	_ "net/http/pprof"
 	"os"
@@ -17,9 +16,9 @@ import (
 
 	"github.com/gunnihinn/evil-feed-reader/config"
 	"github.com/gunnihinn/evil-feed-reader/core"
-)
 
-var logger *log.Logger
+	log "github.com/sirupsen/logrus"
+)
 
 type Content struct {
 	feeds []config.Feed
@@ -32,12 +31,12 @@ type DateEntries struct {
 }
 
 func (content *Content) Refresh() {
-	logger.Println("Refreshing content")
+	log.Info("Refreshing content")
 	start := time.Now()
 
 	feeds, errors := core.ScatterGather(content.feeds, core.HTTPFetcher)
 	for _, err := range errors {
-		log.Printf("Error: %s\n", err)
+		log.Error(err)
 	}
 
 	entries := make([]core.Entry, 0)
@@ -46,17 +45,20 @@ func (content *Content) Refresh() {
 	}
 
 	end := time.Now()
-	logger.Printf("Getting feeds took %d ms\n", (end.UnixNano()-start.UnixNano())/1000000)
+	log.WithFields(log.Fields{
+		"took_ms": (end.UnixNano() - start.UnixNano()) / 1000000,
+	}).Info("Got feeds")
 
 	start = time.Now()
 	content.Days = gatherEntries(entries)
 	end = time.Now()
-	logger.Printf("Gathering entries took %d us\n", (end.UnixNano()-start.UnixNano())/1000)
+	log.WithFields(log.Fields{
+		"took_us": (end.UnixNano() - start.UnixNano()) / 1000,
+	}).Info("Gathered feeds")
 }
 
 func main() {
-	logger = log.New(os.Stdout, "", log.LstdFlags)
-	logger.Println("Starting")
+	log.Info("Starting")
 
 	var port = flag.Int("port", 8080, "HTTP port")
 	var configFileOption = flag.String("config", "", "Reader config file")
@@ -99,12 +101,12 @@ func main() {
 
 	go func() {
 		if err := http.ListenAndServe(fmt.Sprintf(":%d", *port), nil); err != nil {
-			logger.Fatalf("Server error: %s\n", err)
+			log.Fatal(err)
 		}
 	}()
 
 	<-stop
-	logger.Print("Shutting down")
+	log.Info("Shutting down")
 }
 
 func gatherEntries(entries []core.Entry) []DateEntries {
@@ -148,7 +150,9 @@ func getDate(t time.Time) string {
 }
 
 func (c *Content) Load(filename string) error {
-	log.Printf("Loading config from '%s'", filename)
+	log.WithFields(log.Fields{
+		"filename": filename,
+	}).Info("Loading config")
 
 	fh, err := os.Open(filename)
 	if err != nil {
@@ -157,7 +161,7 @@ func (c *Content) Load(filename string) error {
 
 	cfg, err := config.Parse(fh)
 	if err != nil {
-		logger.Fatal(err)
+		log.Fatal(err)
 	}
 
 	c.feeds = cfg.Feeds
