@@ -14,6 +14,12 @@
   version = "v1.0.0"
 
 [[projects]]
+  name = "github.com/elazarl/go-bindata-assetfs"
+  packages = ["."]
+  revision = "30f82fa23fd844bd5bb1e5f216db87fd77b5eb43"
+  version = "v1.0.0"
+
+[[projects]]
   name = "github.com/mmcdole/gofeed"
   packages = [
     ".",
@@ -65,9 +71,15 @@
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
 
+[[projects]]
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0d5125ca375975b9dd44bc97db4ec9c0c605ea0f0d32c4ca09bdad060ce4f88b"
+  inputs-digest = "831b8d5492d753b458149dc679d61d03ef9bcdf7f2cacfc42ef021b5659ab6f5"
   solver-name = "gps-cdcl"
   solver-version = 1
