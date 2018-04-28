@@ -39,17 +39,23 @@ thus what items we've already read.
 You need a Go compiler; any one should do. The project dependencies are
 vendored with `dep`. Compile and run the reader with:
 
-    $ git clone https://github.com/gunnihinn/evil-feed-reader.git
-    $ make      # needs GNU make
-    $ ./evil-feed-reader
+[source,bash]
+----
+$ git clone https://github.com/gunnihinn/evil-feed-reader.git
+$ make      # needs GNU make
+$ ./evil-feed-reader
+----
 
 This will launch an HTTP server on `localhost:8080` that renders the latest
 items from the feeds you are interested in.
 
-You'll need to setup some feed URLs for the reader to do anything. The reader
-will look for a file named `feeds.json` in the directory where it is run by
-default. You can have it look elsewhere by passing a `-feeds` flag to it when
-run.
+The program accepts these command-line options:
+
+[source]
+----
+-port PORT      Accept HTTP connections on this port. Default 8080.
+-config FILE    Feed config file to use. Defaults to XDG spec.
+----
 
 == Profiling
 
