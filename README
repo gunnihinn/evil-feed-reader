@@ -49,9 +49,15 @@ will look for a file named `feeds.json` in the directory where it is run by
 default. You can have it look elsewhere by passing a `-feeds` flag to it when
 run.
 
+== Profiling
+
+We import https://golang.org/pkg/net/http/pprof/[`net/http/pprof`], so all of
+its default endpoints are available. We recommend
+https://github.com/uber/go-torch[`go-torch`] for reviewing the results.
+
 == Evil
 
-See [evilwm](http://www.6809.org.uk/evilwm/).
+See http://www.6809.org.uk/evilwm/[EvilWM].
 
 
 
