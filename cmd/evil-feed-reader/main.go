@@ -29,9 +29,9 @@ type DateEntries struct {
 	Entries []core.Entry
 }
 
-func SetupContent(configs []config.Feed) *Content {
+func SetupContent(config config.Config) *Content {
 	return &Content{
-		configs: configs,
+		configs: config.Feeds,
 	}
 }
 
@@ -63,7 +63,7 @@ func main() {
 	logger.Println("Starting")
 
 	var port = flag.Int("port", 8080, "HTTP port")
-	var configFile = flag.String("config", "feeds.json", "Reader config file")
+	var configFile = flag.String("config", "config.yaml", "Reader config file")
 	flag.Parse()
 
 	fh, err := os.Open(*configFile)

@@ -1,20 +1,25 @@
 package config
 
 import (
-	"encoding/json"
+	"gopkg.in/yaml.v2"
 	"io"
 )
 
-type Feed struct {
-	URL      string
-	Nickname string
-	Prefix   string
+type Config struct {
+	Feeds []Feed `yaml:"feeds"`
 }
 
-func Parse(r io.Reader) ([]Feed, error) {
-	var configs []Feed
-	decoder := json.NewDecoder(r)
-	err := decoder.Decode(&configs)
+type Feed struct {
+	URL      string `yaml:"url"`
+	Nickname string `yaml:"nickname"`
+	Prefix   string `yaml:"prefix"`
+}
 
-	return configs, err
+func Parse(r io.Reader) (Config, error) {
+	config := Config{}
+
+	decoder := yaml.NewDecoder(r)
+	err := decoder.Decode(&config)
+
+	return config, err
 }

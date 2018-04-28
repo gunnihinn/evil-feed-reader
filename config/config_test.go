@@ -8,51 +8,35 @@ import (
 func TestParse(t *testing.T) {
 	type setup struct {
 		input    string
-		expected []Feed
+		expected Config
 	}
 
 	tests := []setup{
 		setup{
-			input: `[
-	{
-		"Url": "URL",
-		"Nickname": "NICKNAME",
-		"Prefix": "PREFIX"
-	}
-]`,
-			expected: []Feed{
-				Feed{
-					URL:      "URL",
-					Nickname: "NICKNAME",
-					Prefix:   "PREFIX",
+			input: `feeds:
+- url: URL
+  nickname: NICKNAME
+  prefix: PREFIX
+`,
+			expected: Config{
+				Feeds: []Feed{
+					Feed{
+						URL:      "URL",
+						Nickname: "NICKNAME",
+						Prefix:   "PREFIX",
+					},
 				},
 			},
 		},
 		setup{
-			input: `[
-	{
-		"url": "URL",
-		"nickname": "NICKNAME",
-		"prefix": "PREFIX"
-	}
-]`,
-			expected: []Feed{
-				Feed{
-					URL:      "URL",
-					Nickname: "NICKNAME",
-					Prefix:   "PREFIX",
-				},
-			},
-		},
-		setup{
-			input: `[
-	{
-		"url": "URL"
-	}
-]`,
-			expected: []Feed{
-				Feed{
-					URL: "URL",
+			input: `feeds:
+- url: URL
+`,
+			expected: Config{
+				[]Feed{
+					Feed{
+						URL: "URL",
+					},
 				},
 			},
 		},
@@ -70,13 +54,13 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func equal(a, b []Feed) bool {
-	if len(a) != len(b) {
+func equal(a, b Config) bool {
+	if len(a.Feeds) != len(b.Feeds) {
 		return false
 	}
 
-	for i := 0; i < len(a); i++ {
-		if a[i] != b[i] {
+	for i := 0; i < len(a.Feeds); i++ {
+		if a.Feeds[i] != b.Feeds[i] {
 			return false
 		}
 	}

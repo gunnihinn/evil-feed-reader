@@ -9,18 +9,15 @@ Note that what I personally want may not at all be what you want.
 
 Very few!
 
-You define the feeds you want to follow in a JSON config file. The format the
-program understand is:
+You define the feeds you want to follow in a YAML config file. The format the
+program understands is:
 
-[source,json]
+[source,yaml]
 ----
-[
-    {
-        "url": "feed URL",
-        "nickname": "optional nickname for feed",
-        "prefix": "optional prefix for feed link URLs"
-    }
-]
+feeds:
+- url: feed URL
+  nickname: optional nickname for feed
+  prefix: optional prefix for feed link URLs
 ----
 
 Every entry needs a `url` value. Use `nickname` to pick names for feed titles
