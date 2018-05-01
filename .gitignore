@@ -5,6 +5,7 @@
 *.dylib
 
 /evil-feed-reader
+/evil-feed-reader.1
 secrets
 
 # Config files

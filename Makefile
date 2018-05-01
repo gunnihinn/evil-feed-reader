@@ -1,6 +1,7 @@
 binary=evil-feed-reader
 source = $(shell find -name "*.go")
 package = github.com/gunnihinn/evil-feed-reader/cmd/evil-feed-reader
+manpage=evil-feed-reader.1
 
 $(binary): $(source)
 	go build -o $(binary) $(package)
@@ -14,6 +15,8 @@ debug: $(binary)
 clean:
 	rm -f $(binary)
 
-deploy: $(source)
-	GOOS=linux GOARCH=amd64 go build -o $(binary) $(package)
-	./deploy.sh > /dev/null
+$(manpage): man.adoc
+	asciidoctor -b manpage man.adoc -o $(manpage)
+
+package: $(binary) $(manpage)
+

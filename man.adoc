@@ -1,0 +1,60 @@
+= evil-feed-reader(1)
+:mansource: evil-feed-reader
+:doctype: manpage
+:man-linkstyle: pass:[blue R < >]
+
+== Name
+
+evil-feed-reader - Barebones feed reader
+
+== Synopsis
+
+*evil-feed-reader* ['OPTION']...
+
+== Options
+
+*-port*=_PORT_::
+  Port to accept HTTP requests on. Default: 8080.
+*-config*=_CONFIG_::
+  Configuration file to use. See below for default.
+
+== Configuration
+
+The configuration file the program expects is a YAML file whose contents are:
+[source,yaml]
+----
+feeds:
+- url: feed URL
+  nickname: optional nickname for feed
+  prefix: optional prefix for feed link URLs
+----
+Every entry needs a `url` value. Use `nickname` to pick names for feed titles
+you think are better than what its authors chose. Use `prefix` if a feed only
+provides relative links to its items and you know what to prefix them with to
+make working links.
+
+The program will look for a configuration file called `evil-feed-reader.yaml`
+in the following places:
+
+* The directory the binary lives in
+* In `${XDG_CONFIG_HOME:$HOME/.config}`
+* In `${XDG_CONFIG_ROOT:/etc/xdg}`
+
+== Bugs
+
+Refer to the *Evil feed reader* issue tracker at
+https://github.com/gunnihinn/evil-feed-reader/issues.
+
+== Author
+
+Gunnar Þór Magnússon.
+
+Copyright \(C) 2018.
+License GPLv3+: GNU GPL version 3 or later
+https://gnu.org/licenses/gpl.html.
+
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+
+
+// vim: ft=asciidoc

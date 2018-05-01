@@ -1,0 +1,10 @@
+[Unit]
+Description=Evil feed reader
+Documentation=man:/usr/share/man/man1/evil-feed-reader.1
+Requires=nginx.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/evil-feed-reader
+Restart=always
+RestartSec=3
