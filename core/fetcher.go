@@ -32,7 +32,7 @@ func ScatterGather(configs []config.Feed, goodboy Fetcher) ([][]Entry, []error) 
 		}(cfg)
 	}
 
-	feeds := make([][]Entry, len(configs))
+	feeds := make([][]Entry, 0, len(configs))
 	go func() {
 		for feed := range fs {
 			feeds = append(feeds, feed)

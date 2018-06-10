@@ -117,14 +117,6 @@ func gatherEntries(entries []core.Entry) []DateEntries {
 	var date string
 	var bucket DateEntries
 	for _, entry := range entries {
-		if date == "" {
-			date = getDate(entry.Published)
-			bucket = DateEntries{
-				Date:    entry.Published,
-				Entries: make([]core.Entry, 0),
-			}
-		}
-
 		d := getDate(entry.Published)
 		if date != d {
 			date = d
@@ -137,9 +129,13 @@ func gatherEntries(entries []core.Entry) []DateEntries {
 				Date:    entry.Published,
 				Entries: make([]core.Entry, 0),
 			}
-		} else {
-			bucket.Entries = append(bucket.Entries, entry)
 		}
+
+		bucket.Entries = append(bucket.Entries, entry)
+	}
+
+	if len(bucket.Entries) > 0 {
+		days = append(days, bucket)
 	}
 
 	return days
