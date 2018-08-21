@@ -9,8 +9,9 @@ $(binary): $(source)
 check: $(source)
 	go test ./...
 
-debug: $(binary)
-	dlv exec ./$(binary)
+debug:
+	go build -gcflags=all='-l -N' -o $(binary) $(package)
+	dlv exec ./$(binary) -- -config test.yaml
 
 clean:
 	rm -f $(binary)

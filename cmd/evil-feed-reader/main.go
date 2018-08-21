@@ -84,6 +84,13 @@ func main() {
 		}
 	}(configFile, reload)
 
+	server := http.Server{
+		Addr:         fmt.Sprintf(":%d", *port),
+		Handler:      nil,
+		ReadTimeout:  200 * time.Millisecond,
+		WriteTimeout: 3 * time.Second,
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		t, err := template.New("index.html").Parse(HTML)
 		if err != nil {
@@ -100,13 +107,17 @@ func main() {
 	})
 
 	go func() {
-		if err := http.ListenAndServe(fmt.Sprintf(":%d", *port), nil); err != nil {
+		if err := server.ListenAndServe(); err != nil {
 			log.Fatal(err)
 		}
 	}()
 
 	<-stop
+
 	log.Info("Shutting down")
+	if err := server.Close(); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func gatherEntries(entries []core.Entry) []DateEntries {
