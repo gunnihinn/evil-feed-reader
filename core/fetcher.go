@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"crypto/tls"
 	"net/http"
 	"sync"
@@ -10,10 +11,10 @@ import (
 )
 
 // Fetcher fetches a Feed based on a config.
-type Fetcher func(config.Feed) ([]Entry, error)
+type Fetcher func(context.Context, config.Feed) ([]Entry, error)
 
 // ScatterGather uses a given Fetcher to fetch feeds concurrently.
-func ScatterGather(configs []config.Feed, goodboy Fetcher) ([][]Entry, []error) {
+func ScatterGather(ctx context.Context, configs []config.Feed, goodboy Fetcher) ([][]Entry, []error) {
 	fs := make(chan []Entry)
 	es := make(chan error)
 	defer close(fs)
@@ -23,7 +24,7 @@ func ScatterGather(configs []config.Feed, goodboy Fetcher) ([][]Entry, []error) 
 	for _, cfg := range configs {
 		wg.Add(1)
 		go func(c config.Feed) {
-			f, err := goodboy(c)
+			f, err := goodboy(ctx, c)
 			if err != nil {
 				es <- err
 			} else {
@@ -61,8 +62,13 @@ var client = http.Client{
 }
 
 // HTTPFetcher fetches feeds over HTTP.
-func HTTPFetcher(f config.Feed) ([]Entry, error) {
-	response, err := client.Get(f.URL)
+func HTTPFetcher(ctx context.Context, f config.Feed) ([]Entry, error) {
+	req, err := http.NewRequest("GET", f.URL, nil)
+	if err != nil {
+		return []Entry{}, err
+	}
+
+	response, err := client.Do(req.WithContext(ctx))
 	if err != nil {
 		return nil, err
 	}

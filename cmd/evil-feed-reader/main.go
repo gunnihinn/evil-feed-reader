@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"html/template"
@@ -34,7 +35,10 @@ func (content *Content) Refresh() {
 	log.Info("Refreshing content")
 	start := time.Now()
 
-	feeds, errors := core.ScatterGather(content.feeds, core.HTTPFetcher)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	feeds, errors := core.ScatterGather(ctx, content.feeds, core.HTTPFetcher)
 	for _, err := range errors {
 		log.Error(err)
 	}
