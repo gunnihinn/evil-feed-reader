@@ -4,6 +4,7 @@ Math feeds
 SIGHUP reloads config
 Add config editing abilities
 Authenticate config editing
+Configurable timeout
 
 * Generate flame graphs
 * Split data fetching and rendering
